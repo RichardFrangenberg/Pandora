@@ -10,23 +10,23 @@ https://prism-pipeline.com/pandora
 
 ## Getting Started
 
-On the website you can find the latest official installer.
+On the [website](https://prism-pipeline.com/pandora) you can find the latest official installer.
 
 Currently Pandora runs on Windows only.
 
 
-### Installing
+## Installing
 
-To install the latest development version download or clone this repository and the Pandora dependencies:
+* To install the latest development version download or clone this repository and the Pandora dependencies:
 
-Windows-dependencies
+[Windows-dependencies](https://dl.dropboxusercontent.com/s/bkbzq7znd59h98p/Prism1.1.0_depependencies_Win.zip?dl=0)
 
-Extract the dependencies and copy the extracted folders into Pandora/PandoraFiles of this repository.
+* Extract the dependencies and copy the extracted folders into Pandora/PandoraFiles of this repository.
 
-Now the "PandoraFiles" folder should contain the folders like:
+* Now the "PandoraFiles" folder should contain the folders like:
 "Python27", "PythonLibs", "Scripts" ...
 
-Now go two folders up and execute the Prism_Setup.bat.
+* Now go two folders up and execute the Pandora_Setup.bat.
 
 ## License
 
