@@ -195,6 +195,15 @@ class SlaveLogic(QDialog):
 		self.setSlaveInfo()
 	#	self.getGDrivePath()
 
+		slaveEnabled = self.getIniSetting("enabled", stype="bool")
+		if slaveEnabled is None:
+			self.getIniSetting("enabled", setval=True, value=True)
+			slaveEnabled = True
+		elif slaveEnabled and self.slaveState == "disabled":
+			self.setState("idle")
+		elif not slaveEnabled:
+			self.setState("disabled")
+
 		self.createTrayIcon()
 		self.trayIcon.show()
 
@@ -350,7 +359,7 @@ class SlaveLogic(QDialog):
 		self.pause4Action.triggered.connect(lambda: self.pauseSlave(360))
 		self.pauseMenu.addAction(self.pause4Action)
 		self.trayIconMenu.addMenu(self.pauseMenu)
-		self.enableAction = QAction("Enabled", self.parentWidget, checkable = True, checked = True)
+		self.enableAction = QAction("Enabled", self.parentWidget, checkable = True, checked = self.slaveState!="disabled")
 		self.enableAction.triggered[bool].connect(self.setSlave)
 		self.trayIconMenu.addAction(self.enableAction)
 		self.restartAction = QAction("Restart ", self.parentWidget, triggered=self.restartLogic)
@@ -395,6 +404,8 @@ class SlaveLogic(QDialog):
 					statusText += " (%sh %smin.)" % (hourPause, pauseMin)
 				else:
 					statusText += " (%s min.)" % pauseMin
+
+			self.enableAction.setChecked(self.slaveState != "disabled")
 					
 			statusText += "\n"
 			self.statusLabel.setText(statusText)
@@ -413,6 +424,7 @@ class SlaveLogic(QDialog):
 	def setSlave(self, enabled):
 		if enabled:
 			self.setState("idle")
+			self.getIniSetting("enabled", setval=True, value="True")
 		else:
 			self.stopRender()
 			self.getIniSetting("enabled", setval=True, value="False")
@@ -823,9 +835,6 @@ class SlaveLogic(QDialog):
 			self.setState("idle")
 		elif not slaveEnabled:
 			self.setState("disabled")
-
-		if self.interrupted:
-			self.interrupted = False
 		
 		if not (os.path.exists(self.slavePath)):
 			self.writeWarning("paths don't exist", 3)
@@ -1191,6 +1200,9 @@ class SlaveLogic(QDialog):
 		jobCode = command["code"]
 		jobName = command["name"]
 		taskName = command["task"]
+
+		if self.interrupted:
+			self.interrupted = False
 
 		localPath = os.path.join(self.localSlavePath, "Jobs", jobCode, "JobFiles")
 		jobPath = os.path.join(self.slavePath, "AssignedJobs", jobCode, "JobFiles")

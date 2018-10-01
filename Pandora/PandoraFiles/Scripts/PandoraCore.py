@@ -204,7 +204,7 @@ class PandoraCore():
 
 				curShelves = hou.ShelfSet.shelves(hou.shelves.shelfSets()[curShelfSet])
 
-				shelfName = "pandora-v0.9.0"
+				shelfName = "pandora-v1.0.0"
 
 				if not shelfName in hou.shelves.shelves():
 					news = hou.shelves.newShelf(file_path = hou.shelves.defaultFilePath(), name= shelfName, label="Pandora")
@@ -213,17 +213,17 @@ class PandoraCore():
 					submitterScript = "import PandoraInit\n\nPandoraInit.pandoraCore.openSubmitter()"
 					if hou.shelves.tool("pandora_submitter") is not None:
 						hou.shelves.tool("pandora_submitter").destroy()
-					hou.shelves.newTool(file_path=hou.shelves.defaultFilePath(), name = "pandora_submitter", label ="Submitter",help = "\"\"\"Open the Pandora renderjob submitter\"\"\"", script= submitterScript, icon=os.path.join(self.pandoraRoot, "Scripts", "UserInterfacesPandora", "pandoraSubmitter.png" ))
+					hou.shelves.newTool(file_path=hou.shelves.defaultFilePath(), name = "pandora_submitter", label ="Submitter",help = "\"\"\"Open the Pandora renderjob submitter\"\"\"", script= submitterScript, icon=os.path.join(self.pandoraRoot, "Scripts", "UserInterfacesPandora", "pandoraSubmitter.png" ).replace("\\", "/"))
 
 					renderHandlerScript = "import PandoraInit\n\nPandoraInit.pandoraCore.openRenderHandler()"
 					if hou.shelves.tool("pandora_renderhandler") is not None:
 						hou.shelves.tool("pandora_renderhandler").destroy()
-					hou.shelves.newTool(file_path=hou.shelves.defaultFilePath(), name = "pandora_renderhandler", label ="Render-Handler",help = "\"\"\"Open the Pandora Render-Handler\"\"\"", script= renderHandlerScript, icon=os.path.join(self.pandoraRoot, "Scripts", "UserInterfacesPandora", "pandoraRenderHandler.png"))
+					hou.shelves.newTool(file_path=hou.shelves.defaultFilePath(), name = "pandora_renderhandler", label ="Render-Handler",help = "\"\"\"Open the Pandora Render-Handler\"\"\"", script= renderHandlerScript, icon=os.path.join(self.pandoraRoot, "Scripts", "UserInterfacesPandora", "pandoraRenderHandler.png").replace("\\", "/"))
 
 					settingsScript = "import PandoraInit\n\nPandoraInit.pandoraCore.openSettings()"
 					if hou.shelves.tool("pandora_settings") is not None:
 						hou.shelves.tool("pandora_settings").destroy()
-					hou.shelves.newTool(file_path=hou.shelves.defaultFilePath(), name = "pandora_settings", label ="Settings",help = "\"\"\"Open the Pandora settings\"\"\"", script= settingsScript, icon=os.path.join(self.pandoraRoot, "Scripts", "UserInterfacesPandora", "pandoraSettings.png"))
+					hou.shelves.newTool(file_path=hou.shelves.defaultFilePath(), name = "pandora_settings", label ="Settings",help = "\"\"\"Open the Pandora settings\"\"\"", script= settingsScript, icon=os.path.join(self.pandoraRoot, "Scripts", "UserInterfacesPandora", "pandoraSettings.png").replace("\\", "/"))
 
 					hou.Shelf.setTools(hou.shelves.shelves()[shelfName],( hou.shelves.tool("pandora_submitter"), hou.shelves.tool("pandora_renderhandler"), hou.shelves.tool("pandora_settings")))
 				

@@ -74,7 +74,10 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 			self.configPath = os.path.join(os.path.dirname(os.path.dirname(__file__)), "Config", "Pandora.ini")
 
 			self.pconfig = ConfigParser()
-			self.pconfig.read(self.configPath)
+			try:
+				self.pconfig.read(self.configPath)
+			except:
+				pass
 
 			lmode = self.core.getConfig("globals", "localmode")
 			if lmode == "True":
@@ -91,6 +94,8 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 							os.makedirs(self.sourceDir)
 						except:
 							pass
+				else:
+					self.sourceDir = ""
 			else:
 				if self.pconfig.has_option("submissions", "submissionpath"):
 					self.sourceDir = self.pconfig.get("submissions", "submissionpath")
