@@ -19,7 +19,7 @@ Currently Pandora runs on Windows only.
 
 * To install the latest development version download or clone this repository and the Pandora dependencies:
 
-[Windows-dependencies](https://dl.dropboxusercontent.com//s/wwgsymhtbvk4jvl/Pandora_v1.0.1_dependencies_Win.zip?dl=0)
+[Windows-dependencies](https://dl.dropboxusercontent.com/s/wwgsymhtbvk4jvl/Pandora_v1.0.1_dependencies_Win.zip?dl=0)
 
 * Extract the dependencies and copy the extracted folders into Pandora/PandoraFiles of this repository.
 
