@@ -34,7 +34,7 @@
 
 class Pandora_Blender_Variables(object):
 	def __init__(self, core, plugin):
-		self.version = "v1.0.0.1"
+		self.version = "v1.0.1.0"
 		self.pluginName = "Blender"
 		self.pluginType = "App"
 		self.appShortName = "Bld"

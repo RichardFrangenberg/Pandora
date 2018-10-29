@@ -34,7 +34,7 @@
 
 class Pandora_3dsMax_Variables(object):
 	def __init__(self, core, plugin):
-		self.version = "v1.0.0.1"
+		self.version = "v1.0.1.0"
 		self.pluginName = "3dsMax"
 		self.pluginType = "App"
 		self.appShortName = "Max"
