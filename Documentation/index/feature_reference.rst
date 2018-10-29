@@ -15,71 +15,34 @@ You can ignore this warning by clicking on "More info" and then on the "Run anyw
 
 .. image:: images/windows-smartscreen.png
 
-Follow the installer instructions:
+Follow the installer instructions.
 
-.. image:: images/PandoraInstallerDialog.png
+On the last page of the installer there is are checkboxes called "Setup integrations", "Start Coordinator" and "Start Renderslave". "Setup integrations" displays a dialog for adding a Pandora shelf/menu to your 3d apps. You need this only on computers from which you want to submit renderjobs. The "Start Coordinator" launches the Pandora Coordinator tools, which assign the renderjobs to the slaves. One Coordinator is needed in a Pandora renderfarm. "Start Renderslave" launches the Pandora renderslave, which can be controlled by its tray icon. An additional Pandora tray icon launches at the end of the installation, which allows you to access all Pandora tools.
 
-After the files are extracted, an additional :ref:`installation dialog<dlgInstallation>` opens.
-
-Pandora will be installed into this location:
-
-*%localappdata%/Pandora/*
-
-On the last page of the installer there is a checkbox called "Run Pandora". This will start the Pandora Tray Icon after the installation.
 
 In the Windows start menu you can find the following tools now: "PandoraTray", "PandoraCoordinator", "PandoraSlave", "PandoraRenderHandler" and "Pandora Settings".
-By default, the Pandora Tray icon will start, when you start Windows. You can disable this in the "General" tab of the Pandora Settings dialog.
+By default, the Pandora tray icon will start, when you start Windows. You can disable this in the "General" tab of the Pandora Settings dialog.
 
 
 
 .. _dlgInstallation:
 
-Installation dialog
+Setup Pandora integrations
 --------------------------------
 
-The installation dialog lets you select for which programs you want to install the Pandora integration.
-
-.. image:: images/PandoraInstaller.png
-
-**Create Pandora shelves/menus:**
-
-This option lets you add Pandora integrations into DCC applications. This is needed to submit renderjobs, but not neccessary on renderslaves.
-
-
-**Pandora files:**
-
-This are the core tools and scripts of Pandora, which you need to use Pandora. This option should be enabled always.
-
-
-**Keep old settings:**
-
-When an existing Pandora installation is found, this option gets enabled. When enabled your existing preferences will be preserved. When disabled your preferences will be deleted and new default preferences will be created.
-
-
-**DCC integrations:**
+If you move the Pandora files to a different location or if you disabled the "Setup integrations" checkbox in the installer, you can use the "Setup_Integrations.bat" and "Setup_Startmenu.bat" in the Pandora installation folder to open a dialog, which lets you select for which programs you want to install the Pandora integration:
 
 All supported DCC applications are listed here. The installer automatically detects which DCCs you have installed on your PC and enables the corresponding options. In most cases you can leave all settings to default. The "custom" options for 3ds Max and Maya can be used to install Pandora for additional versions like 2016.5.
 
 If you want to install Pandora for a different DCC version, you can double click a path on the right side of the dialog. For 3ds Max and Maya this only works in the "custom" line. A new dialog opens and lets you select a different path (for example to install Pandora for an older Houdini version).
 
-To add Pandora integrations later on you can execute the installer again and select different DCC versions.
-
-
-**Install for user:**
-
-Select a Windows user for whom Pandora will be installed. The current user is selected by default.
 
 
 Uninstall
 --------------------------------
 
-To uninstall Pandora, you have to execute the Pandora installer again.
-
-In the installer you need to click on "Install" to extract the files. After the extraction a window will pop up, which lets you uninstall Pandora:
-
-.. image:: images/PandoraUninstaller.png
-
-Uninstalling Pandora will also remove all DCC integrations of Pandora. In some programs (like Houdini) the Pandora shelf needs to be deleted manually.
+To uninstall Pandora, you have to execute the "Uninstall.bat" in the Pandora installation folder. This will remove all Pandora integrations and links. Then you can delete the Pandora installation folder manually.
+In some programs (like Houdini) the Pandora shelf needs to be deleted manually.
 
 
 Setup the Coordinator on a server
@@ -477,12 +440,15 @@ This is the main Pandora directory. All submitter, renderslaves and the Coordina
 Pandora saves different files in this directory based on the enabled components in the Pandora Settings. If the renderslave is enabled, all the jobs beeing rendered are copied to this folder. If the Coordinator is enabled, the global job repository will be saved in this folder.
 
 
+**Local repository:**
+
+This button lets you update the Pandora scripts directly from GitHub if you have git installed or from a .zip file from the GitHub repository.
+
+
 Tab Submission
 ++++++++++++++++++++
 
-**Enable Pandora job submissions:**
-
-Enable this option, if you want to submit renderjobs from this computer. If this option is enabled you can open the Render Handler from the Tray-Icon.
+This tab is visible if use have installed at least one Pandora integration for a DCC app.
 
 **Job submission path (local network mode disabled):**
 
