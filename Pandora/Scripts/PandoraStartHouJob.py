@@ -157,6 +157,8 @@ try:
 	else:
 		sys.exit("ERROR - No outputpath specified")
 
+	newOutput = newOutput.replace("\\", "/")
+
 	if not os.path.exists(os.path.dirname(newOutput)):
 		sys.exit("ERROR - Cannot create outputfolder - " + newOutput)
 

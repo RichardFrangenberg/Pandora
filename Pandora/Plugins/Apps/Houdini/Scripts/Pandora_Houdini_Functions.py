@@ -249,7 +249,10 @@ class Pandora_Houdini_Functions(object):
 
 	@err_decorator
 	def preSubmit(self, origin, rSettings):
-		rSettings["renderNode"] = self.node
+		try:
+			rSettings["renderNode"] = self.node.path()
+		except:
+			pass
 
 
 	@err_decorator

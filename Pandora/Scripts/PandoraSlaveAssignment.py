@@ -122,74 +122,20 @@ class PandoraSlaveAssignment(QDialog, PandoraSlaveAssignment_ui.Ui_dlg_SlaveAssi
 	def getSlaves(self):
 		self.lw_slaves.clear()
 
-		cData = {}
-		cData["localMode"] = ['globals', "localMode"]
-		cData["rootPath"] = ['globals', "rootPath"]
-		cData["submissionPath"] = ['submissions', "submissionPath"]		
-
-		cData = self.core.getConfig(data=cData)
-
-		self.localMode = True
-
-		if cData["localMode"] is not None:
-			self.localMode = cData["localMode"]
-
-		sPath = ""
-
-		if self.localMode:
-			if cData["rootPath"] is not None:
-				rootPath = cData["rootPath"]
-				sPath = os.path.join(rootPath, "Workstations", "WS_" + socket.gethostname())
-		else:
-			if cData["submissionPath"] is not None:
-				sPath = cData["submissionPath"]
-
-		if not os.path.exists(sPath):
-			try:
-				os.makedirs(sPath)
-			except:
-				pass
-
-		if not os.path.exists(sPath):
-			QMessageBox.warning(self,"Warning", "No Pandora valid job submissions folder specified in the Pandora config")
-			return False
-
-		slaveDir = os.path.join(os.path.dirname(sPath), "Logs", "Slaves")
+		slaveData = self.core.getSlaveData()
 
 		gLayout = QVBoxLayout()
 		self.w_slaveGroups.setLayout(gLayout)
 
-		if os.path.isdir(slaveDir):
-			for i in os.listdir(slaveDir):
-				try:
-					slaveLogPath = os.path.join(slaveDir, i)
-					if i.startswith("slaveLog_") and i.endswith(".txt") and os.path.isfile(slaveLogPath):
-						slaveName = i[len("slaveLog_"):-len(".txt")]
-						slaveSettingsPath = slaveLogPath.replace("slaveLog_", "slaveSettings_")[:-3] + "ini"
-						sItem = QListWidgetItem(slaveName)
-						self.lw_slaves.addItem(sItem)
+		for i in slaveData["slaveNames"]:
+			sItem = QListWidgetItem(i)
+			self.lw_slaves.addItem(sItem)
 
-						if os.path.exists(slaveSettingsPath):
-							sGroups = self.core.getConfig("settings", "slavegroup", configPath=slaveSettingsPath)
-
-							if sGroups is not None:
-								tTip = ""
-								for i in sGroups:
-									tTip += i + ", "
-									if i not in [x.text() for x in self.slaveGroups]:
-										chbGroup = QCheckBox(i)
-										chbGroup.toggled.connect(self.groupToogled)
-										gLayout.addWidget(chbGroup)
-										self.slaveGroups.append(chbGroup)
-
-								if tTip.endswith(", "):
-									tTip = tTip[:-2]
-
-								sItem.setToolTip(tTip)
-
-				except Exception as e:
-					exc_type, exc_obj, exc_tb = sys.exc_info()
-					print ("ERROR - getSlaves - %s\n%s\n%s" % (str(e), exc_type, exc_tb.tb_lineno))
+		for i in slaveData["slaveGroups"]:
+			chbGroup = QCheckBox(i)
+			chbGroup.toggled.connect(self.groupToogled)
+			gLayout.addWidget(chbGroup)
+			self.slaveGroups.append(chbGroup)
 
 
 	@err_decorator

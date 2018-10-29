@@ -86,7 +86,7 @@ class SlaveLogic(QDialog):
 	def __init__(self, core):
 		QDialog.__init__(self)
 		self.core = core
-		self.slaveLogicVersion = "v1.0.0.1"
+		self.slaveLogicVersion = "v1.0.1.0"
 
 		# define some initial variables
 		self.slaveState = "idle"			# slave render status
@@ -116,7 +116,6 @@ class SlaveLogic(QDialog):
 		cData["repositoryPath"] = ["globals", "repositoryPath"]
 		cData["rootPath"] = ["globals", "rootPath"]
 		cData["slavePath"] = ["slave", "slavePath"]
-		cData["submissionsEnabled"] = ["submissions", "enabled"]
 		cData = self.core.getConfig(data=cData)
 
 		if cData["localMode"] is not None:
@@ -126,6 +125,7 @@ class SlaveLogic(QDialog):
 
 		if cData["repositoryPath"] is None:
 			QMessageBox.warning(self, "Warning", "Pandora repository path is not defined.")
+			sys.exit()
 			return
 
 		repoDir = os.path.join(cData["repositoryPath"], "Slave")
@@ -136,32 +136,37 @@ class SlaveLogic(QDialog):
 				pass
 
 		if not os.path.exists(repoDir):
-			QMessageBox.warning(self, "Warning", "Pandora repository path doesn't exist.\n\n%s" % repoDir)
-			return
+			try:
+				os.makedirs(repoDir)
+			except:
+				QMessageBox.warning(self, "Warning", "Pandora repository path doesn't exist.\n\n%s" % repoDir)
+				sys.exit()
+				return
 	
 		self.localSlavePath = repoDir
 
 		if self.localMode:
 			if cData["rootPath"] is None:
 				QMessageBox.warning(self, "Warning", "Pandora root path is not defined.")
+				sys.exit()
 				return
 
 			if not os.path.exists(cData["rootPath"]):
-				QMessageBox.warning(self, "Warning", "Pandora root path doesn't exist.")
-				return
+				try:
+					os.makedirs(cData["rootPath"])
+				except:
+					QMessageBox.warning(self, "Warning", "Pandora root path doesn't exist.")
+					sys.exit()
+					return
 
 			self.slavePath = os.path.join(cData["rootPath"], "Slaves", "S_" + socket.gethostname())
 		else:
 			if cData["slavePath"] is None:
 				QMessageBox.warning(self, "Warning", "No slave root folder specified in the Pandora config")
+				sys.exit()
 				return
 			else:
 				self.slavePath = cData["slavePath"]
-
-		if cData["submissionsEnabled"] is not None:
-			self.isWorkstation = cData["submissionsEnabled"]
-		else:
-			self.isWorkstation = False
 
 		self.slaveConf = os.path.join(self.slavePath, "slaveSettings_%s.json" % socket.gethostname())			# path for the file with the RenderSlave settings
 		self.slaveLog = os.path.join(self.slavePath, "slaveLog_%s.txt" % socket.gethostname())							# path for the RenderSlave Log file
@@ -202,7 +207,7 @@ class SlaveLogic(QDialog):
 		showslavewindow = self.getConfSetting("showSlaveWindow")
 
 		# display a messagebox, which informs the user, that this PC is a RenderSlave
-		if not self.isWorkstation and showslavewindow:
+		if showslavewindow:
 			self.msgStart = QMessageBox(QMessageBox.Information, "Pandora RenderSlave", "<b>Please don't shut down this PC, when you leave.</b>", QMessageBox.Ok)
 			self.msgStart.setInformativeText("This PC is part of a renderfarm and will start rendering, when nobody is working on it.")
 			self.msgStart.buttons()[0].setHidden(True)
@@ -248,7 +253,7 @@ class SlaveLogic(QDialog):
 		self.trayIconMenu.addAction(self.activateAction)
 		self.pauseMenu = QMenu("Pause", self.parentWidget)
 		self.pause1Action = QAction("15 min.", self.parentWidget)
-		self.pause1Action.triggered.connect(lambda: self.pauseSlave(2))
+		self.pause1Action.triggered.connect(lambda: self.pauseSlave(15))
 		self.pauseMenu.addAction(self.pause1Action)
 		self.pause2Action = QAction("1h", self.parentWidget)
 		self.pause2Action.triggered.connect(lambda: self.pauseSlave(60))
@@ -454,7 +459,8 @@ class SlaveLogic(QDialog):
 			try:
 				if not os.path.exists(os.path.dirname(self.slaveWarningsConf)):
 					os.makedirs(os.path.dirname(self.slaveWarningsConf))
-				open(self.slaveWarningsConf, 'a').close()
+				confData = {}
+				self.setConfig(configPath=self.slaveWarningsConf, confData=confData)
 			except:
 				self.writeLog("cannot create warningConfig", 2)
 				self.writeLog(text, level)
@@ -635,7 +641,7 @@ class SlaveLogic(QDialog):
 				"connectionTimeout": 15,
 				"preRenderWaitTime": 0,
 				"showSlaveWindow": False,
-				"showInterruptWindow": True,
+				"showInterruptWindow": False,
 			},
 			"slaveinfo": {
 			}
@@ -1170,7 +1176,7 @@ class SlaveLogic(QDialog):
 
 		showinterruptwindow = self.getConfSetting("showInterruptWindow")
 		if self.getConfSetting("showInterruptWindow") is None:
-			self.getConfSetting("showInterruptWindow", setval=True, value=True)
+			self.getConfSetting("showInterruptWindow", setval=True, value=False)
 		else:
 			showinterruptwindow = self.getConfSetting("showInterruptWindow")
 
@@ -1562,17 +1568,14 @@ if __name__ == "__main__":
 
 	if len(slaveProc) > 0:
 		if sys.argv[-1] == "forcestart":
-			PROCNAME = 'PandoraSlave.exe'
 			for pid in slaveProc:
 				proc = psutil.Process(pid)
 				proc.kill()
-			sl = SlaveLogic()
-			sys.exit(qApp.exec_())
 		else:
 			QMessageBox.warning(QWidget(), "Pandora RenderSlave", "Pandora RenderSlave is already running.")
 			sys.exit()
-	else:
-		import PandoraCore
-		pc = PandoraCore.PandoraCore()
-		pc.startRenderSlave()
-		sys.exit(qApp.exec_())		
+
+	import PandoraCore
+	pc = PandoraCore.PandoraCore()
+	pc.startRenderSlave()
+	sys.exit(qApp.exec_())

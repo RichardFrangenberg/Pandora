@@ -1230,6 +1230,8 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 				settingVal = item.checkState() == Qt.Checked
 			elif settingName in ["updateTime", "maxCPU", "connectionTimeout", "preRenderWaitTime"]:
 				settingVal = widget.value()
+			elif settingName in ["slaveGroup"]:
+				settingVal = eval(widget.text())
 			elif settingName in ["slaveGroup", "command", "corecommand"]:
 				settingVal = widget.text()
 			elif settingName in ["restPeriod"]:

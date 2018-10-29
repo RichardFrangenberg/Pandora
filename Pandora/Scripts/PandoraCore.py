@@ -41,7 +41,7 @@ except:
 	from PySide.QtGui import *
 	psVersion = 1
 
-import sys, os, threading, shutil, time, socket, traceback, imp, platform, json, random, string
+import sys, os, threading, shutil, time, socket, traceback, imp, platform, json, random, string, errno, stat
 
 #check if python 2 or python 3 is used
 if sys.version[0] == "3":
@@ -94,6 +94,12 @@ class PandoraCore():
 
 			if sys.argv[-1] == "setupStartMenu":
 				self.setupStartMenu()
+				sys.exit()
+			elif sys.argv[-1] == "setupCoordinator":
+				self.setupCoordinator()
+				sys.exit()
+			elif sys.argv[-1] == "setupRenderslave":
+				self.setupRenderslave()
 				sys.exit()
 
 		except Exception as e:
@@ -224,7 +230,7 @@ class PandoraCore():
 			if self.fixPath(options[i]) == path:
 				continue
 
-			cData.append([appName, "%02d" % idx, i[1]])
+			cData.append([appName, "%02d" % (idx+1), options[i]])
 
 		self.setConfig(configPath=self.installLocPath, data=cData)
 
@@ -234,6 +240,42 @@ class PandoraCore():
 		if self.appPlugin.pluginName == "Standalone":
 			self.appPlugin.createWinStartMenu(self)
 			#QMessageBox.information(self.messageParent, "Pandora", "Successfully added start menu entries.")
+
+
+	@err_decorator
+	def setupCoordinator(self):
+		if self.appPlugin.pluginName == "Standalone":
+			self.setConfig("coordinator", "enabled", True)
+			self.startCoordinator(restart=True)
+			#QMessageBox.information(self.messageParent, "Pandora", "Successfully setup coordinator.")
+
+			startupPath = os.getenv('APPDATA') + "\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\"
+			coordStartup = startupPath + "PandoraCoordinator.lnk"
+
+			if os.path.exists(coordStartup):
+				os.remove(coordStartup)
+
+			if not os.path.exists(coordStartup):
+				cPath = os.path.join(self.pandoraRoot, "Tools", "PandoraCoordinator.lnk")
+				shutil.copy2(cPath, coordStartup)
+
+
+	@err_decorator
+	def setupRenderslave(self):
+		if self.appPlugin.pluginName == "Standalone":
+			self.setConfig("slave", "enabled", True)
+			self.startRenderSlave(newProc=True, restart=True)
+			#QMessageBox.information(self.messageParent, "Pandora", "Successfully setup renderslave.")
+
+			startupPath = os.getenv('APPDATA') + "\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\"
+			slaveStartup = startupPath + "PandoraSlave.lnk"
+
+			if os.path.exists(slaveStartup):
+				os.remove(slaveStartup)
+
+			if not os.path.exists(slaveStartup):
+				cPath = os.path.join(self.pandoraRoot, "Tools", "PandoraSlave.lnk")
+				shutil.copy2(cPath, slaveStartup)
 
 
 	@err_decorator
@@ -272,6 +314,9 @@ class PandoraCore():
 				pass
 
 		from win32com.shell import shell, shellcon
+		cRoot = os.path.join(shell.SHGetFolderPath(0, shellcon.CSIDL_PERSONAL, None, 0), "Pandora", "Root")
+		wsPath = os.path.join(cRoot, "Workstations", "WS_" + socket.gethostname())
+		sPath = os.path.join(cRoot, "Slaves", "S_" + socket.gethostname())
 		localRep = os.path.join(shell.SHGetFolderPath(0, shellcon.CSIDL_PERSONAL, None, 0), "PandoraRepository")
 
 		if not os.path.exists(os.path.dirname(self.configPath)):
@@ -280,26 +325,25 @@ class PandoraCore():
 		uconfig = {
 			"globals": {
 				"localMode": True,
-				"rootPath": "",
+				"rootPath": cRoot,
 				"repositoryPath": localRep
 			},
 			"submissions": {
-				"enabled": False,
-				"submissionPath": "",
+				"submissionPath": wsPath,
 				"userName": ""
 			},
 			"slave": {
 				"enabled": False,
-				"slavePath": ""
+				"slavePath": sPath
 			},
 			"coordinator": {
 				"enabled": False,
-				"rootPath": ""
+				"rootPath": cRoot
 			},
 			"renderHandler": {
 				"refreshTime": 5,
 				"logLimit": 500,
-				"showCoordinator": False,
+				"showCoordinator": True,
 				"autoUpdate": True,
 				"windowSize": ""
 			},
@@ -459,27 +503,152 @@ class PandoraCore():
 			import PandoraInstaller
 
 		self.pinst = PandoraInstaller.PandoraInstaller(core=self, uninstall=uninstall)
-		self.pinst.show()
+		if not uninstall:
+			self.pinst.show()
 
 
 	@err_decorator
-	def startRenderSlave(self):
-		if hasattr(self, "RenderSlave") or self.appPlugin.pluginName != "Standalone":
+	def startRenderSlave(self, newProc=False, restart=False):
+		if newProc:
+			slavePath = os.path.join(self.pandoraRoot, "Scripts", "PandoraSlave.py")
+			pythonPath = os.path.join(self.pandoraRoot, "Python27", "PandoraSlave.exe")
+			for i in [slavePath, pythonPath]:
+				if not os.path.exists(i):
+					QMessageBox.warning(self.messageParent, "Script missing", "%s does not exist." % os.path.basename(i))
+					return None
+
+			command = ['%s' % pythonPath, '%s' % slavePath]
+			if restart:
+				command.append("forcestart")
+
+			subprocess.Popen(command)
+
+		else:
+			if hasattr(self, "RenderSlave") or self.appPlugin.pluginName != "Standalone":
+				return
+
+			import PandoraSlave
+
+			self.RenderSlave = PandoraSlave.SlaveLogic(core=self)
+
+
+	@err_decorator
+	def stopRenderSlave(self):
+		cData = {}
+		cData["localMode"] = ["globals", "localMode"]
+		cData["rootPath"] = ["globals", "rootPath"]
+		cData["slavePath"] = ["slave", "slavePath"]
+		cData = self.getConfig(data=cData)
+
+		if cData["localMode"] == True:
+			slavepath = os.path.join(cData["rootPath"], "Slaves", "S_" + socket.gethostname())
+		else:
+			slavepath = cData["slavePath"]
+
+		if slavepath is None:
 			return
 
-		import PandoraSlave
+		if not os.path.exists(slavepath):
+			try:
+				os.makedirs(slavepath)
+			except:
+				return
 
-		self.RenderSlave = PandoraSlave.SlaveLogic(core=self)
+		cmd = ["exitSlave"]
+
+		cmdDir = os.path.join(slavepath, "Communication")
+		curNum = 1
+
+		for i in os.listdir(cmdDir):
+			if not i.startswith("slaveIn_"):
+				continue
+		
+			num = i.split("_")[1]
+			if not unicode(num).isnumeric():
+				continue
+
+			if int(num) >= curNum:
+				curNum = int(num) + 1
+
+		cmdFile = os.path.join(cmdDir, "slaveIn_%s_%s.txt" % (format(curNum, '04'), time.time()))
+
+		with open(cmdFile, 'w') as cFile:
+			cFile.write(str(cmd))
 
 
 	@err_decorator
-	def startTray(self):
+	def startCoordinator(self, restart=False):
+		coordProc = []
+		import psutil
+
+		for x in psutil.pids():
+			try:
+				if os.path.basename(psutil.Process(x).exe()) == "PandoraCoordinator.exe":
+					coordProc.append(x)
+			except:
+				pass
+
+		if len(coordProc) > 0:
+			if restart:
+				for pid in coordProc:
+					proc = psutil.Process(pid)
+					proc.kill()
+			else:
+				QMessageBox.information(self.messageParent, "PandoraCoordinator", "PandoraCoordinator is already running.")
+				return
+
+		coordPath = os.path.join(self.pandoraRoot, "Scripts", "PandoraCoordinator.py")
+		pythonPath = os.path.join(self.pandoraRoot, "Python27", "PandoraCoordinator.exe")
+		for i in [coordPath, pythonPath]:
+			if not os.path.exists(i):
+				QMessageBox.warning(self.messageParent, "Script missing", "%s does not exist." % os.path.basename(i))
+				return None
+
+		command = ['%s' % pythonPath, '%s' % coordPath]
+		subprocess.Popen(command)
+
+
+	@err_decorator
+	def stopCoordinator(self):
+		cData = {}
+		cData["localMode"] = ["globals", "localMode"]
+		cData["rootPath"] = ["globals", "rootPath"]
+		cData["slavePath"] = ["coordinator", "rootPath"]
+		cData = self.getConfig(data=cData)
+
+		if cData["localMode"] == True:
+			coordRoot = cData["rootPath"]
+		else:
+			coordRoot = cData["slavePath"]
+		
+		if coordRoot is None:
+			return
+
+		if not os.path.exists(coordRoot):
+			try:
+				os.makedirs(coordRoot)
+			except:
+				return
+
+		coordBasePath = os.path.join(coordRoot, "Scripts", "PandoraCoordinator")
+
+		if not os.path.exists(coordBasePath):
+			os.makedirs(coordBasePath)
+
+		cmdPath = os.path.join(coordBasePath, "command.txt")
+
+		with open(cmdPath, "w") as cmdFile:
+			cmdFile.write("exit")
+
+
+	@err_decorator
+	def startTray(self, silent=False):
 		if hasattr(self, "PandoraTray") or self.appPlugin.pluginName != "Standalone":
 			return
 
 		import PandoraTray
 
-		self.PandoraTray = PandoraTray.PandoraTray(core=self)
+		self.PandoraTray = PandoraTray.PandoraTray(core=self, silent=silent)
 
 
 	@err_decorator
@@ -827,6 +996,17 @@ class PandoraCore():
 
 
 	@err_decorator
+	def getSubmissionEnabled(self):
+		conf = self.getConfig(configPath=self.installLocPath, getConf=True)
+		if conf is not None:
+			for i in conf:
+				if len(conf[i]) > 0:
+					return True
+
+		return False
+
+
+	@err_decorator
 	def getSubmissionPath(self):
 		osFolder = None
 		localMode = True
@@ -847,6 +1027,30 @@ class PandoraCore():
 			osFolder = cData["submissionPath"]
 
 		return osFolder
+
+
+	@err_decorator
+	def getSlaveData(self):
+		slaveData = {"slaveNames": [], "slaveGroups":[]}
+		slaveDir = os.path.join(os.path.dirname(self.getSubmissionPath()), "Logs", "Slaves")
+		if os.path.isdir(slaveDir):
+			for i in os.listdir(slaveDir):
+				slaveLogPath = os.path.join(slaveDir, i)
+				if i.startswith("slaveLog_") and i.endswith(".txt") and os.path.isfile(slaveLogPath):
+					slaveName = i[len("slaveLog_"):-len(".txt")]
+					slaveSettingsPath = slaveLogPath.replace("slaveLog_", "slaveSettings_")[:-3] + "json"
+					slaveData["slaveNames"].append(slaveName)
+
+					if not os.path.exists(slaveSettingsPath):
+						continue
+						
+					sGroups = self.getConfig('settings', "slaveGroup", configPath=slaveSettingsPath)
+					if sGroups is not None:
+						for k in sGroups:
+							if k not in slaveData["slaveGroups"]:
+								slaveData["slaveGroups"].append(k)
+
+		return slaveData
 
 
 	@err_decorator
@@ -1082,6 +1286,120 @@ class PandoraCore():
 		self.callback(name="onPostJobSubmitted", types=["curApp", "custom"], args=[self, os.path.dirname(jobPath)])
 
 		return ["Success", jobCode]
+
+
+	@err_decorator
+	def updatePandora(self, filepath="", gitHub=False):
+		targetdir = os.path.join(os.environ["temp"], "PandoraUpdate")
+
+		if os.path.exists(targetdir):
+			try:
+				shutil.rmtree(targetdir, ignore_errors=False, onerror=self.handleRemoveReadonly)
+			except:
+				QMessageBox.warning(self.messageParent, "Pandora update", "Could not remove temp directory:\n%s" % targetdir)
+				return
+
+		if gitHub:
+			try:
+				from git import Repo
+			except:
+				QMessageBox.warning(self.messageParent, "Pandora update", "Could not load git. In order to update Pandora from GitHub you need git installed on your computer.")
+				return
+
+			waitmsg = QMessageBox(QMessageBox.NoIcon, "Pandora update", "Downloading repository - please wait..", QMessageBox.Cancel)
+			waitmsg.buttons()[0].setHidden(True)
+			waitmsg.show()
+			QCoreApplication.processEvents()
+
+			Repo.clone_from("https://github.com/RichardFrangenberg/Pandora", targetdir)
+
+			updateRoot = os.path.join(os.environ["temp"], "PandoraUpdate", "Pandora")
+		else:
+			if not os.path.exists(filepath):
+				return
+
+			import zipfile
+
+			waitmsg = QMessageBox(QMessageBox.NoIcon, "Pandora update", "Extracting - please wait..", QMessageBox.Cancel)
+			waitmsg.buttons()[0].setHidden(True)
+			waitmsg.show()
+			QCoreApplication.processEvents()
+
+			with zipfile.ZipFile(filepath,"r") as zip_ref:
+				zip_ref.extractall(targetdir)
+
+			updateRoot = os.path.join(os.environ["temp"], "PandoraUpdate", "Pandora-development", "Pandora")
+
+		if "waitmsg" in locals() and waitmsg.isVisible():
+			waitmsg.close()
+
+		msgText = "Are you sure you want to continue?\n\nThis will overwrite existing files in your Pandora installation folder."
+		if psVersion == 1:
+			flags = QMessageBox.StandardButton.Yes
+			flags |= QMessageBox.StandardButton.No
+			result = QMessageBox.question(self.messageParent, "Pandora update", msgText, flags)
+		else:
+			result = QMessageBox.question(self.messageParent, "Pandora update", msgText)
+
+		if not str(result).endswith(".Yes"):
+			return
+
+		for i in os.walk(updateRoot):
+			for k in i[2]:
+				filepath = os.path.join(i[0], k)
+				if not os.path.exists(i[0].replace(updateRoot, self.pandoraRoot)):
+					os.makedirs(i[0].replace(updateRoot, self.pandoraRoot))
+
+				shutil.copy2(filepath, filepath.replace(updateRoot, self.pandoraRoot) )
+
+		if os.path.exists(targetdir):
+			shutil.rmtree(targetdir, ignore_errors=False, onerror=self.handleRemoveReadonly)
+		try:
+			import psutil
+		except:
+			pass
+		else:
+			PROCNAMES = ['PandoraTray.exe', "PandoraCoordinator.exe", "PandoraRenderHandler.exe", "PandoraSettings.exe", "PandoraSlave.exe"]
+			for proc in psutil.process_iter():
+				if proc.name() in PROCNAMES:
+					if proc.pid == os.getpid():
+						continue
+
+					p = psutil.Process(proc.pid)
+
+					try:
+						if not 'SYSTEM' in p.username():
+							try:
+								proc.kill()
+							except:
+								pass
+					except:
+						pass
+
+		trayPath = os.path.join(self.pandoraRoot, "Tools", "PandoraTray.lnk")
+		if os.path.exists(trayPath):
+			subprocess.Popen([trayPath], shell=True)
+
+		msgStr = "Successfully updated Pandora"
+		if self.appPlugin.pluginName == "Standalone":
+			msgStr += "\n\nPandora will now close. Please restart all your currently open DCC apps."
+		else:
+			msgStr += "\nPlease restart %s in order to reload Pandora." % self.appPlugin.pluginName
+
+		QMessageBox.information(self.messageParent, "Pandora update", msgStr)
+
+		if self.appPlugin.pluginName == "Standalone":
+			sys.exit()
+
+
+	@err_decorator
+	def handleRemoveReadonly(self, func, path, exc):
+		excvalue = exc[1]
+		if func in (os.rmdir, os.remove) and excvalue.errno == errno.EACCES:
+			os.chmod(path, stat.S_IRWXU| stat.S_IRWXG| stat.S_IRWXO) # 0777
+			func(path)
+		else:
+			raise
 
 
 	@err_decorator

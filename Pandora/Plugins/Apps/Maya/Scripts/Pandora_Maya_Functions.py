@@ -109,7 +109,7 @@ class Pandora_Maya_Functions(object):
 	def saveScene(self, origin, filepath):
 		cmds.file(rename=filepath)
 		try:
-			return cmds.file(save=True, type="mayaAscii")
+			return cmds.file(save=True)
 		except:
 			return False
 
@@ -219,10 +219,8 @@ class Pandora_Maya_Functions(object):
 
 				cmds.setAttr("defaultRenderGlobals.imageFilePrefix", outputPrefix, type="string")
 
-				passPrefix = os.path.join("..", "..", "..")
-				if not origin.gb_submit.isHidden() and origin.gb_submit.isChecked():
-					rSettings["outputName"] = os.path.join(os.path.dirname(os.path.dirname(rSettings["outputName"])), os.path.basename(rSettings["outputName"]))
-					passPrefix = ".."
+				#rSettings["outputName"] = os.path.join(os.path.dirname(os.path.dirname(rSettings["outputName"])), os.path.basename(rSettings["outputName"]))
+				passPrefix = ".."
 
 				drivers = ["defaultArnoldDriver"]
 				for i in aAovs:

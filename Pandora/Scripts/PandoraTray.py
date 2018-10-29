@@ -42,7 +42,7 @@ import psutil
 from UserInterfacesPandora import qdarkstyle
 
 class PandoraTray():
-	def __init__(self, core):
+	def __init__(self, core, silent=False):
 		self.core = core
 
 		try:
@@ -58,10 +58,15 @@ class PandoraTray():
 					pass
 
 			if len(coreProc) > 0:
-				QMessageBox.warning(self.core.messageParent, "PandoraTray", "PandoraTray is already running.")
-				qApp.quit()
-				sys.exit()
-				return
+				if silent:
+					for pid in coreProc:
+						proc = psutil.Process(pid)
+						proc.kill()
+				else:
+					QMessageBox.warning(self.core.messageParent, "PandoraTray", "PandoraTray is already running.")
+					qApp.quit()
+					sys.exit()
+					return
 
 			self.createTrayIcon()
 			self.trayIcon.show()
@@ -80,17 +85,17 @@ class PandoraTray():
 			self.trayIconMenu.addAction(self.collectAction)
 			self.trayIconMenu.addSeparator()
 
-			self.slaveAction = QAction("Start Slave", self.core.messageParent, triggered=self.startRenderSlave)
+			self.slaveAction = QAction("Start Slave", self.core.messageParent, triggered=lambda: self.core.startRenderSlave(newProc=True))
 			self.trayIconMenu.addAction(self.slaveAction)
 
-			self.slaveStopAction = QAction("Stop Slave", self.core.messageParent, triggered=self.stopRenderSlave)
+			self.slaveStopAction = QAction("Stop Slave", self.core.messageParent, triggered=self.core.stopRenderSlave)
 			self.trayIconMenu.addAction(self.slaveStopAction)
 			self.trayIconMenu.addSeparator()
 
-			self.coordAction = QAction("Start Coordinator", self.core.messageParent, triggered=self.startCoordinator)
+			self.coordAction = QAction("Start Coordinator", self.core.messageParent, triggered=self.core.startCoordinator)
 			self.trayIconMenu.addAction(self.coordAction)
 
-			self.coordStopAction = QAction("Stop Coordinator", self.core.messageParent, triggered=self.stopCoordinator)
+			self.coordStopAction = QAction("Stop Coordinator", self.core.messageParent, triggered=self.core.stopCoordinator)
 			self.trayIconMenu.addAction(self.coordStopAction)
 			self.trayIconMenu.addSeparator()
 
@@ -129,13 +134,12 @@ class PandoraTray():
 	def aboutToShow(self):
 		try:
 			cData = {}
-			cData["submissions"] = ["submissions", "enabled"]
 			cData["localMode"] = ["globals", "localMode"]
 			cData["slave"] = ["slave", "enabled"]
 			cData["coordinator"] = ["coordinator", "enabled"]
 			cData = self.core.getConfig(data=cData)
 
-			if cData["submissions"] == True:
+			if self.core.getSubmissionEnabled():
 				self.handlerAction.setVisible(True)
 				if cData["localMode"] == True:
 					self.collectAction.setVisible(False)
@@ -195,7 +199,7 @@ class PandoraTray():
 			pythonPath = os.path.join(pandoraRoot, "Python27", "PandoraRenderHandler.exe")
 			for i in [handlerPath, pythonPath]:
 				if not os.path.exists(i):
-					self.trayIcon.showMessage("Script missing", "%s does not exist." % os.path.basename(i), icon = QSystemTrayIcon.Warning)
+					QMessageBox.warning(self.core.messageParent, "Script missing", "%s does not exist." % os.path.basename(i))
 					return None
 
 			command = ['%s' % pythonPath, '%s' % handlerPath]
@@ -213,7 +217,7 @@ class PandoraTray():
 
 		except Exception,e:
 			exc_type, exc_obj, exc_tb = sys.exc_info()
-			self.trayIcon.showMessage("Unknown Error", "startRenderHandler - %s - %s - %s" % (str(e), exc_type, exc_tb.tb_lineno), icon = QSystemTrayIcon.Critical)
+			QMessageBox.critical(self.core.messageParent, "Unknown Error", "startRenderHandler - %s - %s - %s" % (str(e), exc_type, exc_tb.tb_lineno))
 
 
 	def collectRenderings(self):
@@ -230,13 +234,13 @@ class PandoraTray():
 				psPath = cData["submissionPath"]
 
 			if psPath is None or not os.path.exists(psPath):
-				self.trayIcon.showMessage("Directory missing", "Pandora submission directory doesn't exist.", icon = QSystemTrayIcon.Warning)
+				QMessageBox.warning(self.core.messageParent, "Directory missing", "Pandora submission directory doesn't exist.")
 				return None
 
 			outputDir = os.path.join(psPath, "RenderOutput")
 
 			if not os.path.exists(outputDir):
-				self.trayIcon.showMessage("Directory missing", "Pandora renderoutput directory doesn't exist.", icon = QSystemTrayIcon.Warning)
+				QMessageBox.warning(self.core.messageParent, "Directory missing", "Pandora renderoutput directory doesn't exist.")
 				return None
 
 			result = {}
@@ -245,9 +249,9 @@ class PandoraTray():
 					for k in os.walk(os.path.join(i[0], prj)):
 						for job in k[1]:
 							jobDir = os.path.join(k[0], job)
-							confPath = os.path.join(k[0], job, job + ".json")
+							confPath = os.path.join(k[0], job, "PandoraJob.json")
 							if not os.path.exists(confPath):
-								self.trayIcon.showMessage("Config missing", "Job config doesn't exist. (%s)" % job, icon = QSystemTrayIcon.Warning)
+								QMessageBox.warning(self.core.messageParent, "Config missing", "Job config doesn't exist. (%s)" % job)
 								continue
 
 							outputCount = 0
@@ -257,7 +261,7 @@ class PandoraTray():
 							outPath = self.core.getConfig("information", "outputPath", configPath=confPath)
 
 							if outPath is None:
-								self.trayIcon.showMessage("information missing", "No outputpath is defined in job config. (%s)" % job, icon = QSystemTrayIcon.Warning)
+								QMessageBox.warning(self.core.messageParent, "information missing", "No outputpath is defined in job config. (%s)" % job)
 								continue
 
 							targetBase = os.path.dirname(os.path.dirname(outPath))
@@ -273,7 +277,7 @@ class PandoraTray():
 
 							for o in os.walk(jobDir):
 								for m in o[2]:
-									if m == (job + ".json"):
+									if m == "PandoraJob.json":
 										continue
 
 									filePath = os.path.join(o[0], m)
@@ -346,137 +350,7 @@ class PandoraTray():
 
 		except Exception,e:
 			exc_type, exc_obj, exc_tb = sys.exc_info()
-			self.trayIcon.showMessage("Unknown Error", "collectRenderings - %s - %s - %s" % (str(e), exc_type, exc_tb.tb_lineno), icon = QSystemTrayIcon.Critical)
-
-
-	def startRenderSlave(self):
-		try:
-			slavePath = os.path.join(pandoraRoot, "Scripts", "PandoraSlave.py")
-			pythonPath = os.path.join(pandoraRoot, "Python27", "PandoraSlave.exe")
-			for i in [slavePath, pythonPath]:
-				if not os.path.exists(i):
-					self.trayIcon.showMessage("Script missing", "%s does not exist." % os.path.basename(i), icon = QSystemTrayIcon.Warning)
-					return None
-
-			command = ['%s' % pythonPath, '%s' % slavePath]
-			subprocess.Popen(command)
-
-		except Exception,e:
-			exc_type, exc_obj, exc_tb = sys.exc_info()
-			self.trayIcon.showMessage("Unknown Error", "startPandoraSlave - %s - %s - %s" % (str(e), exc_type, exc_tb.tb_lineno), icon = QSystemTrayIcon.Critical)
-
-
-	def stopRenderSlave(self):
-		try:
-			cData = {}
-			cData["localMode"] = ["globals", "localMode"]
-			cData["rootPath"] = ["globals", "rootPath"]
-			cData["slavePath"] = ["slave", "slavePath"]
-			cData = self.core.getConfig(data=cData)
-
-			if cData["localMode"] == True:
-				slavepath = os.path.join(cData["rootPath"], "Slaves", "S_" + socket.gethostname())
-			else:
-				slavepath = cData["slavePath"]
-
-			if slavepath is None:
-				return
-
-			if not os.path.exists(slavepath):
-				try:
-					os.makedirs(slavepath)
-				except:
-					return
-
-			cmd = ["exitSlave"]
-
-			cmdDir = os.path.join(slavepath, "Communication")
-			curNum = 1
-
-			for i in os.listdir(cmdDir):
-				if not i.startswith("slaveIn_"):
-					continue
-			
-				num = i.split("_")[1]
-				if not unicode(num).isnumeric():
-					continue
-
-				if int(num) >= curNum:
-					curNum = int(num) + 1
-
-			cmdFile = os.path.join(cmdDir, "slaveIn_%s_%s.txt" % (format(curNum, '04'), time.time()))
-
-			with open(cmdFile, 'w') as cFile:
-				cFile.write(str(cmd))
-
-		except Exception,e:
-			exc_type, exc_obj, exc_tb = sys.exc_info()
-			self.trayIcon.showMessage("Unknown Error", "stopPandoraSlave - %s - %s - %s" % (str(e), exc_type, exc_tb.tb_lineno), icon = QSystemTrayIcon.Critical)
-
-
-	def startCoordinator(self):
-		try:
-			coordProc = []
-			for x in psutil.pids():
-				try:
-					if os.path.basename(psutil.Process(x).exe()) == "PandoraCoordinator.exe":
-						coordProc.append(x)
-				except:
-					pass
-			if len(coordProc) > 0:
-				self.trayIcon.showMessage("PandoraCoordinator", "PandoraCoordinator is already running.", icon = QSystemTrayIcon.Information)
-				return
-
-			coordPath = os.path.join(pandoraRoot, "Scripts", "PandoraCoordinator.py")
-			pythonPath = os.path.join(pandoraRoot, "Python27", "PandoraCoordinator.exe")
-			for i in [coordPath, pythonPath]:
-				if not os.path.exists(i):
-					self.trayIcon.showMessage("Script missing", "%s does not exist." % os.path.basename(i), icon = QSystemTrayIcon.Warning)
-					return None
-
-			command = ['%s' % pythonPath, '%s' % coordPath]
-			subprocess.Popen(command)
-
-		except Exception,e:
-			exc_type, exc_obj, exc_tb = sys.exc_info()
-			self.trayIcon.showMessage("Unknown Error", "startPandoraCoordinator - %s - %s - %s" % (str(e), exc_type, exc_tb.tb_lineno), icon = QSystemTrayIcon.Critical)
-
-
-	def stopCoordinator(self):
-		try:
-			cData = {}
-			cData["localMode"] = ["globals", "localMode"]
-			cData["rootPath"] = ["globals", "rootPath"]
-			cData["slavePath"] = ["coordinator", "rootPath"]
-			cData = self.core.getConfig(data=cData)
-
-			if cData["localMode"] == True:
-				coordRoot = cData["rootPath"]
-			else:
-				coordRoot = cData["slavePath"]
-			
-			if coordRoot is None:
-				return
-
-			if not os.path.exists(coordRoot):
-				try:
-					os.makedirs(coordRoot)
-				except:
-					return
-
-			coordBasePath = os.path.join(coordRoot, "Scripts", "PandoraCoordinator")
-
-			exitFile = os.path.join(coordBasePath, "EXIT-.txt")
-			activeExitFile = os.path.join(coordBasePath, "EXIT.txt")
-
-			if os.path.exists(exitFile):
-				os.rename(exitFile, activeExitFile)
-			else:
-				open(activeExitFile, "w").close()
-
-		except Exception,e:
-			exc_type, exc_obj, exc_tb = sys.exc_info()
-			self.trayIcon.showMessage("Unknown Error", "stopPandoraCoordinator - %s - %s - %s" % (str(e), exc_type, exc_tb.tb_lineno), icon = QSystemTrayIcon.Critical)
+			QMessageBox.critical(self.core.messageParent, "Unknown Error", "collectRenderings - %s - %s - %s" % (str(e), exc_type, exc_tb.tb_lineno))
 
 
 	def openSettings(self):
@@ -491,7 +365,7 @@ class PandoraTray():
 			pythonPath = os.path.join(pandoraRoot, "Python27", "PandoraSettings.exe")
 			for i in [settingsPath, pythonPath]:
 				if not os.path.exists(i):
-					self.trayIcon.showMessage("Script missing", "%s does not exist." % os.path.basename(i), icon = QSystemTrayIcon.Warning)
+					QMessageBox.warning(self.core.messageParent, "Script missing", "%s does not exist." % os.path.basename(i))
 					return None
 
 			command = ['%s' % pythonPath, '%s' % settingsPath]
@@ -510,7 +384,7 @@ class PandoraTray():
 
 		except Exception,e:
 			exc_type, exc_obj, exc_tb = sys.exc_info()
-			self.trayIcon.showMessage("Unknown Error", "openSettings - %s - %s - %s" % (str(e), exc_type, exc_tb.tb_lineno), icon = QSystemTrayIcon.Critical)
+			QMessageBox.critical(self.core.messageParent, "Unknown Error", "openSettings - %s - %s - %s" % (str(e), exc_type, exc_tb.tb_lineno))
 
 
 	def exitTray(self):
@@ -526,7 +400,9 @@ if __name__ == "__main__":
 		QMessageBox.critical(None, "PandoraTray", "Could not launch PandoraTray.")
 		sys.exit(1)
 
+	isSilent = sys.argv[-1] == "silent"
+
 	import PandoraCore
 	pc = PandoraCore.PandoraCore()
-	pc.startTray()
+	pc.startTray(silent=isSilent)
 	sys.exit(qApp.exec_())

@@ -68,10 +68,12 @@ class PandoraSettings(QDialog, PandoraSettings_ui.Ui_dlg_PandoraSettings):
 		self.core = core
 		self.core.parentWindow(self)
 
-		self.groupboxes = [self.gb_submission, self.gb_slave, self.gb_coordinator]
+		self.groupboxes = [self.gb_slave, self.gb_coordinator]
 
 		self.loadUI()
 		self.loadSettings()
+
+		self.startSettings = {"localMode":self.chb_localMode.isChecked(), "lRootPath":self.e_rootPath.text(), "cRootpath":self.e_coordinatorRoot.text(), "slaveEnabled":self.gb_slave.isChecked(), "coordEnabled":self.gb_coordinator.isChecked()}
 
 		ss = QApplication.instance().styleSheet()
 		for i in self.groupboxes:
@@ -119,6 +121,7 @@ class PandoraSettings(QDialog, PandoraSettings_ui.Ui_dlg_PandoraSettings):
 		self.b_browseCoordinatorRoot.customContextMenuRequested.connect(lambda: self.core.openFolder(self.e_coordinatorRoot.text()))
 
 		self.chb_localMode.stateChanged.connect(self.lmodeChanged)
+		self.b_updatePandora.clicked.connect(self.showUpdate)
 
 		for i in self.exOverridePlugins:
 			self.exOverridePlugins[i]["chb"].stateChanged.connect(lambda x, y=i: self.orToggled(y, x))
@@ -188,6 +191,7 @@ class PandoraSettings(QDialog, PandoraSettings_ui.Ui_dlg_PandoraSettings):
 		if result:
 			self.core.integrationAdded(prog, result)
 			self.refreshIntegrations()
+			self.tw_settings.insertTab(1, self.tab_submissions, "Submissions")
 
 
 	@err_decorator
@@ -208,6 +212,8 @@ class PandoraSettings(QDialog, PandoraSettings_ui.Ui_dlg_PandoraSettings):
 		if result:
 			self.core.integrationRemoved(prog, installPath)
 			self.refreshIntegrations()
+			if not self.core.getSubmissionEnabled():
+				self.tw_settings.removeTab(self.tw_settings.indexOf(self.tab_submissions))
 
 
 	@err_decorator
@@ -428,7 +434,6 @@ class PandoraSettings(QDialog, PandoraSettings_ui.Ui_dlg_PandoraSettings):
 		if repPath != "" and not repPath.endswith("\\"):
 			repPath += "\\"
 		cData.append(["globals", "repositoryPath", repPath])
-		cData.append(["submissions", "enabled", self.gb_submission.isChecked()])
 
 		sPath = self.e_submissionPath.text().replace("/","\\")
 		if sPath != "" and not sPath.endswith("\\"):
@@ -491,6 +496,59 @@ class PandoraSettings(QDialog, PandoraSettings_ui.Ui_dlg_PandoraSettings):
 			if os.path.exists(coordStartup):
 				os.remove(coordStartup)
 
+		if self.startSettings["localMode"] == self.chb_localMode.isChecked():
+			if self.chb_localMode.isChecked():
+				if self.startSettings["lRootPath"] == self.e_rootPath.text():
+					if self.startSettings["slaveEnabled"] != self.gb_slave.isChecked():
+						if self.gb_slave.isChecked():
+							self.core.startRenderSlave(newProc=True)
+						else:
+							self.core.stopRenderSlave()
+					if self.startSettings["coordEnabled"] != self.gb_coordinator.isChecked():
+						if self.gb_coordinator.isChecked():
+							self.core.startCoordinator()
+						else:
+							self.core.stopCoordinator()
+				else:
+					if self.gb_slave.isChecked():
+						self.core.startRenderSlave(newProc=True, restart=True)
+					else:
+						self.core.stopRenderSlave()
+					if self.gb_coordinator.isChecked():
+						self.core.startCoordinator(restart=True)
+					else:
+						self.core.stopCoordinator()
+			else:
+				if self.startSettings["cRootpath"] == self.e_coordinatorRoot.text():
+					if self.startSettings["slaveEnabled"] != self.gb_slave.isChecked():
+						if self.gb_slave.isChecked():
+							self.core.startRenderSlave(newProc=True)
+						else:
+							self.core.stopRenderSlave()
+					if self.startSettings["coordEnabled"] != self.gb_coordinator.isChecked():
+						if self.gb_coordinator.isChecked():
+							self.core.startCoordinator()
+						else:
+							self.core.stopCoordinator()
+				else:
+					if self.gb_slave.isChecked():
+						self.core.startRenderSlave(newProc=True, restart=True)
+					else:
+						self.core.stopRenderSlave()
+					if self.gb_coordinator.isChecked():
+						self.core.startCoordinator(restart=True)
+					else:
+						self.core.stopCoordinator()
+		else:
+			if self.gb_slave.isChecked():
+				self.core.startRenderSlave(newProc=True, restart=True)
+			else:
+				self.core.stopRenderSlave()
+			if self.gb_coordinator.isChecked():
+				self.core.startCoordinator(restart=True)
+			else:
+				self.core.stopCoordinator()
+
 		self.core.callback(name="onPandoraSettingsSave", types=["custom"], args=[self])
 
 		if openRH:
@@ -511,7 +569,6 @@ class PandoraSettings(QDialog, PandoraSettings_ui.Ui_dlg_PandoraSettings):
 		ucData["localMode"] = ['globals', "localMode", "bool"]
 		ucData["rootPath"] = ['globals', "rootPath"]
 		ucData["repositoryPath"] = ['globals', "repositoryPath"]
-		ucData["subEnabled"] = ['submissions', "enabled", "bool"]
 		ucData["submissionPath"] = ['submissions', "submissionPath"]
 		ucData["userName"] = ['submissions', "userName"]
 		ucData["sEnabled"] = ['slave', "enabled", "bool"]
@@ -538,8 +595,8 @@ class PandoraSettings(QDialog, PandoraSettings_ui.Ui_dlg_PandoraSettings):
 		if ucData["repositoryPath"] is not None:
 			self.e_repositoryPath.setText(ucData["repositoryPath"])
 
-		if ucData["subEnabled"] is not None:
-			self.gb_submission.setChecked(ucData["subEnabled"])
+		if not self.core.getSubmissionEnabled():
+			self.tw_settings.removeTab(self.tw_settings.indexOf(self.tab_submissions))
 
 		if ucData["submissionPath"] is not None:
 			self.e_submissionPath.setText(ucData["submissionPath"])
@@ -698,6 +755,31 @@ class PandoraSettings(QDialog, PandoraSettings_ui.Ui_dlg_PandoraSettings):
 				self.integrationPlugins[i]["bremove"].setEnabled(True)
 			else:
 				self.integrationPlugins[i]["bremove"].setEnabled(False)
+
+
+	@err_decorator
+	def showUpdate(self):
+		updateDlg = QDialog()
+		updateDlg.b_zip = QPushButton("Update from .zip")
+		updateDlg.b_github = QPushButton("Update from GitHub")
+		layout = QHBoxLayout()
+		layout.addWidget(updateDlg.b_zip)
+		layout.addWidget(updateDlg.b_github)
+		updateDlg.setLayout(layout)
+		self.core.parentWindow(updateDlg)
+		updateDlg.b_zip.clicked.connect(updateDlg.accept)
+		updateDlg.b_zip.clicked.connect(self.updateFromZip)
+		updateDlg.b_github.clicked.connect(updateDlg.accept)
+		updateDlg.b_github.clicked.connect(lambda: self.core.updatePandora(gitHub=True))
+		action = updateDlg.exec_()
+
+
+	@err_decorator
+	def updateFromZip(self):
+		pZip = QFileDialog.getOpenFileName(self, "Select Pandora Zip", self.core.pandoraRoot, "ZIP (*.zip)")[0]
+
+		if pZip != "":
+			self.core.updatePandora(filepath=pZip)
 
 
 	@err_decorator

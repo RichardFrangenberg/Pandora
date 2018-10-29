@@ -57,7 +57,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "UserInterfacesPandora")
 if psVersion == 1:
 	import PandoraInstaller_ui
 else:
-	import PandoraInstaller_ui as PandoraInstaller_ui
+	import PandoraInstaller_ui_ps2 as PandoraInstaller_ui
 
 from UserInterfacesPandora import qdarkstyle
 
@@ -297,7 +297,7 @@ def force_elevated():
 			obj = win32event.WaitForSingleObject(procHandle, win32event.INFINITE)
 			rc = win32process.GetExitCodeProcess(procHandle)
 
-		#	sys.exit()
+			sys.exit()
 	except Exception as ex:
 		print ex
 

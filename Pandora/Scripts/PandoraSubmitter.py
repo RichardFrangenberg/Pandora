@@ -129,7 +129,6 @@ If set to False, the renderings can be found locally on the renderslave, which r
 
 	@err_decorator
 	def startChanged(self):
-		x
 		if self.sp_rangeStart.value() > self.sp_rangeEnd.value():
 			self.sp_rangeEnd.setValue(self.sp_rangeStart.value())
 
@@ -337,6 +336,9 @@ If set to False, the renderings can be found locally on the renderslave, which r
 		jobData["timeout"] = self.sp_rjTimeout.value()
 		jobData["outputFolder"] = outputFolder
 		jobData["outputPath"] = rSettings["outputName"]
+
+		if "renderNode" in rSettings:
+			jobData["renderNode"] = rSettings["renderNode"]
 
 		self.saveSettings()
 

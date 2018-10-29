@@ -90,8 +90,11 @@ class PandoraCoordinator():
 					return
 
 				if not os.path.exists(rootPath):
-					self.writeLog("sync directory doesn't exist. Closing Coordinator")
-					return
+					try:
+						os.makedirs(rootPath)
+					except:
+						self.writeLog("sync directory doesn't exist. Closing Coordinator")
+						return
 
 				self.coordBasePath = os.path.join(rootPath, "Scripts", "PandoraCoordinator")
 
@@ -173,19 +176,23 @@ class PandoraCoordinator():
 
 			self.getGDrivePath()
 
-			exitActive = os.path.join(self.coordBasePath, "EXIT.txt")
-			exitInactive = os.path.join(self.coordBasePath, "EXIT-.txt")
+			cmdPath = os.path.join(self.coordBasePath, "command.txt")
 
 			while not self.close:
-				if os.path.exists(exitActive):
-					try:
-						os.rename(exitActive, exitInactive)
-					except:
-						pass
-					break
+				if os.path.exists(cmdPath):
+					with open(cmdPath, "r") as cmdFile:
+						cmd = cmdFile.read()
 
-				if not os.path.exists(exitInactive):
-					open(exitInactive, "w").close()
+					if cmd == "exit":
+						closeCoord = time.time() - os.path.getmtime(cmdPath) < 30
+						try:
+							os.remove(cmdPath)
+						except:
+							pass
+
+						if closeCoord:
+							break
+
 
 				self.startCoordination()
 				time.sleep(self.coordUpdateTime)
@@ -193,7 +200,7 @@ class PandoraCoordinator():
 			self.writeLog("Coordinator closed", 1)
 			self.notifyWorkstations()
 
-		except Exception,e:
+		except Exception as e:
 			exc_type, exc_obj, exc_tb = sys.exc_info()
 			self.writeLog("ERROR - init - %s - %s - %s" % (str(e), exc_type, exc_tb.tb_lineno), 3)
 
@@ -578,13 +585,13 @@ class PandoraCoordinator():
 		self.checkSlaves()
 		self.setConfig(configPath=self.actSlvPath, confData=self.slaveContactTimes)
 
-		if self.localMode:
+		if not self.localMode:
 			self.checkConnection()
 		self.checkRenderingTasks()
 		self.getAvailableSlaves()
 		self.assignJobs()
 		self.checkTvRequests()
-		if self.localMode:
+		if not self.localMode:
 			self.checkCollectTasks()
 		self.notifyWorkstations()
 		self.notifySlaves()
@@ -656,7 +663,7 @@ class PandoraCoordinator():
 					if taskStatus == "rendering" and [jobCode, taskName] not in self.renderingTasks:
 						self.renderingTasks.append([jobCode, taskName])
 
-					if taskStatus == "finished" and outputFileNum > 0 and self.localMode:
+					if taskStatus == "finished" and outputFileNum > 0 and not self.localMode:
 						if self.collectTasks.has_key(origin):
 							self.collectTasks[origin][jobCode] = outputFileNum
 						else:
