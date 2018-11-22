@@ -172,7 +172,7 @@ class Pandora_Blender_Functions(object):
 			rlayerNodes = [x for x in bpy.context.scene.node_tree.nodes if x.type == 'R_LAYERS']
 
 			bName = os.path.splitext(os.path.basename(rSettings["outputName"]))
-			if bName[0].endswith(origin.frameStr):
+			if bName[0].endswith(self.plugin.frameString):
 				bName = "%s.beauty%s%s" % (bName[0][:-5],bName[0][-5:] , bName[1])
 			else:
 				bName = "%s.beauty%s" % (bName[0], bName[1])

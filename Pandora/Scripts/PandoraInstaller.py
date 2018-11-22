@@ -65,15 +65,16 @@ from UserInterfacesPandora import qdarkstyle
 class PandoraInstaller(QDialog, PandoraInstaller_ui.Ui_dlg_installer):
 	def __init__(self, core, uninstall=False):
 		QDialog.__init__(self)
+		self.core = core
+
+		pnames = self.core.getPluginNames()
+		self.plugins = {x:self.core.getPlugin(x) for x in pnames if x != "Standalone"}
+
 		if uninstall:
 			self.uninstall()
 		else:
 			self.setupUi(self)
 			try:
-				self.core = core
-				pnames = self.core.getPluginNames()
-				self.plugins = {x:self.core.getPlugin(x) for x in pnames if x != "Standalone"}
-
 				from win32com.shell import shell, shellcon
 				self.documents = shell.SHGetFolderPath(0, shellcon.CSIDL_PERSONAL, None, 0)
 
@@ -219,22 +220,6 @@ class PandoraInstaller(QDialog, PandoraInstaller_ui.Ui_dlg_installer):
 			except:
 				pass
 
-			if os.path.exists(self.core.pandoraRoot):
-				print "remove old files.."
-				
-				while True:
-					try:
-						shutil.rmtree(self.core.pandoraRoot)
-						break
-					except WindowsError:
-						msg = QMessageBox(QMessageBox.Warning, "Remove old files", "Could not remove Pandora files.\n\nMake sure all dependent programms like Max, Maya, Houdini, Blender, TrayIcon and eventually the windows explorer are closed.", QMessageBox.Cancel, parent=self.core.messageParent)
-						msg.addButton("Retry", QMessageBox.YesRole)
-						action = msg.exec_()
-
-						if action != 0:
-							print "Canceled Pandora files removal"
-							return False
-
 			return True
 
 		except Exception as e:
@@ -244,7 +229,7 @@ class PandoraInstaller(QDialog, PandoraInstaller_ui.Ui_dlg_installer):
 
 
 	def uninstall(self):
-		msg = QMessageBox(QMessageBox.Question, "Pandora Render Manager", "Are you sure you want to uninstall Pandora?\n\nThis will delete all Pandora files and Pandora integrations from your PC. Your renderings and scenefiles will remain unaffected.", QMessageBox.Cancel, parent=self.core.messageParent)
+		msg = QMessageBox(QMessageBox.Question, "Pandora Render Manager", "Are you sure you want to uninstall Pandora?\n\nThis will delete all Pandora integrations from your PC. Your renderings and scenefiles will remain unaffected.", QMessageBox.Cancel, parent=self.core.messageParent)
 		msg.addButton("Continue", QMessageBox.YesRole)
 		action = msg.exec_()
 
@@ -255,7 +240,7 @@ class PandoraInstaller(QDialog, PandoraInstaller_ui.Ui_dlg_installer):
 
 		result = {}
 
-		if os.path.exists(locFile):
+		if os.path.exists(self.core.installLocPath):
 			cData = self.core.getConfig(configPath=self.core.installLocPath, getConf=True)
 
 			for i in cData:
@@ -270,16 +255,17 @@ class PandoraInstaller(QDialog, PandoraInstaller_ui.Ui_dlg_installer):
 		result["Pandora Files"] = self.removePandoraFiles()
 
 		if not False in result.values():
-			msgStr = "Pandora was uninstalled successfully."
-			QMessageBox.information(self.core.messageParent, "Prism Uninstallation", msgStr)
+			msgStr = "All Pandora integrations were removed successfully. To finish the uninstallation delete the Pandora folder:\n\n%s" % self.core.pandoraRoot
+			QMessageBox.information(self.core.messageParent, "Pandora Uninstallation", msgStr)
 		else:
 			msgString = "Some parts failed to uninstall:\n\n"
 			for i in result:
 				msgString += "%s:\t\t%s\t\t\n\n" % (i, result[i])
 
-			msgString = msgString.replace("True", "Success").replace("False", "Error").replace("Prism Files:", "Prism Files:\t")
+			msgString = msgString.replace("True", "Success").replace("False", "Error").replace("Pandora Files:", "Pandora Files:\t")
 
-			QMessageBox.warning(self.core.messageParent, "Prism Installation", msgString)
+			QMessageBox.warning(self.core.messageParent, "Pandora Installation", msgString)
+			sys.exit()
 
 
 def force_elevated():

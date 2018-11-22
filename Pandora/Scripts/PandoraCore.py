@@ -936,7 +936,11 @@ class PandoraCore():
 		if os.path.isdir(path):
 			self.openFolder(path)
 		else:
-			os.startfile(path)
+			try:
+				os.startfile(path)
+			except:
+				QMessageBox.warning(self.messageParent, "Pandora", "Could not open this file:\n\n%s\n\nEventually there is no program associated with this filetype." % path)
+				self.openFolder(path)
 
 
 	@err_decorator
@@ -1285,7 +1289,7 @@ class PandoraCore():
 		
 		self.callback(name="onPostJobSubmitted", types=["curApp", "custom"], args=[self, os.path.dirname(jobPath)])
 
-		return ["Success", jobCode]
+		return ["Success", jobCode, jobPath]
 
 
 	@err_decorator

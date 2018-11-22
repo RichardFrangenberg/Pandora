@@ -89,7 +89,7 @@ class Pandora_Maya_externalAccess_Functions(object):
 		mayaOverride = self.core.getConfig("dccoverrides", "Maya_override")
 		mayaOverridePath = self.core.getConfig("dccoverrides", "Maya_path")
 
-		if mayaOverride == "True" and mayaOverridePath is not None and os.path.exists(mayaOverridePath):
+		if mayaOverride == True and mayaOverridePath is not None and os.path.exists(mayaOverridePath):
 			mayaPath = mayaOverridePath
 		else:
 			if "programVersion" in jobData:

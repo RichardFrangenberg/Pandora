@@ -79,7 +79,7 @@ class Pandora_Houdini_externalAccess_Functions(object):
 		houOverride = self.core.getConfig("dccoverrides", "Houdini_override")
 		houOverridePath = self.core.getConfig("dccoverrides", "Houdini_path")
 
-		if houOverride == "True" and houOverridePath is not None and os.path.exists(houOverridePath):
+		if houOverride == True and houOverridePath is not None and os.path.exists(houOverridePath):
 			houPath = houOverridePath
 		else:
 			if "programVersion" in jobData:

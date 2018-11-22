@@ -1649,7 +1649,7 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 					beautyPath = os.path.join(outpath, "beauty")
 
 				rvAct.triggered.connect(lambda: self.playRV(beautyPath))
-				if not os.path.exists(beautyPath) or len(os.listdir(beautyPath)) == 0:
+				if not os.path.exists(beautyPath) or len(os.listdir(beautyPath)) == 0 or self.rv is None:
 					rvAct.setEnabled(False)
 
 				rcmenu.addAction(rvAct)
@@ -2104,20 +2104,26 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 	@err_decorator
 	def playRV(self, path):
 		sequence = [x for x in os.listdir(path) if x.endswith(".exr")]
-		if sequence != [] and self.rv is not None:
-			subprocess.Popen([self.rv, os.path.join(path, sequence[0][:-8] + "@@@@" + sequence[0][-4:])])
+		if sequence == []:
+			QMessageBox.warning(self, "Warning", "There are no .exr files in the outputfolder.")
+			return
+
+		subprocess.Popen([self.rv, os.path.join(path, sequence[0][:-8] + "@@@@" + sequence[0][-4:])])
 
 
 	@err_decorator
 	def getRVpath(self):
-		key = _winreg.OpenKey(
-			_winreg.HKEY_LOCAL_MACHINE,
-			"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\rv.exe",
-			0,
-			_winreg.KEY_READ | _winreg.KEY_WOW64_64KEY
-		)
+		try:
+			key = _winreg.OpenKey(
+				_winreg.HKEY_LOCAL_MACHINE,
+				"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\rv.exe",
+				0,
+				_winreg.KEY_READ | _winreg.KEY_WOW64_64KEY
+			)
 
-		self.rv = (_winreg.QueryValue(key, None))
+			self.rv = (_winreg.QueryValue(key, None))
+		except:
+			self.rv = None
 
 
 if __name__ == "__main__":

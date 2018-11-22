@@ -103,7 +103,7 @@ class Pandora_Blender_externalAccess_Functions(object):
 		bldOverride = self.core.getConfig("dccoverrides", "Blender_override")
 		bldOverridePath = self.core.getConfig("dccoverrides", "Blender_path")
 
-		if bldOverride == "True" and bldOverridePath is not None and os.path.exists(bldOverridePath):
+		if bldOverride == True and bldOverridePath is not None and os.path.exists(bldOverridePath):
 			blenderPath = bldOverridePath
 		else:
 			blenderPath = self.getInstallPath()

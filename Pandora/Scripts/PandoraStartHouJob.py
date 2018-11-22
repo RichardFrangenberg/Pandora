@@ -243,7 +243,16 @@ return outPut"""
 	hou.hipFile.save()
 
 	writeLog("start rendering")
-	exec("renderNode.render(frame_range=(frameStart,frameEnd), %s output_file=newOutput, verbose=True)" % resolution)
+	if renderNode.type().name() == "filecache":
+		renderNode.parm("trange").set(1)
+		renderNode.parm("f1").deleteAllKeyframes()
+		renderNode.parm("f2").deleteAllKeyframes()
+		renderNode.parm("f1").set(frameStart)
+		renderNode.parm("f2").set(frameEnd)
+		renderNode.parm("file").set(newOutput)
+		renderNode.parm("execute").pressButton()
+	else:
+		exec("renderNode.render(frame_range=(frameStart,frameEnd), %s output_file=newOutput, verbose=True)" % resolution)
 
 
 except Exception,e:

@@ -352,7 +352,7 @@ If set to False, the renderings can be found locally on the renderslave, which r
 			action = msg.exec_()
 
 			if action == 0:
-				self.core.openFolder(os.path.dirname(jobPath))
+				self.core.openFolder(os.path.dirname(result[2]))
 			self.close()
 		elif result.startswith("Submission canceled"):
 			QMessageBox.warning(self.core.messageParent, "Submission canceled", result)

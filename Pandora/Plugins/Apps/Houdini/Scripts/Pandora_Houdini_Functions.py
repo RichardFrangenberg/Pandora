@@ -70,6 +70,9 @@ class Pandora_Houdini_Functions(object):
 
 	@err_decorator
 	def startup(self, origin):
+		if not hou.isUIAvailable():
+			return False
+		
 		if hou.ui.mainQtWindow() is None:
 			return False
 

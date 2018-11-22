@@ -79,7 +79,7 @@ class Pandora_3dsMax_externalAccess_Functions(object):
 		maxOverride = self.core.getConfig("dccoverrides", "3dsMax_override")
 		maxOverridePath = self.core.getConfig("dccoverrides", "3dsMax_path")
 
-		if maxOverride == "True" and maxOverridePath is not None and os.path.exists(maxOverridePath):
+		if maxOverride == True and maxOverridePath is not None and os.path.exists(maxOverridePath):
 			maxPath = maxOverridePath
 		else:
 			maxPath = self.getInstallPath()
