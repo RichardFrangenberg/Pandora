@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'RenderHandler.ui'
+# Form implementation generated from reading ui file 'RenderHandler.ui',
+# licensing of 'RenderHandler.ui' applies.
 #
-# Created: Thu May 24 20:08:58 2018
-#      by: pyside2-uic @pyside_tools_VERSION@ running on PySide2 2.0.0~alpha0
+# Created: Thu Dec  6 23:10:54 2018
+#      by: pyside2-uic  running on PySide2 5.9.0a1.dev1528389443
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -39,7 +40,7 @@ class Ui_mw_RenderHandler(object):
         self.tw_jobs.setSizePolicy(sizePolicy)
         self.tw_jobs.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.tw_jobs.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
-        self.tw_jobs.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
+        self.tw_jobs.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
         self.tw_jobs.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
         self.tw_jobs.setVerticalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
         self.tw_jobs.setHorizontalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)

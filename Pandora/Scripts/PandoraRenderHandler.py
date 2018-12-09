@@ -423,10 +423,21 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 		self.refreshTimer.stop()
 		self.l_refreshCounter.setText("")
 		if self.tw_jobs.rowCount() > 0:
-			curJobRow = self.tw_jobs.currentIndex().row()
-			if curJobRow != -1:
-				curJobName = self.tw_jobs.item(curJobRow, 0).text()
+			selJobs = []
+			for i in self.tw_jobs.selectedIndexes():
+				jobName = self.tw_jobs.item(i.row(), 0).text()
+				if jobName not in selJobs:
+					selJobs.append(jobName)
+
 			curJobSliderPos = self.tw_jobs.verticalScrollBar().value()
+		if self.tw_jobs.rowCount() > 0:
+			selTaks = []
+			for i in self.tw_taskList.selectedIndexes():
+				taskName = self.tw_taskList.item(i.row(), 0).text()
+				if taskName not in selTaks:
+					selTaks.append(taskName)
+
+			curTaskSliderPos = self.tw_taskList.verticalScrollBar().value()
 		if self.tw_slaves.rowCount() > 0:
 			curSlaveRow = self.tw_slaves.currentIndex().row()
 			if curSlaveRow != -1:
@@ -465,14 +476,25 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 			self.updateCoordSettings()
 			self.updateCoordWarnings()
 
-		if "curJobName" in locals() and updateJobs:
+		if "selJobs" in locals() and updateJobs:
+			self.tw_jobs.setSelectionMode(QAbstractItemView.MultiSelection)
 			for i in range(self.tw_jobs.rowCount()):
-				if self.tw_jobs.item(i,0).text() == curJobName:
+				if self.tw_jobs.item(i,0).text() in selJobs:
 					self.tw_jobs.selectRow(i)
-					break
+			self.tw_jobs.setSelectionMode(QAbstractItemView.ExtendedSelection)
 
 		if "curJobSliderPos" in locals() and updateJobs:
 			self.tw_jobs.verticalScrollBar().setValue(curJobSliderPos)
+
+		if "selTaks" in locals() and updateJobs:
+			self.tw_taskList.setSelectionMode(QAbstractItemView.MultiSelection)
+			for i in range(self.tw_taskList.rowCount()):
+				if self.tw_taskList.item(i,0).text() in selTaks:
+					self.tw_taskList.selectRow(i)
+			self.tw_taskList.setSelectionMode(QAbstractItemView.ExtendedSelection)
+
+		if "curTaskSliderPos" in locals() and updateJobs:
+			self.tw_taskList.verticalScrollBar().setValue(curTaskSliderPos)
 
 		if "curSlaveName" in locals() and updateSlaves:
 			for i in range(self.tw_slaves.rowCount()):
@@ -789,7 +811,13 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 		self.tw_taskList.setRowCount(0)
 		self.tw_taskList.setSortingEnabled(False)
 
-		if self.tw_jobs.currentRow() == -1:
+		selJobs = []
+		for i in self.tw_jobs.selectedIndexes():
+			jobName = self.tw_jobs.item(i.row(), 0).text()
+			if jobName not in selJobs:
+				selJobs.append(jobName)
+
+		if len(selJobs) != 1:
 			return False
 
 		jobName = self.tw_jobs.item(self.tw_jobs.currentRow(),0).text()
@@ -863,7 +891,14 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 		self.tw_jobSettings.setRowCount(0)
 		jobSettings = []
 		jobInfo = []
-		if self.tw_jobs.currentRow() != -1:
+
+		selJobs = []
+		for i in self.tw_jobs.selectedIndexes():
+			jobName = self.tw_jobs.item(i.row(), 0).text()
+			if jobName not in selJobs:
+				selJobs.append(jobName)
+
+		if len(selJobs) == 1:
 			settingsPath = self.tw_jobs.item(self.tw_jobs.currentRow(),9).text()
 
 			if os.path.exists(settingsPath):
@@ -1200,10 +1235,17 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 		if not self.writeSettings:
 			return
 
+		settingsPath = None
 		settingVal = None
 		settingName = item.tableWidget().item(item.row(), 0).text()
 
-		if stype == "js" and self.tw_jobs.currentRow() != -1:
+		selJobs = []
+		for i in self.tw_jobs.selectedIndexes():
+			jobName = self.tw_jobs.item(i.row(), 0).text()
+			if jobName not in selJobs:
+				selJobs.append(jobName)
+
+		if stype == "js" and len(selJobs) == 1:
 			settingType = "Job"
 			section = "jobglobals"
 			settingsPath = self.tw_jobs.item(self.tw_jobs.currentRow(), 9).text()
@@ -1284,8 +1326,12 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 				continue
 		
 			num = i.split("_")[1]
-			if not unicode(num).isnumeric():
-				continue
+			if pVersion == 2:
+				if not unicode(num).isnumeric():
+					continue
+			else:
+				if not num.isnumeric():
+					continue
 
 			if int(num) >= curNum:
 				curNum = int(num) + 1
@@ -1559,7 +1605,13 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 			cwAct.triggered.connect(lambda: self.clearWarnings("Coordinator"))
 			rcmenu.addAction(cwAct)
 
-		if self.tw_jobs.rowCount() > 0 and self.tw_jobs.currentRow() != -1:
+		selJobs = []
+		for i in self.tw_jobs.selectedIndexes():
+			jobName = self.tw_jobs.item(i.row(), 0).text()
+			if jobName not in selJobs:
+				selJobs.append(jobName)
+
+		if self.tw_jobs.rowCount() > 0 and len(selJobs) > 0:
 
 			jobSettings = self.tw_jobs.item(self.tw_jobs.currentRow(),9).text()
 			if os.path.exists(jobSettings):
@@ -1576,34 +1628,19 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 
 					rcmenu.addSeparator()
 
-				enable = False
-				disable = False
-				restart = False
-				tasks = range(self.tw_taskList.rowCount())
-				for i in range(self.tw_taskList.rowCount()):
-					if self.tw_taskList.item(i, 2).text() == "disabled":
-						enable = True
-					else:
-						disable = True
-					if self.tw_taskList.item(i, 3).text() != "unassigned":
-						restart = True
-
 				restartAct = QAction("Restart", self)
-				restartAct.triggered.connect(lambda: self.restartTask(self.tw_jobs.currentRow(), tasks))
-				restartAct.setEnabled(restart)
+				restartAct.triggered.connect(lambda: self.restartTask(selJobs=True))
 				rcmenu.addAction(restartAct)
 
 				enableAct = QAction("Enable", self)
-				enableAct.triggered.connect(lambda: self.disableTask(self.tw_jobs.currentRow(), tasks, enable=True))
-				enableAct.setEnabled(enable)
+				enableAct.triggered.connect(lambda: self.disableTask(selJobs=True, enable=True))
 				rcmenu.addAction(enableAct)
 
 				disableAct = QAction("Disable", self)
-				disableAct.triggered.connect(lambda: self.disableTask(self.tw_jobs.currentRow(), tasks))
-				disableAct.setEnabled(disable)
+				disableAct.triggered.connect(lambda: self.disableTask(selJobs=True))
 				rcmenu.addAction(disableAct)
 
-				deleteAct = QAction("Delete Job", self)
+				deleteAct = QAction("Delete", self)
 				deleteAct.triggered.connect(self.deleteJob)
 				rcmenu.addAction(deleteAct)
 
@@ -1611,6 +1648,7 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 
 				fileAct = QAction("Open Settings", self)
 				fileAct.triggered.connect(jobSettings)
+				fileAct.setEnabled(len(selJobs) == 1)
 				rcmenu.addAction(fileAct)
 
 				outAct = QAction("Open Output", self)
@@ -1629,7 +1667,7 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 				if not self.localMode:
 					outpath = os.path.join(os.path.dirname(os.path.dirname(self.sourceDir)), outpath[outpath.find("\\%s\\" % projectName)+1:])
 
-				if os.path.exists(outpath):
+				if os.path.exists(outpath) and len(selJobs) == 1:
 					for i in os.walk(outpath):
 						dirs = i[1]
 						if len(dirs) == 1:
@@ -1649,7 +1687,7 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 					beautyPath = os.path.join(outpath, "beauty")
 
 				rvAct.triggered.connect(lambda: self.playRV(beautyPath))
-				if not os.path.exists(beautyPath) or len(os.listdir(beautyPath)) == 0 or self.rv is None:
+				if len(selJobs) != 1 or not os.path.exists(beautyPath) or len(os.listdir(beautyPath)) == 0 or self.rv is None:
 					rvAct.setEnabled(False)
 
 				rcmenu.addAction(rvAct)
@@ -1991,31 +2029,13 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 
 	@err_decorator
 	def collectOutput(self):
-		curJobName = self.tw_jobs.item(self.tw_jobs.currentRow(),0).text()
+		selJobs = []
+		for i in self.tw_jobs.selectedIndexes():
+			jobName = self.tw_jobs.item(i.row(), 0).text()
+			if jobName not in selJobs:
+				selJobs.append(jobName)
 
-		jobConf = os.path.join(self.logDir, "Jobs", "%s.json" % curJobName)
-
-		jCode = self.core.getConfig("information", "jobcode", configPath=jobConf)
-
-		if jCode is not None:
-			jobCode = jCode
-		else:
-			jobCode = curJobName
-
-		self.writeCmd(["collectJob", jobCode])
-		QMessageBox.information(self,"CollectOutput", "Collect request for job %s was sent." % curJobName)
-
-
-	@err_decorator
-	def deleteJob(self):
-		curJobName = self.tw_jobs.item(self.tw_jobs.currentRow(),0).text()
-		message = "Do you really want to delete job \"<b>%s</b>\"" % curJobName
-		delMsg = QMessageBox(QMessageBox.Question, "Delete Job", message, QMessageBox.No)
-		delMsg.addButton("Yes", QMessageBox.YesRole)
-		self.core.parentWindow(delMsg)
-		result = delMsg.exec_()
-
-		if result == 0:
+		for curJobName in selJobs:
 			jobConf = os.path.join(self.logDir, "Jobs", "%s.json" % curJobName)
 
 			jCode = self.core.getConfig("information", "jobcode", configPath=jobConf)
@@ -2025,79 +2045,135 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 			else:
 				jobCode = curJobName
 
-			self.writeCmd(["deleteJob", jobCode])
+			self.writeCmd(["collectJob", jobCode])
 
-			if os.path.exists(jobConf):
-				try:
-					os.remove(jobConf)
-				except:
-					pass
+		QMessageBox.information(self,"CollectOutput", "Collect request was sent.")
+
+
+	@err_decorator
+	def deleteJob(self):
+		selJobs = []
+		for i in self.tw_jobs.selectedIndexes():
+			jobName = self.tw_jobs.item(i.row(), 0).text()
+			if jobName not in selJobs:
+				selJobs.append(jobName)
+
+		message = "Do you really want to delete the selected jobs?"
+		delMsg = QMessageBox(QMessageBox.Question, "Delete Job", message, QMessageBox.No)
+		delMsg.addButton("Yes", QMessageBox.YesRole)
+		self.core.parentWindow(delMsg)
+		result = delMsg.exec_()
+
+		if result == 0:
+			for curJobName in selJobs:
+				jobConf = os.path.join(self.logDir, "Jobs", "%s.json" % curJobName)
+
+				jCode = self.core.getConfig("information", "jobcode", configPath=jobConf)
+
+				if jCode is not None:
+					jobCode = jCode
+				else:
+					jobCode = curJobName
+
+				self.writeCmd(["deleteJob", jobCode])
+
+				if os.path.exists(jobConf):
+					try:
+						os.remove(jobConf)
+					except:
+						pass
 
 			self.updateJobs()
 
 
 	@err_decorator
-	def restartTask(self, job, tasks):
-		jobName = self.tw_jobs.item(job,0).text()
-		jobConf = os.path.join(self.logDir, "Jobs", "%s.json" % jobName)
-
-		jCode = self.core.getConfig("information", "jobcode", configPath=jobConf)
-
-		if jCode is not None:
-			jobCode = jCode
+	def restartTask(self, job=None, tasks=None, selJobs=False):
+		if selJobs:
+			taskItems = []
+			selJobNames = []
+			for i in self.tw_jobs.selectedIndexes():
+				jobName = self.tw_jobs.item(i.row(), 0).text()
+				if jobName not in selJobNames:
+					selJobNames.append(jobName)
+					jobConf = os.path.join(self.logDir, "Jobs", "%s.json" % jobName)
+					jobTasks = [int(x[4:]) for x in self.core.getConfig("jobtasks", getOptions=True, configPath=jobConf)]
+					taskItems.append([jobName, jobTasks, i.row()])
 		else:
-			jobCode = jobName
+			taskItems = [self.tw_jobs.item(job,0).text(), tasks, self.tw_jobs.currentRow()]
 
-		cData = []
+		for jobName, tasks, jobRow in taskItems:
+			jobConf = os.path.join(self.logDir, "Jobs", "%s.json" % jobName)
 
-		for i in tasks:
-			self.writeCmd(["restartTask", jobCode, i])
-			taskData = self.core.getConfig("jobtasks", "task%04d" % i, configPath=jobConf)
-			if taskData is not None:
-				taskData[2] = "ready"
-				taskData[3] = "unassigned"
-				taskData[4] = ""
-				taskData[5] = ""
-				taskData[6] = ""
-				cData.append(["jobtasks", "task%04d" % i, taskData])
+			jCode = self.core.getConfig("information", "jobcode", configPath=jobConf)
 
-		self.core.setConfig(configPath=jobConf, data=cData)
+			if jCode is not None:
+				jobCode = jCode
+			else:
+				jobCode = jobName
 
-		self.updateJobData(self.tw_jobs.currentRow())
+			cData = []
+
+			for i in tasks:
+				self.writeCmd(["restartTask", jobCode, i])
+				taskData = self.core.getConfig("jobtasks", "task%04d" % i, configPath=jobConf)
+				if taskData is not None:
+					taskData[2] = "ready"
+					taskData[3] = "unassigned"
+					taskData[4] = ""
+					taskData[5] = ""
+					taskData[6] = ""
+					cData.append(["jobtasks", "task%04d" % i, taskData])
+
+			self.core.setConfig(configPath=jobConf, data=cData)
+			self.updateJobData(jobRow)
+	
 		self.updateTaskList()
 
 
 	@err_decorator
-	def disableTask(self, job, tasks, enable=False):
-		jobName = self.tw_jobs.item(job,0).text()
-		jobConf = os.path.join(self.logDir, "Jobs", "%s.json" % jobName)
-
-		jCode = self.core.getConfig("information", "jobcode", configPath=jobConf)
-
-		if jCode is not None:
-			jobCode = jCode
+	def disableTask(self, job=None, tasks=None, selJobs=False, enable=False):
+		if selJobs:
+			taskItems = []
+			selJobNames = []
+			for i in self.tw_jobs.selectedIndexes():
+				jobName = self.tw_jobs.item(i.row(), 0).text()
+				if jobName not in selJobNames:
+					selJobNames.append(jobName)
+					jobConf = os.path.join(self.logDir, "Jobs", "%s.json" % jobName)
+					jobTasks = [int(x[4:]) for x in self.core.getConfig("jobtasks", getOptions=True, configPath=jobConf)]
+					taskItems.append([jobName, jobTasks, i.row()])
 		else:
-			jobCode = jobName
+			taskItems = [self.tw_jobs.item(job,0).text(), tasks, self.tw_jobs.currentRow()]
 
-		cData = []
+		for jobName, tasks, jobRow in taskItems:
+			jobConf = os.path.join(self.logDir, "Jobs", "%s.json" % jobName)
 
-		for i in tasks:
-			self.writeCmd(["disableTask", jobCode, i, enable])
+			jCode = self.core.getConfig("information", "jobcode", configPath=jobConf)
 
-			taskData = self.core.getConfig("jobtasks", "task%04d" % i, configPath=jobConf)
-			if taskData is not None:
-				if (taskData[2] in ["ready", "rendering", "assigned"] and not enable) or (taskData[2] == "disabled" and enable):
-					if enable:
-						taskData[2] = "ready"
-						taskData[3] = "unassigned"
-					else:
-						taskData[2] = "disabled"
-						taskData[3] = "unassigned"
-					cData.append(["jobtasks", "task%04d" % i, taskData])
+			if jCode is not None:
+				jobCode = jCode
+			else:
+				jobCode = jobName
 
-		self.core.setConfig(configPath=jobConf, data=cData)
+			cData = []
 
-		self.updateJobData(self.tw_jobs.currentRow())
+			for i in tasks:
+				self.writeCmd(["disableTask", jobCode, i, enable])
+
+				taskData = self.core.getConfig("jobtasks", "task%04d" % i, configPath=jobConf)
+				if taskData is not None:
+					if (taskData[2] in ["ready", "rendering", "assigned"] and not enable) or (taskData[2] == "disabled" and enable):
+						if enable:
+							taskData[2] = "ready"
+							taskData[3] = "unassigned"
+						else:
+							taskData[2] = "disabled"
+							taskData[3] = "unassigned"
+						cData.append(["jobtasks", "task%04d" % i, taskData])
+
+			self.core.setConfig(configPath=jobConf, data=cData)
+			self.updateJobData(jobRow)
+
 		self.updateTaskList()
 
 

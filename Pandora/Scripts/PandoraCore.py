@@ -695,7 +695,7 @@ class PandoraCore():
 
 		if getOptions:
 			if cat in userConfig:
-				return userConfig[cat].values()
+				return userConfig[cat].keys()
 			else:
 				return []
 
