@@ -1293,7 +1293,7 @@ class PandoraCore():
 
 
 	@err_decorator
-	def updatePandora(self, filepath="", gitHub=False):
+	def updatePandora(self, filepath="", source=""):
 		targetdir = os.path.join(os.environ["temp"], "PandoraUpdate")
 
 		if os.path.exists(targetdir):
