@@ -49,24 +49,24 @@ class PandoraTray():
 			pIcon = QIcon(os.path.dirname(os.path.abspath(__file__)) + "\\UserInterfacesPandora\\pandora_tray.ico")
 			self.core.messageParent.setWindowIcon(pIcon)
 
-			coreProc = []
-			for x in psutil.pids():
-				try:
-					if x != os.getpid() and os.path.basename(psutil.Process(x).exe()) == "PandoraTray.exe":
-						coreProc.append(x)
-				except:
-					pass
+		#	coreProc = []
+		#	for x in psutil.pids():
+		#		try:
+		#			if x != os.getpid() and os.path.basename(psutil.Process(x).exe()) == "PandoraTray.exe":
+		#				coreProc.append(x)
+		#		except:
+		#			pass
 
-			if len(coreProc) > 0:
-				if silent:
-					for pid in coreProc:
-						proc = psutil.Process(pid)
-						proc.kill()
-				else:
-					QMessageBox.warning(self.core.messageParent, "PandoraTray", "PandoraTray is already running.")
-					qApp.quit()
-					sys.exit()
-					return
+		#	if len(coreProc) > 0:
+		#		if silent:
+		#			for pid in coreProc:
+		#				proc = psutil.Process(pid)
+		#				proc.kill()
+		#		else:
+		#			QMessageBox.warning(self.core.messageParent, "PandoraTray", "PandoraTray is already running.")
+		#			qApp.quit()
+		#			sys.exit()
+		#			return
 
 			self.createTrayIcon()
 			self.trayIcon.show()
