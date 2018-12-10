@@ -60,7 +60,7 @@ class PandoraCore():
 	def __init__(self, app="Standalone"):
 		try:
 			# set some general variables
-			self.version = "v1.0.1.0"
+			self.version = "v1.0.2.0"
 			self.pandoraRoot = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 
 			# add the custom python libraries to the path variable, so they can be imported
@@ -1303,36 +1303,49 @@ class PandoraCore():
 				QMessageBox.warning(self.messageParent, "Pandora update", "Could not remove temp directory:\n%s" % targetdir)
 				return
 
-		if gitHub:
-			try:
-				from git import Repo
-			except:
-				QMessageBox.warning(self.messageParent, "Pandora update", "Could not load git. In order to update Pandora from GitHub you need git installed on your computer.")
-				return
-
-			waitmsg = QMessageBox(QMessageBox.NoIcon, "Pandora update", "Downloading repository - please wait..", QMessageBox.Cancel)
+		if source == "github":
+			waitmsg = QMessageBox(QMessageBox.NoIcon, "Pandora update", "Downloading Pandora - please wait..", QMessageBox.Cancel)
 			waitmsg.buttons()[0].setHidden(True)
+			self.parentWindow(waitmsg)
 			waitmsg.show()
 			QCoreApplication.processEvents()
 
-			Repo.clone_from("https://github.com/RichardFrangenberg/Pandora", targetdir)
+			import urllib
 
-			updateRoot = os.path.join(os.environ["temp"], "PandoraUpdate", "Pandora")
-		else:
-			if not os.path.exists(filepath):
-				return
+			url = 'https://api.github.com/repos/RichardFrangenberg/Pandora/zipball'
 
-			import zipfile
+			u = urllib.urlopen(url)
+			data = u.read()
+			u.close()
+			filepath = os.path.join(targetdir, "Pandora_update.zip")
+			if not os.path.exists(os.path.dirname(filepath)):
+				os.makedirs(os.path.dirname(filepath))
+				
+			with open(filepath, "wb") as f :
+				f.write(data)
 
-			waitmsg = QMessageBox(QMessageBox.NoIcon, "Pandora update", "Extracting - please wait..", QMessageBox.Cancel)
-			waitmsg.buttons()[0].setHidden(True)
-			waitmsg.show()
-			QCoreApplication.processEvents()
+			if "waitmsg" in locals() and waitmsg.isVisible():
+				waitmsg.close()
 
-			with zipfile.ZipFile(filepath,"r") as zip_ref:
-				zip_ref.extractall(targetdir)
+		if not os.path.exists(filepath):
+			return
 
-			updateRoot = os.path.join(os.environ["temp"], "PandoraUpdate", "Pandora-development", "Pandora")
+		import zipfile
+
+		waitmsg = QMessageBox(QMessageBox.NoIcon, "Pandora update", "Extracting - please wait..", QMessageBox.Cancel)
+		waitmsg.buttons()[0].setHidden(True)
+		self.parentWindow(waitmsg)
+		waitmsg.show()
+		QCoreApplication.processEvents()
+
+		with zipfile.ZipFile(filepath,"r") as zip_ref:
+			zip_ref.extractall(targetdir)
+
+		for i in os.walk(targetdir):
+			dirs = i[1]
+			break
+
+		updateRoot = os.path.join(targetdir, dirs[0], "Pandora")
 
 		if "waitmsg" in locals() and waitmsg.isVisible():
 			waitmsg.close()

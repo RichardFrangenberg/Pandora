@@ -34,7 +34,7 @@
 
 class Pandora_PluginPreset_Variables(object):
 	def __init__(self, core, plugin):
-		self.version = "v1.0.0.1"
+		self.version = "v1.0.2.0"
 		self.pluginName = "PluginPreset"
 		self.pluginType = "Custom"
 		self.platforms = ["Windows"]
