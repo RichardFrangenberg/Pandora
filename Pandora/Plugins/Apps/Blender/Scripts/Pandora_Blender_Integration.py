@@ -156,10 +156,11 @@ class Pandora_Blender_Integration(object):
 			shutil.copy2(baseinitfile, initpath)
 			addedFiles.append(initpath)
 
-			with open(initpath, "r+") as init:
+			with open(initpath, "r") as init:
 				initStr = init.read()
+
+			with open(initpath, "w") as init:
 				initStr = initStr.replace("PANDORAROOT", "\"%s\"" % self.core.pandoraRoot.replace("\\", "/"))
-				init.seek(0)
 				init.write(initStr)
 
 			if platform.system() == "Windows":

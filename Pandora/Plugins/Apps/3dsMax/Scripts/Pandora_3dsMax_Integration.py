@@ -185,10 +185,11 @@ class Pandora_3dsMax_Integration(object):
 			origInitFile = os.path.join(integrationBase, "initPandora.py")
 			shutil.copy2(origInitFile, initPy)
 
-			with open(initPy, "r+") as init:
+			with open(initPy, "r") as init:
 				initStr = init.read()
+
+			with open(initPy, "w") as init:
 				initStr = initStr.replace("PANDORAROOT", "\"%s\"" % self.core.pandoraRoot.replace("\\", "/"))
-				init.seek(0)
 				init.write(initStr)
 
 			pandoraMenu = os.path.join(maxpath, "PandoraMenu.ms")
