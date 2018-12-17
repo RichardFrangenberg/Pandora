@@ -2099,7 +2099,7 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 					jobTasks = [int(x[4:]) for x in self.core.getConfig("jobtasks", getOptions=True, configPath=jobConf)]
 					taskItems.append([jobName, jobTasks, i.row()])
 		else:
-			taskItems = [self.tw_jobs.item(job,0).text(), tasks, self.tw_jobs.currentRow()]
+			taskItems = [[self.tw_jobs.item(job,0).text(), tasks, self.tw_jobs.currentRow()]]
 
 		for jobName, tasks, jobRow in taskItems:
 			jobConf = os.path.join(self.logDir, "Jobs", "%s.json" % jobName)
@@ -2143,7 +2143,7 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 					jobTasks = [int(x[4:]) for x in self.core.getConfig("jobtasks", getOptions=True, configPath=jobConf)]
 					taskItems.append([jobName, jobTasks, i.row()])
 		else:
-			taskItems = [self.tw_jobs.item(job,0).text(), tasks, self.tw_jobs.currentRow()]
+			taskItems = [[self.tw_jobs.item(job,0).text(), tasks, self.tw_jobs.currentRow()]]
 
 		for jobName, tasks, jobRow in taskItems:
 			jobConf = os.path.join(self.logDir, "Jobs", "%s.json" % jobName)
