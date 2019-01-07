@@ -230,7 +230,7 @@ class Pandora_Maya_Integration(object):
 			with open(shelfpath, "r") as init:
 				initStr = init.read()
 
-			with open(initpath, "w") as init:
+			with open(shelfpath, "w") as init:
 				initStr = initStr.replace("PANDORAROOT", self.core.pandoraRoot.replace("\\", "\\\\"))
 				init.write(initStr)
 
