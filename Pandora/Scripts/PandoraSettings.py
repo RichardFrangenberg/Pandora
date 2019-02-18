@@ -11,7 +11,7 @@
 ####################################################
 #
 #
-# Copyright (C) 2016-2018 Richard Frangenberg
+# Copyright (C) 2016-2019 Richard Frangenberg
 #
 # Licensed under GNU GPL-3.0-or-later
 #
@@ -74,10 +74,6 @@ class PandoraSettings(QDialog, PandoraSettings_ui.Ui_dlg_PandoraSettings):
 		self.loadSettings()
 
 		self.startSettings = {"localMode":self.chb_localMode.isChecked(), "lRootPath":self.e_rootPath.text(), "cRootpath":self.e_coordinatorRoot.text(), "slaveEnabled":self.gb_slave.isChecked(), "coordEnabled":self.gb_coordinator.isChecked()}
-
-		ss = QApplication.instance().styleSheet()
-		for i in self.groupboxes:
-			i.setStyleSheet(ss.replace("QCheckBox::indicator", "QGroupBox::indicator"))
 
 		self.refreshSlaves()
 		self.refreshWorkstations()

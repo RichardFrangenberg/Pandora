@@ -11,7 +11,7 @@
 ####################################################
 #
 #
-# Copyright (C) 2016-2018 Richard Frangenberg
+# Copyright (C) 2016-2019 Richard Frangenberg
 #
 # Licensed under GNU GPL-3.0-or-later
 #
@@ -86,7 +86,7 @@ class SlaveLogic(QDialog):
 	def __init__(self, core):
 		QDialog.__init__(self)
 		self.core = core
-		self.slaveLogicVersion = "v1.0.2.0"
+		self.slaveLogicVersion = "v1.0.3.0"
 
 		# define some initial variables
 		self.slaveState = "idle"			# slave render status
@@ -1316,6 +1316,7 @@ class SlaveLogic(QDialog):
 						for line in iter(self.renderProc.stdout.readline, ''):
 							if decode:
 								line = line.replace('\x00', "")
+								line = unicode(line, errors='ignore')
 
 							if "Error" in line or "ERROR" in line:
 								logLevel = 2
@@ -1323,7 +1324,7 @@ class SlaveLogic(QDialog):
 								logLevel = 1
 
 								#reduce blender logdata
-								if prog == "blender" and line.startswith("Fra:") and " | Time:" in line and " | Scene" in line:
+								if prog == "blender" and line.startswith("Fra:") and " | Time:" in line in line:
 									continue
 
 							self.writeLog(line.strip(), logLevel)

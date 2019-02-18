@@ -11,7 +11,7 @@
 ####################################################
 #
 #
-# Copyright (C) 2016-2018 Richard Frangenberg
+# Copyright (C) 2016-2019 Richard Frangenberg
 #
 # Licensed under GNU GPL-3.0-or-later
 #
@@ -60,7 +60,7 @@ class PandoraCore():
 	def __init__(self, app="Standalone"):
 		try:
 			# set some general variables
-			self.version = "v1.0.2.2"
+			self.version = "v1.0.3.0"
 			self.pandoraRoot = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 
 			# add the custom python libraries to the path variable, so they can be imported
@@ -372,7 +372,7 @@ class PandoraCore():
 
 	@err_decorator
 	def showAbout(self):
-		QMessageBox.information(self.messageParent, "About", "Pandora: %s\n\nCopyright (C) 2016-2018 Richard Frangenberg\nLicense: GNU GPL-3.0-or-later\n\nhttps://prism-pipeline.com/pandora/" % (self.version))
+		QMessageBox.information(self.messageParent, "About", "Pandora: %s\n\nCopyright (C) 2016-2019 Richard Frangenberg\nLicense: GNU GPL-3.0-or-later\n\nhttps://prism-pipeline.com/pandora/" % (self.version))
 
 
 	@err_decorator
@@ -592,7 +592,11 @@ class PandoraCore():
 			if restart:
 				for pid in coordProc:
 					proc = psutil.Process(pid)
-					proc.kill()
+					try:
+						proc.kill()
+					except:
+						QMessageBox.warning(self.messageParent, "PandoraCoordinator", "Failed to close Coordinator. Restart the Coordinator manually from the Tray Icon.")
+						return
 			else:
 				QMessageBox.information(self.messageParent, "PandoraCoordinator", "PandoraCoordinator is already running.")
 				return
@@ -652,7 +656,7 @@ class PandoraCore():
 
 
 	@err_decorator
-	def getConfig(self, cat=None, param=None, data=None, configPath=None, getOptions=False, getItems=False, getConf=False):
+	def getConfig(self, cat=None, param=None, data=None, configPath=None, getOptions=False, getItems=False, getConf=False, silent=False):
 		if configPath is None:
 			configPath = self.configPath
 
@@ -682,6 +686,9 @@ class PandoraCore():
 			else:
 				warnStr = "Cannot read the following file:\n\n%s" % configPath
 				
+			if silent:
+				return "Error"
+
 			msg = QMessageBox(QMessageBox.Warning, "Warning", warnStr, QMessageBox.Ok, parent=self.messageParent)
 			action = msg.exec_()
 
@@ -736,6 +743,14 @@ class PandoraCore():
 		if isUserConf and not os.path.exists(configPath):
 			self.createUserPrefs()
 
+		if not os.path.exists(os.path.dirname(configPath)):
+			try:
+				df
+				os.makedirs(os.path.dirname(configPath))
+			except Exception as e:
+				QMessageBox.warning(self.messageParent, "Pandora", "The folder couldn't be created:\n\n%s\n\n%s" % (os.path.dirname(configPath), str(e)))
+				return
+
 		fcontent = os.listdir(os.path.dirname(configPath))
 		if len([x for x in fcontent if x.startswith(os.path.basename(configPath) + ".bak")]):
 			self.restoreConfig(configPath)
@@ -781,7 +796,10 @@ class PandoraCore():
 			userConfig = confData
 
 		with open(configPath, 'w') as confFile:
-			json.dump(userConfig, confFile, indent=4)
+			try:
+				json.dump(userConfig, confFile, indent=4)
+			except UnicodeEncodeError:
+				QMessageBox.warning(self.messageParent, "Pandora", "Cannot save config because it contains illegal characters:\n\n%s" % (unicode(userConfig)), QMessageBox.Ok)
 
 		try:
 			with open(configPath, 'r') as f:
@@ -948,7 +966,7 @@ class PandoraCore():
 		if fixSlashes:
 			text = self.fixPath(text)
 
-		cb = qApp.clipboard()
+		cb = QApplication.clipboard()
 		cb.setText(text)
 
 

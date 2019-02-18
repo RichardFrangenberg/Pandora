@@ -11,7 +11,7 @@
 ####################################################
 #
 #
-# Copyright (C) 2016-2018 Richard Frangenberg
+# Copyright (C) 2016-2019 Richard Frangenberg
 #
 # Licensed under GNU GPL-3.0-or-later
 #
@@ -34,13 +34,42 @@
 
 import sys, os, bpy
 pandoraRoot = PANDORAROOT
-sys.path.append(os.path.join(pandoraRoot, "PythonLibs", "Python35"))
-sys.path.append(os.path.join(pandoraRoot, "Scripts"))
-from PySide2.QtCore import *
-from PySide2.QtGui import *
-from PySide2.QtWidgets import *
+
+if sys.version_info[0] == 3 and sys.version_info[1] == 5:
+	libFolder = "Python35"
+if sys.version_info[0] == 3 and sys.version_info[1] == 7:
+	libFolder = "Python37"
+
+sys.path.insert(0, os.path.join(pandoraRoot, "PythonLibs", "Python3"))
+sys.path.insert(0, os.path.join(pandoraRoot, "PythonLibs", libFolder).replace("\\", "/"))
+sys.path.insert(0, os.path.join(pandoraRoot, "Scripts"))
+
+try:
+	from PySide2.QtCore import *
+	from PySide2.QtGui import *
+	from PySide2.QtWidgets import *
+except:
+	if not bpy.app.background:
+		import platform, subprocess
+		dScript = os.path.join(pandoraRoot, "Plugins", "Apps", "Blender", "Scripts", "Download_PySide2.py")
+
+		if platform.system() == "Windows":
+			pythonPath = os.path.join(pandoraRoot, "Python27", "pythonw.exe")
+		else:
+			pythonPath = "python"
+
+		result = subprocess.Popen([pythonPath, dScript, libFolder], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+		stdOutData, stderrdata = result.communicate()
+
+		import site, importlib
+		importlib.reload(site)
+
+		from PySide2.QtCore import *
+		from PySide2.QtGui import *
+		from PySide2.QtWidgets import *
 
 from bpy.app.handlers import persistent
+
 
 def pandoraInit():
 	import PandoraCore
@@ -74,13 +103,16 @@ class PandoraSettings(bpy.types.Operator):
 		Pandora.openSettings()
 		return {'FINISHED'}
 
+if bpy.app.version < (2,80,0):
+	Region = "TOOLS"
+else:
+	Region = "UI"
 
 class PandoraPanel(bpy.types.Panel):
 	bl_label = "Pandora Tools"
 	bl_idname = "pandoraToolsPanel"
 	bl_space_type = 'VIEW_3D'
-	bl_region_type = 'TOOLS'
-	bl_context = "objectmode"
+	bl_region_type = Region
 	bl_category = "Pandora"
 
 	def draw(self, context):
@@ -104,11 +136,16 @@ def register():
 		qapp = QApplication.instance()
 		if qapp == None:
 			qapp = QApplication(sys.argv)
-			
-		with (open(os.path.join(pandoraRoot, "Plugins", "Apps", "Blender", "UserInterfaces", "BlenderStyleSheet", "Blender.qss"), "r")) as ssFile:
+
+		if bpy.app.version < (2,80,0):
+			qssFile = os.path.join(pandoraRoot, "Plugins", "Apps", "Blender", "UserInterfaces", "BlenderStyleSheet", "Blender2.79.qss")
+		else:
+			qssFile = os.path.join(pandoraRoot, "Plugins", "Apps", "Blender", "UserInterfaces", "BlenderStyleSheet", "Blender2.8.qss")
+
+		with (open(qssFile, "r")) as ssFile:
 			ssheet = ssFile.read()
 
-		ssheet = ssheet.replace("qss:", os.path.join(pandoraRoot, "Plugins", "Apps", "Blender", "UserInterfaces", "BlenderStyleSheet").replace("\\", "/") + "/")
+		ssheet = ssheet.replace("qss:", os.path.dirname(qssFile).replace("\\", "/") + "/")
 		qapp.setStyleSheet(ssheet)
 		appIcon = QIcon(os.path.join(pandoraRoot, "Scripts", "UserInterfacesPandora", "pandora_tray.png"))
 		qapp.setWindowIcon(appIcon)

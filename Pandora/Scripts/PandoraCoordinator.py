@@ -11,7 +11,7 @@
 ####################################################
 #
 #
-# Copyright (C) 2016-2018 Richard Frangenberg
+# Copyright (C) 2016-2019 Richard Frangenberg
 #
 # Licensed under GNU GPL-3.0-or-later
 #
@@ -49,7 +49,7 @@ class PandoraCoordinator():
 
 	def __init__(self):
 		try:
-			self.version = "v1.0.2.0"
+			self.version = "v1.0.3.0"
 
 			self.coordUpdateTime = 5 #seconds
 			self.activeThres = 10 # time in min after a slave becomes inactive
@@ -135,10 +135,10 @@ class PandoraCoordinator():
 
 			self.slPath = os.path.abspath(os.path.join(self.coordBasePath, os.pardir, os.pardir))
 
-			self.coordLog = os.path.join(self.coordBasePath, "PandoraCoordinator_Log.txt")
-			self.coordConf = os.path.join(self.coordBasePath, "PandoraCoordinator_Settings.json")
+			self.coordLog = os.path.join(self.coordBasePath, "Coordinator_Log_%s.txt" % socket.gethostname())
+			self.coordConf = os.path.join(self.coordBasePath, "Coordinator_Settings.json")
 			self.actSlvPath = os.path.join(self.coordBasePath, "ActiveSlaves.json")
-			self.coordWarningsConf = os.path.join(self.coordBasePath, "PandoraCoordinator_Warnings.json")
+			self.coordWarningsConf = os.path.join(self.coordBasePath, "Coordinator_Warnings_%s.json" % socket.gethostname())
 
 			self.close = False
 			self.tvRequests = []
@@ -147,7 +147,7 @@ class PandoraCoordinator():
 			self.collectTasks = {}
 			self.jobDirs = []
 
-			self.writeLog("starting Coordinator - %s" % self.version, 1)
+			self.writeLog("starting Coordinator - %s - %s" % (self.version, socket.gethostname()), 1)
 
 			repConf = self.getConfig("settings", "repository")
 
@@ -214,7 +214,7 @@ class PandoraCoordinator():
 				return func(*args, **kwargs)
 			except Exception,e:
 				exc_type, exc_obj, exc_tb = sys.exc_info()
-				erStr = ("%s ERROR - PandoraCoordinator:\n%s\n\n%s" % (time.strftime("%d/%m/%y %X"), ''.join(traceback.format_stack()), traceback.format_exc()))
+				erStr = ("%s ERROR - Coordinator:\n%s\n\n%s" % (time.strftime("%d/%m/%y %X"), ''.join(traceback.format_stack()), traceback.format_exc()))
 				args[0].writeLog(erStr, 3)
 
 		return func_wrapper
@@ -228,7 +228,7 @@ class PandoraCoordinator():
 				if not os.path.exists(os.path.dirname(self.coordLog)):
 					os.makedirs(os.path.dirname(self.coordLog))
 			except:
-				logPath = os.path.join(os.path.dirname(__file__), "PandoraCoordinator_Log.txt")
+				logPath = os.path.join(os.path.dirname(__file__), "Coordinator_Log_%s.txt" % socket.gethostname())
 		else:
 			logPath = self.coordLog
 
@@ -1736,7 +1736,7 @@ class PandoraCoordinator():
 				self.writeLog("ERROR -- could not create log folder %s -- %s\n%s\n%s" % (logDir), 3)
 				return
 
-		self.copyLogs([self.coordLog, self.coordConf, self.actSlvPath, self.coordWarningsConf], os.path.join(logDir, "PandoraCoordinator"))
+		self.copyLogs([self.coordLog, self.coordConf, self.actSlvPath, self.coordWarningsConf], os.path.join(logDir, "Coordinator"))
 
 		filesToCopy = []
 		for jobDir in self.jobDirs:
@@ -1826,7 +1826,9 @@ class PandoraCoordinator():
 		baseNames = [os.path.basename(x) for x in files if os.path.exists(x)]
 		for i in os.listdir(target):
 			if i not in baseNames and os.path.splitext(i)[0] not in jobNames:
-				os.remove(os.path.join(target,i))
+				lpath = os.path.join(target,i)
+				os.remove(lpath)
+				self.writeLog("removed log: %s" % lpath)
 
 
 

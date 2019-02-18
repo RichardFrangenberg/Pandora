@@ -11,7 +11,7 @@
 ####################################################
 #
 #
-# Copyright (C) 2016-2018 Richard Frangenberg
+# Copyright (C) 2016-2019 Richard Frangenberg
 #
 # Licensed under GNU GPL-3.0-or-later
 #
@@ -106,6 +106,7 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 				QMessageBox.warning(self,"Warning", "No Pandora submission folder specified in the Pandora config")
 
 			self.logDir = os.path.join(os.path.dirname(os.path.dirname(self.sourceDir)), "Logs")
+			self.cacheBase = os.path.join(os.path.dirname(self.core.configPath), "temp", "RenderHandler_cache")
 
 			self.writeSettings = True
 
@@ -115,6 +116,7 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 			self.connectEvents()
 			self.updateJobs()
 			self.updateSlaves()
+			self.refreshLastContactTime()
 			self.loadLayout(preUpdate=False)
 			self.showCoord()
 			self.checkCoordConnected()
@@ -451,7 +453,7 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 		updateCoord = True
 
 		try:
-			fparent = qApp.focusWidget().parent().parent()
+			fparent = QApplication.focusWidget().parent().parent()
 			if fparent == self.tw_jobSettings:
 				updateJobs = False
 			elif fparent == self.tw_slaveSettings:
@@ -507,6 +509,9 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 
 		self.te_slaveLog.verticalScrollBar().setValue(sLogSliderPos)
 
+		self.refreshLastContactTime()
+		self.clearCache()
+
 		self.statusBar().clearMessage()
 		self.checkCoordConnected()
 		self.seconds = self.refreshPeriod
@@ -536,6 +541,9 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 			for i in os.listdir(jobDir):
 				settingsPath = os.path.join(jobDir,i)
 				if not (os.path.isfile(settingsPath) and i.endswith(".json")):
+					continue
+
+				if self.getConfig(configPath=settingsPath, getConf=True, silent=True) == "Error":
 					continue
 
 				rc = self.tw_jobs.rowCount()
@@ -568,7 +576,7 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 
 		rowColorStyle = "ready"
 
-		jsconfig = self.core.getConfig(configPath=jobPath, getConf=True)
+		jsconfig = self.getConfig(configPath=jobPath, getConf=True)
 		jcData = {}
 		jcData["priority"] = ['jobglobals', "priority"]
 		jcData["frameRange"] = ['information', "frameRange"]
@@ -576,7 +584,7 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 		jcData["projectName"] = ['information', "projectName"]
 		jcData["userName"] = ['information', "userName"]
 		jcData["program"] = ['information', "program"]
-		jcData = self.core.getConfig(configPath=jobPath, data=jcData)
+		jcData = self.getConfig(configPath=jobPath, data=jcData)
 
 		if "jobtasks" in jsconfig:
 			finNum = 0
@@ -679,10 +687,10 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 		slaveDir = os.path.join(self.logDir, "Slaves")
 
 		activeSlaves = {}
-		actSlvPath = os.path.join(self.logDir, "PandoraCoordinator", "ActiveSlaves.json")
+		actSlvPath = os.path.join(self.logDir, "Coordinator", "ActiveSlaves.json")
 
 		if os.path.exists(actSlvPath):
-			activeSlaves = self.core.getConfig(configPath=actSlvPath, getConf=True)
+			activeSlaves = self.getConfig(configPath=actSlvPath, getConf=True)
 
 		if os.path.isdir(slaveDir):
 			corruptSlaves = []
@@ -707,7 +715,7 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 							scData["cpucount"] = ['slaveinfo', "cpucount"]
 							scData["ram"] = ['slaveinfo', "ram"]
 							scData["slaveScriptVersion"] = ['slaveinfo', "slaveScriptVersion"]
-							scData = self.core.getConfig(configPath=slaveSettingsPath, data=scData)
+							scData = self.getConfig(configPath=slaveSettingsPath, data=scData)
 
 							if scData["status"] is not None:
 								slaveStatus = scData["status"]
@@ -736,8 +744,11 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 								self.tw_slaves.setItem(rc, 8, slaveVersion)
 
 						if os.path.exists(slaveWarningsPath):
-							options = self.core.getConfig(cat="warnings", configPath=slaveWarningsPath, getOptions=True)
-							numWarns = len(options)
+							options = self.getConfig(cat="warnings", configPath=slaveWarningsPath, getOptions=True, silent=True)
+							if options == "Error":
+								numWarns = options
+							else:
+								numWarns = len(options)
 							warns = QTableWidgetItem(str(numWarns))
 							self.tw_slaves.setItem(rc, 4, warns)
 
@@ -823,7 +834,7 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 		jobName = self.tw_jobs.item(self.tw_jobs.currentRow(),0).text()
 		jobConf = os.path.join(self.logDir, "Jobs", "%s.json" % jobName)
 
-		jconfig = self.core.getConfig(configPath=jobConf, getConf=True)
+		jconfig = self.getConfig(configPath=jobConf, getConf=True)
 
 		if "jobtasks" in jconfig:
 			for idx, i in enumerate(sorted(jconfig["jobtasks"])):
@@ -902,7 +913,7 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 			settingsPath = self.tw_jobs.item(self.tw_jobs.currentRow(),9).text()
 
 			if os.path.exists(settingsPath):
-				jsConfig = self.core.getConfig(configPath=settingsPath, getConf=True)
+				jsConfig = self.getConfig(configPath=settingsPath, getConf=True)
 
 				if "jobglobals" in jsConfig:
 					for i in jsConfig["jobglobals"]:
@@ -970,7 +981,13 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 			settingName = QTableWidgetItem(i[0])
 			settingName.setFlags(settingName.flags() ^ Qt.ItemIsEditable)
 			self.tw_jobSettings.setItem(rc, 0, settingName)
-			settingVal = QTableWidgetItem(str(i[1]))
+			try:
+				strVal = str(i[1])
+			except UnicodeEncodeError:
+				strVal = ""
+				QMessageBox.warning(self, "Pandora", "Cannot read jobsettings because it contains illegal characters:\n\n%s" % (unicode(i[1])), QMessageBox.Ok)
+
+			settingVal = QTableWidgetItem(strVal)
 			settingVal.setFlags(settingVal.flags() ^ Qt.ItemIsEditable)
 			self.tw_jobSettings.setItem(rc, 1, settingVal)
 		
@@ -992,7 +1009,7 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 
 			settingsPath = self.tw_slaves.item(self.tw_slaves.currentRow(), 7).text().replace("slaveLog_", "slaveSettings_")[:-3] + "json"
 			if os.path.exists(settingsPath):
-				ssconfig = self.core.getConfig(configPath=settingsPath, getConf=True)
+				ssconfig = self.getConfig(configPath=settingsPath, getConf=True)
 
 				if "settings" in ssconfig:
 					for i in ssconfig["settings"]:
@@ -1082,9 +1099,9 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 	def updateCoordSettings(self):
 		self.tw_coordSettings.setRowCount(0)
 		coordSettings = []
-		settingsPath = os.path.join(self.logDir, "PandoraCoordinator", "PandoraCoordinator_Settings.json")
+		settingsPath = os.path.join(self.logDir, "Coordinator", "Coordinator_Settings.json")
 		if os.path.exists(settingsPath):
-			ssconfig = self.core.getConfig(configPath=settingsPath, getConf=True)
+			ssconfig = self.getConfig(configPath=settingsPath, getConf=True)
 
 			if "settings" in ssconfig:
 				for i in ssconfig["settings"]:
@@ -1148,7 +1165,15 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 
 			warningsPath = self.tw_slaves.item(self.tw_slaves.currentRow(), 7).text().replace("slaveLog_", "slaveWarnings_")[:-3] + "json"
 			if os.path.exists(warningsPath):
-				swconfig = self.core.getConfig(configPath=warningsPath, getConf=True)
+				swconfig = self.getConfig(configPath=warningsPath, getConf=True, silent=True)
+
+				if swconfig == "Error":
+					rc = self.tw_slaveWarnings.rowCount()
+					self.tw_slaveWarnings.insertRow(rc)
+					item = QTableWidgetItem("Unable to read:")
+					self.tw_slaveWarnings.setItem(rc, 0, item)
+					item = QTableWidgetItem(warningsPath)
+					self.tw_slaveWarnings.setItem(rc, 1, item)
 
 				if "warnings" in swconfig:
 					for i in swconfig["warnings"]:
@@ -1194,9 +1219,14 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 		self.tw_coordWarnings.setRowCount(0)
 		coordWarns = []
 
-		warningsPath = os.path.join(self.logDir, "PandoraCoordinator", "PandoraCoordinator_Warnings.json")
+		warnDir = os.path.join(self.logDir, "Coordinator")
+		if not os.path.exists(warnDir):
+			return
+
+		warningsPath = self.getCoordWarnPath()
+
 		if os.path.exists(warningsPath):
-			wconfig = self.core.getConfig(configPath=warningsPath, getConf=True)
+			wconfig = self.getConfig(configPath=warningsPath, getConf=True)
 
 			if "warnings" in wconfig:
 				for i in wconfig["warnings"]:
@@ -1250,7 +1280,7 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 			section = "jobglobals"
 			settingsPath = self.tw_jobs.item(self.tw_jobs.currentRow(), 9).text()
 
-			jcode = self.core.getConfig("information", "jobcode", configPath=settingsPath)
+			jcode = self.getConfig("information", "jobcode", configPath=settingsPath)
 
 			if jcode is not None:
 				parentName = jcode
@@ -1282,7 +1312,7 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 			settingType = "Coordinator"
 			section = "settings"
 			parentName = ""
-			settingsPath = os.path.join(self.logDir, "PandoraCoordinator", "PandoraCoordinator_Settings.json")
+			settingsPath = os.path.join(self.logDir, "Coordinator", "Coordinator_Settings.json")
 			if settingName in ["coordUpdateTime"]:
 				settingVal = widget.value()
 			elif settingName in ["debugMode", "restartGDrive"]:
@@ -1295,17 +1325,61 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 
 		cmd = ["setSetting", settingType, parentName, settingName, settingVal]
 
-		val = self.core.getConfig(section, cmd[3], configPath=settingsPath)
+		val = self.getConfig(section, cmd[3], configPath=settingsPath)
 		if val == settingVal:
 			return
 
 		self.writeCmd(cmd)
 
 		if settingsPath is not None and os.path.exists(settingsPath):
-			self.core.setConfig(section, settingName, settingVal, configPath=settingsPath)
+			self.modifyConfig(section, settingName, settingVal, configPath=settingsPath)
 
 			if section == "jobglobals" and settingName == "priority":
 				self.updateJobData(self.tw_jobs.currentRow())
+
+
+	@err_decorator
+	def modifyConfig(self, cat=None, param=None, val=None, data=None, configPath=None, delete=False, confData=None, clear=False):
+		if configPath is None:
+			cachePath = None
+		else:
+			cachePath = os.path.join(self.cacheBase, os.path.basename(os.path.dirname(configPath)), os.path.basename(configPath))
+			if not os.path.exists(os.path.dirname(cachePath)):
+				try:
+					os.makedirs(os.path.dirname(cachePath))
+				except:
+					return
+
+			if not os.path.exists(cachePath):
+				shutil.copy2(configPath, cachePath)
+
+		if clear:
+			try:
+				open(cachePath, 'w').close()
+			except:
+				pass
+		else:
+			self.core.setConfig(cat=cat, param=param, val=val, data=data, configPath=cachePath, delete=delete, confData=confData)
+
+
+	@err_decorator
+	def getConfig(self, cat=None, param=None, data=None, configPath=None, getOptions=False, getItems=False, getConf=False, silent=False, readlines=False):
+		cachePath = configPath
+		if configPath is not None and configPath.replace("/", "\\").startswith(self.logDir.replace("/", "\\")):
+			cPath = configPath.replace("/", "\\").replace(self.logDir.replace("/", "\\"), self.cacheBase)
+			if os.path.exists(cPath):
+				cachePath = cPath
+
+		if readlines:
+			with io.open(cachePath, 'r', encoding='utf-16') as logFile:
+				try:
+					logLines = logFile.readlines()
+				except:
+					logLines = []
+
+			return logLines
+		else:
+			return self.core.getConfig(cat=cat, param=param, data=data, configPath=cachePath, getOptions=getOptions, getItems=getItems, getConf=getConf, silent=silent)
 
 
 	@err_decorator
@@ -1409,7 +1483,7 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 					slaveSettingsPath = pItem.text().replace("slaveLog_", "slaveSettings_")[:-3] + "json"
 
 					if os.path.exists(slaveSettingsPath):
-						val = self.core.getConfig("settings", "slaveGroup", configPath=slaveSettingsPath)
+						val = self.getConfig("settings", "slaveGroup", configPath=slaveSettingsPath)
 
 						if val is not None:
 							try:
@@ -1466,11 +1540,7 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 			if os.path.exists(logPath):
 				try:
 					lvl = self.sp_slaveFilter.value()
-					with io.open(logPath, 'r', encoding='utf-16') as logFile:
-						try:
-							logLines = logFile.readlines()
-						except:
-							logLines = []
+					logLines = self.getConfig(configPath=logPath, readlines=True)
 
 					if self.sp_logLimit.value() == 0 or self.sp_logLimit.value() > len(logLines):
 						limit = len(logLines)
@@ -1499,16 +1569,13 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 
 		logData = ""
 		self.l_slaveLogSize.setText("")
-		logPath = os.path.join(self.logDir, "PandoraCoordinator", "PandoraCoordinator_Log.txt")
+
+		logPath = self.getCoordLogPath()
 
 		if os.path.exists(logPath):
-			with io.open(logPath, 'r', encoding='utf-16') as logFile:
-				lvl = self.sp_coordFilter.value()
-				try:
-					logLines = logFile.readlines()
-				except:
-					logLines = []
+			logLines = self.getConfig(configPath=logPath, readlines=True)
 
+			lvl = self.sp_coordFilter.value()
 			if self.sp_logLimit.value() == 0 or self.sp_logLimit.value() > len(logLines):
 				limit = len(logLines)
 			else:
@@ -1531,6 +1598,38 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 
 
 	@err_decorator
+	def getCoordLogPath(self):
+		logDir = os.path.join(self.logDir, "Coordinator")
+		if not os.path.exists(logDir):
+			return ""
+
+		for i in os.listdir(logDir):
+			if i.startswith("Coordinator_Log_") and i.endswith(".txt"):
+				logPath = os.path.join(logDir, i)
+				break
+		else:
+			return ""
+
+		return logPath
+
+
+	@err_decorator
+	def getCoordWarnPath(self):
+		warnDir = os.path.join(self.logDir, "Coordinator")
+		if not os.path.exists(warnDir):
+			return ""
+
+		for i in os.listdir(warnDir):
+			if i.startswith("Coordinator_Warnings_") and i.endswith(".json"):
+				warningsPath = os.path.join(warnDir, i)
+				break
+		else:
+			return ""
+
+		return warningsPath
+
+
+	@err_decorator
 	def colorLogLine(self, textLine, level=0):
 		if len(textLine) > 2 and textLine[0] == "[" and textLine[2] == "]" and int(textLine[1]) in range(1,4):
 			level = int(textLine[1])
@@ -1548,8 +1647,51 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 
 
 	@err_decorator
+	def clearCache(self):
+		if not os.path.exists(self.cacheBase):
+			return
+
+		delFiles = []
+
+		for i in os.walk(self.cacheBase):
+			for f in i[2]:
+				fpath = os.path.join(i[0], f)
+				sourcePath = fpath.replace(self.cacheBase, self.logDir)
+
+				ftime = os.path.getmtime(fpath)
+
+				if not os.path.exists(sourcePath):
+					delFiles.append(fpath)
+					continue
+
+				stime = os.path.getmtime(sourcePath)
+
+				if (time.time() - ftime ) > 10 and stime > ftime:
+					delFiles.append(fpath)
+					continue
+
+				if (time.time() - ftime) > 60*15 and self.lastContactTime < 5:
+					delFiles.append(fpath)
+					continue
+
+		for i in delFiles:
+			try:
+				os.remove(fpath)
+			except:
+				pass
+
+
+	@err_decorator
 	def checkCoordConnected(self):
-		cPath = os.path.join(self.logDir, "PandoraCoordinator", "ActiveSlaves.json")
+		if self.lastContactTime > 5:
+			self.statusLabel.setText("NOT CONNECTED")
+		else:
+			self.statusLabel.setText("")
+
+
+	@err_decorator
+	def refreshLastContactTime(self):
+		cPath = os.path.join(self.logDir, "Coordinator", "ActiveSlaves.json")
 
 		if os.path.exists(cPath):
 			file_mod_time = os.stat(cPath).st_mtime
@@ -1557,10 +1699,7 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 		else:
 			last_timeMin = 999
 
-		if last_timeMin > 5:
-			self.statusLabel.setText("NOT CONNECTED")
-		else:
-			self.statusLabel.setText("")
+		self.lastContactTime = last_timeMin
 
 
 	@err_decorator
@@ -1568,23 +1707,23 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 		rcmenu = QMenu()
 
 		if listType == "cl":
-			coordLog = lambda: self.core.openFile(os.path.join(self.logDir, "PandoraCoordinator", "PandoraCoordinator_Log.txt"))
+			coordLog = lambda: self.core.openFile(self.getCoordLogPath())
 			logAct = QAction("Open Log", self)
 			logAct.triggered.connect(coordLog)
 			rcmenu.addAction(logAct)
 			clearLogAct = QAction("Clear Log", self)
 			clearLogAct.triggered.connect(lambda: self.clearLog(coord=True))
 			rcmenu.addAction(clearLogAct)
-			coordFolder = lambda: self.core.openFile(os.path.join(self.logDir, "PandoraCoordinator"))
+			coordFolder = lambda: self.core.openFile(os.path.join(self.logDir, "Coordinator"))
 			folderAct = QAction("Open Folder", self)
 			folderAct.triggered.connect(coordFolder)
 			rcmenu.addAction(folderAct)
 		elif listType == "cs":
-			coordSettings = lambda: self.core.openFile(os.path.join(self.logDir, "PandoraCoordinator", "PandoraCoordinator_Settings.json"))
+			coordSettings = lambda: self.core.openFile(os.path.join(self.logDir, "Coordinator", "Coordinator_Settings.json"))
 			fileAct = QAction("Open Settings", self)
 			fileAct.triggered.connect(coordSettings)
 			rcmenu.addAction(fileAct)
-			coordFolder = lambda: self.core.openFile(os.path.join(self.logDir, "PandoraCoordinator"))
+			coordFolder = lambda: self.core.openFile(os.path.join(self.logDir, "Coordinator"))
 			folderAct = QAction("Open Folder", self)
 			folderAct.triggered.connect(coordFolder)
 			rcmenu.addAction(folderAct)
@@ -1651,46 +1790,46 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 				fileAct.setEnabled(len(selJobs) == 1)
 				rcmenu.addAction(fileAct)
 
-				outAct = QAction("Open Output", self)
-
 				jConfPath = self.tw_jobs.item(self.tw_jobs.currentRow(),9).text()
-				outpath = self.core.getConfig("information", "outputPath", configPath=jConfPath)
+				outpath = self.getConfig("information", "outputPath", configPath=jConfPath)
 
-				if os.path.splitext(os.path.basename(outpath))[1] != "":
-					outpath = os.path.dirname(outpath)
+				if outpath is not None:
+					outAct = QAction("Open Output", self)
+					if os.path.splitext(os.path.basename(outpath))[1] != "":
+						outpath = os.path.dirname(outpath)
 
-				if os.path.basename(outpath) == "beauty":
-					outpath = os.path.dirname(outpath)
+					if os.path.basename(outpath) == "beauty":
+						outpath = os.path.dirname(outpath)
 
-				projectName = self.core.getConfig("information", "projectName", configPath=jConfPath)
+					projectName = self.getConfig("information", "projectName", configPath=jConfPath)
 
-				if not self.localMode:
-					outpath = os.path.join(os.path.dirname(os.path.dirname(self.sourceDir)), outpath[outpath.find("\\%s\\" % projectName)+1:])
+					if not self.localMode:
+						outpath = os.path.join(os.path.dirname(os.path.dirname(self.sourceDir)), outpath[outpath.find("\\%s\\" % projectName)+1:])
 
-				if os.path.exists(outpath) and len(selJobs) == 1:
-					for i in os.walk(outpath):
-						dirs = i[1]
-						if len(dirs) == 1:
-							outpath = os.path.join(outpath, dirs[0])
-						else:
-							break
-						
-					outAct.triggered.connect(lambda: self.core.openFile(outpath))
-				else:
-					outAct.setEnabled(False)
-				rcmenu.addAction(outAct)
+					if os.path.exists(outpath) and len(selJobs) == 1:
+						for i in os.walk(outpath):
+							dirs = i[1]
+							if len(dirs) == 1:
+								outpath = os.path.join(outpath, dirs[0])
+							else:
+								break
+							
+						outAct.triggered.connect(lambda: self.core.openFile(outpath))
+					else:
+						outAct.setEnabled(False)
+					rcmenu.addAction(outAct)
 
-				rvAct = QAction("Play beauty in RV", self)
+					rvAct = QAction("Play beauty in RV", self)
 
-				beautyPath = outpath
-				if os.path.exists(os.path.join(outpath, "beauty")):
-					beautyPath = os.path.join(outpath, "beauty")
+					beautyPath = outpath
+					if os.path.exists(os.path.join(outpath, "beauty")):
+						beautyPath = os.path.join(outpath, "beauty")
 
-				rvAct.triggered.connect(lambda: self.playRV(beautyPath))
-				if len(selJobs) != 1 or not os.path.exists(beautyPath) or len(os.listdir(beautyPath)) == 0 or self.rv is None:
-					rvAct.setEnabled(False)
+					rvAct.triggered.connect(lambda: self.playRV(beautyPath))
+					if len(selJobs) != 1 or not os.path.exists(beautyPath) or len(os.listdir(beautyPath)) == 0 or self.rv is None:
+						rvAct.setEnabled(False)
 
-				rcmenu.addAction(rvAct)
+					rcmenu.addAction(rvAct)
 
 			elif listType == "tl":
 				tasks = {}
@@ -1845,14 +1984,14 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 			text = self.tw_slaveWarnings.item(row, 1).text()
 
 		elif warnType == "Coordinator":
-			warningsPath = os.path.join(self.logDir, "PandoraCoordinator", "PandoraCoordinator_Warnings.json")
+			warningsPath = self.getCoordWarnPath()
 			if not os.path.exists(warningsPath):
 				return
 
 			text = self.tw_coordWarnings.item(row, 1).text()
 
 		warnNum = "warning" + str(row)
-		warnData = self.core.getConfig(configPath=warningsPath, getConf=True)
+		warnData = self.getConfig(configPath=warningsPath, getConf=True)
 		warnVal = []
 		for i in warnData["warnings"]:
 			if str(warnData["warnings"][i][0]) == str(text):
@@ -1877,7 +2016,7 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 		if result == 0:
 			self.writeCmd(["deleteWarning", warnType, curSlave, warnVal[0], warnVal[1]])
 
-			warns = self.core.getConfig("warnings", configPath=warningsPath, getItems=True)
+			warns = self.getConfig("warnings", configPath=warningsPath, getItems=True)
 
 			warnings = []
 			for i in sorted(warns.values()):
@@ -1889,13 +2028,13 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 			for i in warns:
 				cData.append(["warnings", i, ""])
 
-			self.core.setConfig(configPath=warningsPath, data=cData, delete=True)
+			self.modifyConfig(configPath=warningsPath, data=cData, delete=True)
 
 			cData = []
 			for idx, val in enumerate(warnings):
 				cData.append(["warnings", "warning%s" % idx, val])
 
-			self.core.setConfig(data=cData, configPath=warningsPath)
+			self.modifyConfig(data=cData, configPath=warningsPath)
 
 			if warnType == "Slave":
 				self.updateSlaveWarnings()
@@ -1918,7 +2057,7 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 				return
 
 		elif warnType == "Coordinator":
-			warningsPath = os.path.join(self.logDir, "PandoraCoordinator", "PandoraCoordinator_Warnings.json")
+			warningsPath = self.getCoordWarnPath()
 			if not os.path.exists(warningsPath):
 				return
 
@@ -1942,7 +2081,7 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 				"warnings": {}
 			}
 
-			self.core.setConfig(configPath=warningsPath, confData=warningConfig)
+			self.modifyConfig(configPath=warningsPath, confData=warningConfig)
 
 			if warnType == "Slave":
 				self.updateSlaveWarnings()
@@ -1965,14 +2104,14 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 				return
 
 		elif warnType == "Coordinator":
-			warningsPath = os.path.join(self.logDir, "PandoraCoordinator", "PandoraCoordinator_Warnings.json")
+			warningsPath = self.getCoordWarnPath()
 			if not os.path.exists(warningsPath):
 				return
 
 
 		text = item.text()
 		warnNum = "warning" + str(item.row())
-		warnData = self.core.getConfig(configPath=warningsPath, getConf=True)
+		warnData = self.getConfig(configPath=warningsPath, getConf=True)
 		warnVal = []
 		for i in warnData["warnings"]:
 			if str(warnData["warnings"][i][0]) == str(text):
@@ -2003,7 +2142,7 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 		if coord:
 			logType = "Coordinator"
 			logName = ""
-			logPath = os.path.join(self.logDir, "PandoraCoordinator", "PandoraCoordinator_Log.txt")
+			logPath = self.getCoordLogPath()
 			refresh = self.updateCoordLog
 		else:
 			logType = "Slave"
@@ -2019,10 +2158,7 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 
 		self.writeCmd(["clearLog", logType, logName])
 
-		try:
-			open(logPath, 'w').close()
-		except:
-			pass
+		self.modifyConfig(configPath=logPath, clear=True)
 
 		refresh()
 
@@ -2038,7 +2174,7 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 		for curJobName in selJobs:
 			jobConf = os.path.join(self.logDir, "Jobs", "%s.json" % curJobName)
 
-			jCode = self.core.getConfig("information", "jobcode", configPath=jobConf)
+			jCode = self.getConfig("information", "jobcode", configPath=jobConf)
 
 			if jCode is not None:
 				jobCode = jCode
@@ -2068,7 +2204,7 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 			for curJobName in selJobs:
 				jobConf = os.path.join(self.logDir, "Jobs", "%s.json" % curJobName)
 
-				jCode = self.core.getConfig("information", "jobcode", configPath=jobConf)
+				jCode = self.getConfig("information", "jobcode", configPath=jobConf)
 
 				if jCode is not None:
 					jobCode = jCode
@@ -2077,11 +2213,7 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 
 				self.writeCmd(["deleteJob", jobCode])
 
-				if os.path.exists(jobConf):
-					try:
-						os.remove(jobConf)
-					except:
-						pass
+				self.modifyConfig(configPath=jobConf, clear=True)
 
 			self.updateJobs()
 
@@ -2096,7 +2228,7 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 				if jobName not in selJobNames:
 					selJobNames.append(jobName)
 					jobConf = os.path.join(self.logDir, "Jobs", "%s.json" % jobName)
-					jobTasks = [int(x[4:]) for x in self.core.getConfig("jobtasks", getOptions=True, configPath=jobConf)]
+					jobTasks = [int(x[4:]) for x in self.getConfig("jobtasks", getOptions=True, configPath=jobConf)]
 					taskItems.append([jobName, jobTasks, i.row()])
 		else:
 			taskItems = [[self.tw_jobs.item(job,0).text(), tasks, self.tw_jobs.currentRow()]]
@@ -2104,7 +2236,7 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 		for jobName, tasks, jobRow in taskItems:
 			jobConf = os.path.join(self.logDir, "Jobs", "%s.json" % jobName)
 
-			jCode = self.core.getConfig("information", "jobcode", configPath=jobConf)
+			jCode = self.getConfig("information", "jobcode", configPath=jobConf)
 
 			if jCode is not None:
 				jobCode = jCode
@@ -2115,7 +2247,7 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 
 			for i in tasks:
 				self.writeCmd(["restartTask", jobCode, i])
-				taskData = self.core.getConfig("jobtasks", "task%04d" % i, configPath=jobConf)
+				taskData = self.getConfig("jobtasks", "task%04d" % i, configPath=jobConf)
 				if taskData is not None:
 					taskData[2] = "ready"
 					taskData[3] = "unassigned"
@@ -2124,7 +2256,7 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 					taskData[6] = ""
 					cData.append(["jobtasks", "task%04d" % i, taskData])
 
-			self.core.setConfig(configPath=jobConf, data=cData)
+			self.modifyConfig(configPath=jobConf, data=cData)
 			self.updateJobData(jobRow)
 	
 		self.updateTaskList()
@@ -2140,7 +2272,7 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 				if jobName not in selJobNames:
 					selJobNames.append(jobName)
 					jobConf = os.path.join(self.logDir, "Jobs", "%s.json" % jobName)
-					jobTasks = [int(x[4:]) for x in self.core.getConfig("jobtasks", getOptions=True, configPath=jobConf)]
+					jobTasks = [int(x[4:]) for x in self.getConfig("jobtasks", getOptions=True, configPath=jobConf)]
 					taskItems.append([jobName, jobTasks, i.row()])
 		else:
 			taskItems = [[self.tw_jobs.item(job,0).text(), tasks, self.tw_jobs.currentRow()]]
@@ -2148,7 +2280,7 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 		for jobName, tasks, jobRow in taskItems:
 			jobConf = os.path.join(self.logDir, "Jobs", "%s.json" % jobName)
 
-			jCode = self.core.getConfig("information", "jobcode", configPath=jobConf)
+			jCode = self.getConfig("information", "jobcode", configPath=jobConf)
 
 			if jCode is not None:
 				jobCode = jCode
@@ -2160,7 +2292,7 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 			for i in tasks:
 				self.writeCmd(["disableTask", jobCode, i, enable])
 
-				taskData = self.core.getConfig("jobtasks", "task%04d" % i, configPath=jobConf)
+				taskData = self.getConfig("jobtasks", "task%04d" % i, configPath=jobConf)
 				if taskData is not None:
 					if (taskData[2] in ["ready", "rendering", "assigned"] and not enable) or (taskData[2] == "disabled" and enable):
 						if enable:
@@ -2171,7 +2303,7 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 							taskData[3] = "unassigned"
 						cData.append(["jobtasks", "task%04d" % i, taskData])
 
-			self.core.setConfig(configPath=jobConf, data=cData)
+			self.modifyConfig(configPath=jobConf, data=cData)
 			self.updateJobData(jobRow)
 
 		self.updateTaskList()
