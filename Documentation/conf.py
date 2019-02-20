@@ -20,13 +20,13 @@
 # -- Project information -----------------------------------------------------
 
 project = u'Pandora'
-copyright = u'2018, Richard Frangenberg'
+copyright = u'2018-2019, Richard Frangenberg'
 author = u'Richard Frangenberg'
 
 # The short X.Y version
 version = u''
 # The full version, including alpha/beta/rc tags
-release = u'1.0.0'
+release = u'1.0.3'
 
 
 # -- General configuration ---------------------------------------------------
