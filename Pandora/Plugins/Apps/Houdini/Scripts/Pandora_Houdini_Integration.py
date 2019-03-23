@@ -58,13 +58,13 @@ class Pandora_Houdini_Integration(object):
 		self.core = core
 		self.plugin = plugin
 
+		self.examplePath = ""
 		if platform.system() == "Windows":
-			self.examplePath = os.environ["userprofile"] + "\\Documents\\houdini17.0"
-			if not os.path.exists(self.examplePath):
-				for i in ["17.5", "17.0", "16.5", "16.0"]:
-					path = os.environ["userprofile"] + "\\Documents\\houdini" + i
-					if os.path.exists(path):
-						self.examplePath = path
+			for i in ["17.5", "17.0", "16.5", "16.0"]:
+				path = os.environ["userprofile"] + "\\Documents\\houdini" + i
+				if os.path.exists(path):
+					self.examplePath = path
+					break
 
 
 	def err_decorator(func):

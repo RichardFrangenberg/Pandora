@@ -49,7 +49,7 @@ class PandoraCoordinator():
 
 	def __init__(self):
 		try:
-			self.version = "v1.0.3.0"
+			self.version = "v1.0.3.1"
 
 			self.coordUpdateTime = 5 #seconds
 			self.activeThres = 10 # time in min after a slave becomes inactive
@@ -212,7 +212,7 @@ class PandoraCoordinator():
 		def func_wrapper(*args, **kwargs):
 			try:
 				return func(*args, **kwargs)
-			except Exception,e:
+			except Exception as e:
 				exc_type, exc_obj, exc_tb = sys.exc_info()
 				erStr = ("%s ERROR - Coordinator:\n%s\n\n%s" % (time.strftime("%d/%m/%y %X"), ''.join(traceback.format_stack()), traceback.format_exc()))
 				args[0].writeLog(erStr, 3)
@@ -292,7 +292,7 @@ class PandoraCoordinator():
 			self.writeLog("checkCommands - execute: %s" % val, 1)
 			try:
 				exec(val)
-			except Exception,e:
+			except Exception as e:
 				exc_type, exc_obj, exc_tb = sys.exc_info()
 				self.writeLog("ERROR - checkCommands - %s - %s - %s" % (str(e), exc_type, exc_tb.tb_lineno), 3)
 
@@ -606,7 +606,7 @@ class PandoraCoordinator():
 			command = None
 			try:
 				command = eval(cmdText)
-			except Exception,e:
+			except Exception as e:
 				exc_type, exc_obj, exc_tb = sys.exc_info()
 				self.writeLog("ERROR -- handleCmd evalCmd -- %s\n%s\n%s\n%s\n%s" % (str(e), exc_type, exc_tb.tb_lineno, origin, cmdText), 3)
 
@@ -1075,7 +1075,7 @@ class PandoraCoordinator():
 					self.setConfig(jobCode, "priority", jobPrio, configPath=self.prioList)
 					self.writeLog("Job %s was added to the JobRepository from %s" % (jobName, wsName), 1)
 
-			except Exception,e:
+			except Exception as e:
 				exc_type, exc_obj, exc_tb = sys.exc_info()
 				self.writeLog("ERROR -- getJobAssignments -- %s\n%s\n%s" % (str(e), exc_type, exc_tb.tb_lineno), 3)
 
@@ -1128,7 +1128,7 @@ class PandoraCoordinator():
 							shutil.copy2(masterScriptPath, slaveScriptPath)
 							self.writeLog("updated Slave for %s" % slaveName, 1)
 
-					except Exception,e:
+					except Exception as e:
 						exc_type, exc_obj, exc_tb = sys.exc_info()
 						self.writeLog("ERROR -- checkSlaves mlp -- %s %s\n%s\n%s" % (slaveName, str(e), exc_type, exc_tb.tb_lineno), 3)
 
@@ -1153,7 +1153,7 @@ class PandoraCoordinator():
 							shutil.copy2(mhouJobPath, shouJobPath)
 							self.writeLog("updated houJobScript for %s" % slaveName, 1)
 
-					except Exception,e:
+					except Exception as e:
 						exc_type, exc_obj, exc_tb = sys.exc_info()
 						self.writeLog("ERROR -- checkSlaves mhp -- %s\n%s\n%s" % (str(e), exc_type, exc_tb.tb_lineno), 3)
 				else:
@@ -1173,7 +1173,7 @@ class PandoraCoordinator():
 					cmFile = os.path.join(slaveComPath, k)
 					self.handleCmd(cmFile, origin=slaveName)
 
-			except Exception,e:
+			except Exception as e:
 				exc_type, exc_obj, exc_tb = sys.exc_info()
 				self.writeLog("ERROR -- checkSlaves -- %s\n%s\n%s" % (str(e), exc_type, exc_tb.tb_lineno), 3)
 
@@ -1288,54 +1288,62 @@ class PandoraCoordinator():
 
 		if os.path.exists(jobBase):
 			for i in os.listdir(jobBase):
-				confPath = os.path.join(jobBase, i, "PandoraJob.json")
+				try:
+					confPath = os.path.join(jobBase, i, "PandoraJob.json")
 
-				if not os.path.exists(confPath):
-					continue
+					if not os.path.exists(confPath):
+						continue
 
-				jobConfig = self.getConfig(configPath=confPath, getConf=True)
+					jobConfig = self.getConfig(configPath=confPath, getConf=True)
 
-				for k in jobConfig["jobtasks"]:
-					taskData = jobConfig["jobtasks"][k]
-					if taskData[2] in ["assigned", "rendering"]:
-						try:
-							startTime = float(taskData[5])
-						except:
-							pass
-						else:
-							elapsedTime = (time.time()-startTime)/60.0
+					if "jobtasks" not in jobConfig:
+						self.writeWarning("Job config does not contain jobtasks: %s" % confPath, 2)
+						continue
 
-							taskTimedOut = False
-							if taskData[2] == "assigned":
-								if elapsedTime > 15:
-									taskTimedOut = True
+					for k in jobConfig["jobtasks"]:
+						taskData = jobConfig["jobtasks"][k]
+						if taskData[2] in ["assigned", "rendering"]:
+							try:
+								startTime = float(taskData[5])
+							except:
+								pass
+							else:
+								elapsedTime = (time.time()-startTime)/60.0
 
-							elif taskData[2] == "rendering":
-								if "taskTimeout" in jobConfig["jobglobals"]:
-									timeout = jobConfig["jobglobals"]["taskTimeout"]
-									if elapsedTime > timeout:
+								taskTimedOut = False
+								if taskData[2] == "assigned":
+									if elapsedTime > 15:
 										taskTimedOut = True
 
-							if "jobName" in jobConfig["information"]:
-								jName = jobConfig["information"]["jobName"]
-							else:
-								jName = ""
+								elif taskData[2] == "rendering":
+									if "taskTimeout" in jobConfig["jobglobals"]:
+										timeout = jobConfig["jobglobals"]["taskTimeout"]
+										if elapsedTime > timeout:
+											taskTimedOut = True
 
-							if taskTimedOut:
-								self.sendCommand(taskData[3], ["cancelTask", jName, i, k])
-								
-								taskData[2] = "ready"
-								taskData[3] = "unassigned"
-								taskData[4] = ""
-								taskData[5] = ""
-								taskData[6] = ""
-								self.setConfig("jobtasks", k, taskData, configPath=confPath)
+								if "jobName" in jobConfig["information"]:
+									jName = jobConfig["information"]["jobName"]
+								else:
+									jName = ""
 
-								self.writeLog("Timeout of %s from Job %s (%s min)" % (k, jName, elapsedTime), 1)
-								continue
+								if taskTimedOut:
+									self.sendCommand(taskData[3], ["cancelTask", jName, i, k])
+									
+									taskData[2] = "ready"
+									taskData[3] = "unassigned"
+									taskData[4] = ""
+									taskData[5] = ""
+									taskData[6] = ""
+									self.setConfig("jobtasks", k, taskData, configPath=confPath)
 
-						unavailableSlaves.append(taskData[3])
-						#self.writeLog("DEBUG - unavailable slaves: %s - %s" % (taskData[3],i))
+									self.writeLog("Timeout of %s from Job %s (%s min)" % (k, jName, elapsedTime), 1)
+									continue
+
+							unavailableSlaves.append(taskData[3])
+							#self.writeLog("DEBUG - unavailable slaves: %s - %s" % (taskData[3],i))
+				except Exception as e:
+					exc_type, exc_obj, exc_tb = sys.exc_info()
+					self.writeLog("ERROR - getAvailableSlaves - %s - %s - %s" % (str(e), exc_type, exc_tb.tb_lineno), 3)
 						
 		#self.writeLog("DEBUG - unavailable slaves: %s" % unavailableSlaves)
 
@@ -1353,7 +1361,7 @@ class PandoraCoordinator():
 
 				if slaveStatus == "idle":
 					self.availableSlaves.append(i)
-			except Exception,e:
+			except Exception as e:
 				exc_type, exc_obj, exc_tb = sys.exc_info()
 				self.writeLog("ERROR -- getAvailableSlaves -- %s -- %s\n%s\n%s" % (i, str(e), exc_type, exc_tb.tb_lineno), 3)
 
@@ -1575,7 +1583,7 @@ class PandoraCoordinator():
 				targetPath = os.path.join(self.slPath, "Workstations", "WS_%s" % i["workstation"],  "Screenshots")
 				try:
 					shutil.copy2(ssPath, targetPath)
-				except Exception,e:
+				except Exception as e:
 					exc_type, exc_obj, exc_tb = sys.exc_info()
 					self.writeLog("ERROR -- could not copy file %s -- %s\n%s\n%s" % (i, str(e), exc_type, exc_tb.tb_lineno), 3)
 
@@ -1783,7 +1791,7 @@ class PandoraCoordinator():
 		if not os.path.exists(target):
 			try:
 				os.makedirs(target)
-			except Exception,e:
+			except Exception as e:
 				exc_type, exc_obj, exc_tb = sys.exc_info()
 				self.writeLog("ERROR -- could not create folder %s -- %s\n%s\n%s" % (target, str(e), exc_type, exc_tb.tb_lineno), 3)
 
@@ -1821,7 +1829,7 @@ class PandoraCoordinator():
 					shutil.copy2(i, targetPath)
 				except Exception as e:
 					exc_type, exc_obj, exc_tb = sys.exc_info()
-					self.writeLog("ERROR -- could not copy file %s -- %s\n%s\n%s" % (i, str(e), exc_type, exc_tb.tb_lineno), 3)
+					self.writeLog("ERROR -- could not copy file %s -- %s\n%s\n%s" % (i, str(e), exc_type, exc_tb.tb_lineno), 2)
 
 		baseNames = [os.path.basename(x) for x in files if os.path.exists(x)]
 		for i in os.listdir(target):

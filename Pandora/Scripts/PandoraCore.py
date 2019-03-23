@@ -60,7 +60,7 @@ class PandoraCore():
 	def __init__(self, app="Standalone"):
 		try:
 			# set some general variables
-			self.version = "v1.0.3.0"
+			self.version = "v1.0.3.1"
 			self.pandoraRoot = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 
 			# add the custom python libraries to the path variable, so they can be imported
@@ -681,21 +681,31 @@ class PandoraCore():
 				with open(configPath, 'r') as f:
 					userConfig = json.load(f)
 		except:
-			if isUserConf:
-				warnStr = "The Pandora preferences file seems to be corrupt.\n\nIt will be reset, which means all local Pandora settings will fall back to their defaults."
-			else:
-				warnStr = "Cannot read the following file:\n\n%s" % configPath
-				
 			if silent:
 				return "Error"
 
-			msg = QMessageBox(QMessageBox.Warning, "Warning", warnStr, QMessageBox.Ok, parent=self.messageParent)
-			action = msg.exec_()
-
 			if isUserConf:
+				warnStr = "The Pandora preferences file seems to be corrupt.\n\nIt will be reset, which means all local Pandora settings will fall back to their defaults."
+				msg = QMessageBox(QMessageBox.Warning, "Warning", warnStr, QMessageBox.Ok, parent=self.messageParent)
+				action = msg.exec_()
+
 				self.createUserPrefs()
 				with open(configPath, 'r') as f:
 					userConfig = json.load(f)
+			else:
+				warnStr = "Cannot read the following file:\n\n%s\n\nDo you want to delete the corrupt file?" % configPath
+				msg = QMessageBox(QMessageBox.Warning, "Warning", warnStr, QMessageBox.Cancel, parent=self.messageParent)
+				msg.addButton("Delete", QMessageBox.YesRole)
+				msg.addButton("Open file", QMessageBox.YesRole)
+				action = msg.exec_()
+
+				if action == 0:
+					try:
+						os.remove(configPath)
+					except Exception as e:
+						QMessageBox.warning(self.messageParent, "Pandora", "Could not delete file:\n\n%s\n\n%s" % (configPath, str(e)))
+				elif action == 1:
+					os.startfile(configPath)
 
 		if getConf:
 			return userConfig
@@ -978,6 +988,7 @@ class PandoraCore():
 			return
 		shell = win32com.client.Dispatch('WScript.Shell')
 		shortcut = shell.CreateShortCut(vPath)
+		vTarget = vTarget.replace("/", "\\")
 		shortcut.Targetpath = vTarget
 		shortcut.Arguments = args
 		shortcut.WorkingDirectory = vWorkingDir
