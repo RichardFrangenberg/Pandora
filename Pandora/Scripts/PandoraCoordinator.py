@@ -49,7 +49,7 @@ class PandoraCoordinator():
 
 	def __init__(self):
 		try:
-			self.version = "v1.0.3.1"
+			self.version = "v1.0.3.2"
 
 			self.coordUpdateTime = 5 #seconds
 			self.activeThres = 10 # time in min after a slave becomes inactive

@@ -34,7 +34,7 @@
 
 class Pandora_Maya_Variables(object):
 	def __init__(self, core, plugin):
-		self.version = "v1.0.3.0"
+		self.version = "v1.0.3.2"
 		self.pluginName = "Maya"
 		self.pluginType = "App"
 		self.appShortName = "Maya"

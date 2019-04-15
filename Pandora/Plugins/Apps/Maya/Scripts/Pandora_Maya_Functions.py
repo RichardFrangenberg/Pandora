@@ -78,6 +78,12 @@ class Pandora_Maya_Functions(object):
 
 	@err_decorator
 	def startup(self, origin):
+		if QApplication.instance() is None:
+			return False
+
+		if not hasattr(qApp, "topLevelWidgets"):
+			return False
+
 		for obj in qApp.topLevelWidgets():
 			if obj.objectName() == 'MayaWindow':
 				mayaQtParent = obj

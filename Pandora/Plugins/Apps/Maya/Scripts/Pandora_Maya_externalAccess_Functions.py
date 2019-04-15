@@ -128,10 +128,10 @@ class Pandora_Maya_externalAccess_Functions(object):
 		popenArgs = [mayaPath, "-r", "file", "-rd", newOutputDir, "-im", newOutputFile, "-s", str(startFrame), "-e", str(endFrame)]
 
 		if "width" in jobData:
-			popenArgs += ["-x", jobData["width"]]
+			popenArgs += ["-x", str(jobData["width"])]
 
 		if "height" in jobData:
-			popenArgs += ["-y", jobData["height"]]
+			popenArgs += ["-y", str(jobData["height"])]
 
 		if "camera" in jobData:
 			popenArgs += ["-cam", jobData["camera"]]

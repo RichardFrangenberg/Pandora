@@ -1125,7 +1125,7 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 				settingVal = QTableWidgetItem()
 				spinner = QSpinBox()
 				try:
-					val = i[1]
+					val = int(i[1])
 				except:
 					val = 0
 				spinner.setValue(val)
@@ -1313,7 +1313,7 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 			section = "settings"
 			parentName = ""
 			settingsPath = os.path.join(self.logDir, "Coordinator", "Coordinator_Settings.json")
-			if settingName in ["coordUpdateTime"]:
+			if settingName in ["coordUpdateTime", "notifySlaveInterval"]:
 				settingVal = widget.value()
 			elif settingName in ["debugMode", "restartGDrive"]:
 				settingVal = item.checkState() == Qt.Checked
@@ -1350,7 +1350,7 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 				except:
 					return
 
-			if not os.path.exists(cachePath):
+			if not os.path.exists(cachePath) and os.path.exists(configPath):
 				shutil.copy2(configPath, cachePath)
 
 		if clear:
@@ -1369,6 +1369,9 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 			cPath = configPath.replace("/", "\\").replace(self.logDir.replace("/", "\\"), self.cacheBase)
 			if os.path.exists(cPath):
 				cachePath = cPath
+
+		if not os.path.exists(cachePath):
+			return ""
 
 		if readlines:
 			with io.open(cachePath, 'r', encoding='utf-16') as logFile:

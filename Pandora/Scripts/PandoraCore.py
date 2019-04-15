@@ -60,7 +60,7 @@ class PandoraCore():
 	def __init__(self, app="Standalone"):
 		try:
 			# set some general variables
-			self.version = "v1.0.3.1"
+			self.version = "v1.0.3.2"
 			self.pandoraRoot = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 
 			# add the custom python libraries to the path variable, so they can be imported
@@ -557,6 +557,13 @@ class PandoraCore():
 		cmd = ["exitSlave"]
 
 		cmdDir = os.path.join(slavepath, "Communication")
+
+		if not os.path.exists(cmdDir):
+			try:
+				os.makedirs(cmdDir)
+			except:
+				return
+
 		curNum = 1
 
 		for i in os.listdir(cmdDir):
@@ -579,7 +586,12 @@ class PandoraCore():
 	@err_decorator
 	def startCoordinator(self, restart=False):
 		coordProc = []
-		import psutil
+		try:
+			import psutil
+		except Exception as e:
+			QMessageBox.warning(self.messageParent, "PandoraCoordinator", "Failed to start the Coordinator:\n\n%s" % str(e))
+			return
+
 
 		for x in psutil.pids():
 			try:
@@ -805,23 +817,26 @@ class PandoraCore():
 		else:
 			userConfig = confData
 
-		with open(configPath, 'w') as confFile:
-			try:
-				json.dump(userConfig, confFile, indent=4)
-			except UnicodeEncodeError:
-				QMessageBox.warning(self.messageParent, "Pandora", "Cannot save config because it contains illegal characters:\n\n%s" % (unicode(userConfig)), QMessageBox.Ok)
-
 		try:
-			with open(configPath, 'r') as f:
-				testConfig = json.load(f)
-			for i in userConfig:
-				for k in userConfig[i]:
-					if k not in testConfig[i]:
-						raise RuntimeError
-		except:
-			backupPath = configPath + ".bak" + str(random.randint(1000000,9999999))
-			with open(backupPath, 'w') as confFile:
-				json.dump(userConfig, confFile, indent=4)
+			with open(configPath, 'w') as confFile:
+				try:
+					json.dump(userConfig, confFile, indent=4)
+				except UnicodeEncodeError:
+					QMessageBox.warning(self.messageParent, "Pandora", "Cannot save config because it contains illegal characters:\n\n%s" % (unicode(userConfig)), QMessageBox.Ok)
+
+			try:
+				with open(configPath, 'r') as f:
+					testConfig = json.load(f)
+				for i in userConfig:
+					for k in userConfig[i]:
+						if k not in testConfig[i]:
+							raise RuntimeError
+			except:
+				backupPath = configPath + ".bak" + str(random.randint(1000000,9999999))
+				with open(backupPath, 'w') as confFile:
+					json.dump(userConfig, confFile, indent=4)
+		except IOError as e:
+			return str(e)
 
 
 	@err_decorator
@@ -1343,7 +1358,17 @@ class PandoraCore():
 
 			url = 'https://api.github.com/repos/RichardFrangenberg/Pandora/zipball'
 
-			u = urllib.urlopen(url)
+			try:
+				if pVersion == 2:
+					import urllib
+					u = urllib.urlopen(url)
+				else:
+					import urllib.request
+					u = urllib.request.urlopen(url)
+			except Exception as e:
+				QMessageBox.warning(self.messageParent, "Pandora update", "Could not connect to github:\n%s" % str(e))
+				return
+
 			data = u.read()
 			u.close()
 			filepath = os.path.join(targetdir, "Pandora_update.zip")

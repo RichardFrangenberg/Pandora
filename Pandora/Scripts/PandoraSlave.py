@@ -86,7 +86,7 @@ class SlaveLogic(QDialog):
 	def __init__(self, core):
 		QDialog.__init__(self)
 		self.core = core
-		self.slaveLogicVersion = "v1.0.3.1"
+		self.slaveLogicVersion = "v1.0.3.2"
 
 		# define some initial variables
 		self.slaveState = "idle"			# slave render status
@@ -460,9 +460,11 @@ class SlaveLogic(QDialog):
 				if not os.path.exists(os.path.dirname(self.slaveWarningsConf)):
 					os.makedirs(os.path.dirname(self.slaveWarningsConf))
 				confData = {}
-				self.setConfig(configPath=self.slaveWarningsConf, confData=confData)
+				result = self.setConfig(configPath=self.slaveWarningsConf, confData=confData)
+				if result:
+					self.writeLog("writeWarning %s" % result, 2, writeWarning=False)
 			except:
-				self.writeLog("cannot create warningConfig", 2)
+				self.writeLog("cannot create warningConfig", 2, writeWarning=False)
 				self.writeLog(text, level)
 				return None
 
@@ -483,7 +485,9 @@ class SlaveLogic(QDialog):
 		for idx, val in enumerate(warnings):
 			warningConfig["warnings"]["warning%s" % idx] = val
 
-		self.core.setConfig(configPath=self.slaveWarningsConf, confData=warningConfig)
+		result = self.core.setConfig(configPath=self.slaveWarningsConf, confData=warningConfig)
+		if result:
+			self.writeLog("writeWarning %s" % result, 2, writeWarning=False)
 
 
 	# writes slave infos to file
