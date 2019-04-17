@@ -1576,7 +1576,7 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 		logPath = self.getCoordLogPath()
 
 		if os.path.exists(logPath):
-			logLines = self.getConfig(configPath=logPath, readlines=True)
+			logLines = self.getConfig(configPath=logPath, readlines=True) or []
 
 			lvl = self.sp_coordFilter.value()
 			if self.sp_logLimit.value() == 0 or self.sp_logLimit.value() > len(logLines):

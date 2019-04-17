@@ -1649,7 +1649,7 @@ except Exception as e:
 	def writeErrorLog(self, text):
 		try:
 
-			ptext = "An unknown Pandora error occured.\nThe error was logged.\nIf you want to help improve Pandora, please send this error to the developer.\n\nYou can contact the pipeline administrator or the developer, if you have any questions on this.\n\n"
+			ptext = "An unknown Pandora error occured.\nThe error was logged.\nIf you want to help improve Pandora, please send this error to the developer.\n\nYou can contact the pipeline administrator or the developer, if you have any questions on this.\n\nMake sure you use the latest Pandora version by using the automatic update option in the Pandora Settings.\n\n"
 		#	print (text)
 
 			text += "\n\n"
@@ -1698,7 +1698,9 @@ except Exception as e:
 
 			action = msg.exec_()
 
-			
+			if "UnicodeDecodeError" in text or "UnicodeEncodeError" in text:
+				QMessageBox.information(self.messageParent, "Pandora", "The previous error might be caused by the use of special characters (like ö or é). Pandora doesn't support this at the moment. Make sure you remove these characters from your filepaths.".decode("utf8"))
+		
 		except Exception as e:
 			exc_type, exc_obj, exc_tb = sys.exc_info()
 			print ("ERROR - writeErrorLog - %s - %s - %s\n\n" % (str(e), exc_type, exc_tb.tb_lineno))
