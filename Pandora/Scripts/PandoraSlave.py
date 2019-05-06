@@ -86,7 +86,7 @@ class SlaveLogic(QDialog):
 	def __init__(self, core):
 		QDialog.__init__(self)
 		self.core = core
-		self.slaveLogicVersion = "v1.0.3.2"
+		self.slaveLogicVersion = "v1.0.3.3"
 
 		# define some initial variables
 		self.slaveState = "idle"			# slave render status
@@ -946,6 +946,26 @@ class SlaveLogic(QDialog):
 					"warnings": {}
 				}
 				self.core.setConfig(configPath=self.slaveWarningsConf, confData=warnData)
+			elif command[0] == "deleteJob":
+				jobCode = command[1]
+				jobName = command[1]
+
+				jobPath = os.path.join(self.localSlavePath, "Jobs", jobCode)
+				jobConf = os.path.join(jobPath, "PandoraJob.json")
+				
+				if os.path.exists(jobConf):
+					cData = {}
+					cData["jobName"] = ["information", "jobName"]
+					cData = self.core.getConfig(data=cData, configPath=jobConf)
+
+					if cData["jobName"] is not None:
+						jobName = cData["jobName"]
+
+				if os.path.exists(jobPath):
+					shutil.rmtree(jobPath)
+					self.writeLog("deleted local job %s" % (jobName), 1)
+				else:
+					self.writeLog("job %s did not exist before deletion" % (jobName), 0)
 
 			elif command[0] == "checkConnection":
 				pass

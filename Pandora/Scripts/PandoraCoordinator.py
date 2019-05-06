@@ -49,7 +49,7 @@ class PandoraCoordinator():
 
 	def __init__(self):
 		try:
-			self.version = "v1.0.3.2"
+			self.version = "v1.0.3.3"
 
 			self.coordUpdateTime = 5 #seconds
 			self.activeThres = 10 # time in min after a slave becomes inactive
@@ -714,6 +714,7 @@ class PandoraCoordinator():
 					jobConf = os.path.join(jobPath, "PandoraJob.json")
 
 					projectName = ""
+					jobCode = command[1]
 					jobName = command[1]
 
 					if os.path.exists(jobConf):
@@ -734,6 +735,11 @@ class PandoraCoordinator():
 						self.writeLog("WARNING - job %s did not exist before deletion (%s)" % (jobName, origin), 2)
 
 					for m in os.listdir(os.path.join(self.slPath, "Slaves")):
+						if not m.startswith("S_"):
+							continue
+
+						slaveName = m[2:]
+
 						jobFiles = os.path.join(self.slPath, "Slaves", m, "AssignedJobs", command[1])
 						jobOutput = os.path.join(self.slPath, "Slaves", m, "Output", command[1])
 
@@ -743,6 +749,8 @@ class PandoraCoordinator():
 									shutil.rmtree(k)
 								except:
 									self.writeLog("ERROR - cannot remove folder: %s (%s)" % (k, origin), 3)
+
+						self.sendCommand(slaveName, ["deleteJob", str(jobCode)])
 
 					for m in os.listdir(os.path.join(self.slPath, "Workstations")):
 						if not m.startswith("WS_"):
