@@ -1103,7 +1103,7 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 		if os.path.exists(settingsPath):
 			ssconfig = self.getConfig(configPath=settingsPath, getConf=True)
 
-			if "settings" in ssconfig:
+			if ssconfig and "settings" in ssconfig:
 				for i in ssconfig["settings"]:
 					if i in ["restartGDrive", "notifySlaveInterval"] and self.localMode:
 						continue
@@ -1374,11 +1374,14 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 			return ""
 
 		if readlines:
-			with io.open(cachePath, 'r', encoding='utf-16') as logFile:
-				try:
-					logLines = logFile.readlines()
-				except:
-					logLines = []
+			try:
+				with io.open(cachePath, 'r', encoding='utf-16') as logFile:
+					try:
+						logLines = logFile.readlines()
+					except:
+						logLines = []
+			except:
+				logLines = []
 
 			return logLines
 		else:

@@ -73,7 +73,7 @@ class PandoraSettings(QDialog, PandoraSettings_ui.Ui_dlg_PandoraSettings):
 		self.loadUI()
 		self.loadSettings()
 
-		self.startSettings = {"localMode":self.chb_localMode.isChecked(), "lRootPath":self.e_rootPath.text(), "cRootpath":self.e_coordinatorRoot.text(), "slaveEnabled":self.gb_slave.isChecked(), "coordEnabled":self.gb_coordinator.isChecked()}
+		self.startSettings = {"checkForUpdates":self.chb_checkForUpdates.isChecked(), "localMode":self.chb_localMode.isChecked(), "lRootPath":self.e_rootPath.text(), "cRootpath":self.e_coordinatorRoot.text(), "slaveEnabled":self.gb_slave.isChecked(), "coordEnabled":self.gb_coordinator.isChecked()}
 
 		self.refreshSlaves()
 		self.refreshWorkstations()
@@ -419,6 +419,7 @@ class PandoraSettings(QDialog, PandoraSettings_ui.Ui_dlg_PandoraSettings):
 
 		cData = []
 
+		cData.append(["globals", "checkForUpdates", self.chb_checkForUpdates.isChecked()])
 		cData.append(["globals", "localMode", self.chb_localMode.isChecked()])
 
 		rPath = self.e_rootPath.text().replace("/","\\")
@@ -562,6 +563,7 @@ class PandoraSettings(QDialog, PandoraSettings_ui.Ui_dlg_PandoraSettings):
 			ucData["%s_override" % i] = ["dccoverrides", "%s_override" % i, "bool"]
 			ucData["%s_path" % i] = ["dccoverrides", "%s_path" % i]
 
+		ucData["checkForUpdates"] = ['globals', "checkForUpdates", "bool"]
 		ucData["localMode"] = ['globals', "localMode", "bool"]
 		ucData["rootPath"] = ['globals', "rootPath"]
 		ucData["repositoryPath"] = ['globals', "repositoryPath"]
@@ -581,6 +583,9 @@ class PandoraSettings(QDialog, PandoraSettings_ui.Ui_dlg_PandoraSettings):
 				loadFunctions.update(pLoadFunctions)
 
 		ucData = self.core.getConfig(data=ucData)
+
+		if ucData["checkForUpdates"] is not None:
+			self.chb_checkForUpdates.setChecked(ucData["checkForUpdates"])
 
 		if ucData["localMode"] is not None:
 			self.chb_localMode.setChecked(ucData["localMode"])

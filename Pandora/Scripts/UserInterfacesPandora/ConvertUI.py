@@ -2,7 +2,7 @@ import sys, pprint
 
 
 fname = "RenderHandler"
-#fname = "PandoraSettings"
+fname = "PandoraSettings"
 #fname = "PandoraSubmitter"
 #fname = "PandoraSlaveAssignment"
 #fname = "PandoraInstaller"

@@ -41,7 +41,7 @@ except:
 	from PySide.QtGui import *
 	psVersion = 1
 
-import sys, os, threading, shutil, time, socket, traceback, imp, platform, json, random, string, errno, stat
+import sys, os, threading, shutil, time, socket, traceback, imp, platform, json, random, string, errno, stat, datetime
 
 #check if python 2 or python 3 is used
 if sys.version[0] == "3":
@@ -60,7 +60,7 @@ class PandoraCore():
 	def __init__(self, app="Standalone"):
 		try:
 			# set some general variables
-			self.version = "v1.0.3.3"
+			self.version = "v1.0.3.4"
 			self.pandoraRoot = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 
 			# add the custom python libraries to the path variable, so they can be imported
@@ -101,6 +101,8 @@ class PandoraCore():
 			elif sys.argv[-1] == "setupRenderslave":
 				self.setupRenderslave()
 				sys.exit()
+
+			self.updateCheck()
 
 		except Exception as e:
 			exc_type, exc_obj, exc_tb = sys.exc_info()
@@ -233,6 +235,20 @@ class PandoraCore():
 			cData.append([appName, "%02d" % (idx+1), options[i]])
 
 		self.setConfig(configPath=self.installLocPath, data=cData)
+
+
+	@err_decorator
+	def updateCheck(self):
+		updateEnabled = self.getConfig(cat="globals", param="checkForUpdates")
+		if updateEnabled == False:
+			return
+
+		lastUpdateCheck = self.getConfig(cat="globals", param="lastUpdateCheck")
+		if lastUpdateCheck and (datetime.datetime.now() - datetime.datetime.strptime(lastUpdateCheck, '%Y-%m-%d %H:%M:%S.%f')).total_seconds() < 604.800:
+			return
+
+		self.checkForUpdates()
+		self.setConfig(cat="globals", param="lastUpdateCheck", val=datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f'))
 
 
 	@err_decorator
@@ -1591,7 +1607,7 @@ except Exception as e:
 
 
 	@err_decorator
-	def checkPandoraVersion(self):
+	def checkForUpdates(self):
 		pStr = """
 try:
 	import os, sys
@@ -1605,11 +1621,14 @@ try:
 		sys.path.insert(0, pyLibs)
 
 	import requests
-	page = requests.get('https://prism-pipeline.com/pandora/', verify=False)
+	page = requests.get('https://raw.githubusercontent.com/RichardFrangenberg/Pandora/development/Pandora/Scripts/PandoraCore.py', verify=False)
 
 	cStr = page.content
-	vCode = 'Latest version: ['
-	latestVersionStr = cStr[cStr.find(vCode)+len(vCode): cStr.find(']', cStr.find('Latest version: ['))]
+	lines = cStr.split('\\n')
+	latestVersionStr = '1'
+	for line in lines:
+		if 'self.version =' in line:
+			latestVersionStr = line[line.find('\\"')+2:-1]
 
 	sys.stdout.write(latestVersionStr)
 
@@ -1621,8 +1640,8 @@ except Exception as e:
 		result = subprocess.Popen([pythonPath, "-c", pStr], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 		stdOutData, stderrdata = result.communicate()
 
-		if "failed" in str(stdOutData) or len(str(stdOutData).split(".")) < 3:
-			QMessageBox.information(self.messageParent, "Pandora", "Unable to connect to www.prism-pipeline.com. Could not check for updates.")
+		if "failed" in str(stdOutData) or len(str(stdOutData).split(".")) < 4:
+			QMessageBox.information(self.messageParent, "Pandora", "Unable to read https://raw.githubusercontent.com/RichardFrangenberg/Pandora/development/Pandora/Scripts/PandoraCore.py. Could not check for updates.\n\n(%s)" % stdOutData)
 			return
 
 		if pVersion == 3:
@@ -1634,16 +1653,17 @@ except Exception as e:
 		coreversion = self.version[1:].split(".")
 		curVersion = [int(x) for x in coreversion]
 
-		if curVersion[0] < latestVersion[0] or (curVersion[0] == latestVersion[0] and curVersion[1] < latestVersion[1]) or (curVersion[0] == latestVersion[0] and curVersion[1] == latestVersion[1] and curVersion[2] < latestVersion[2]):
+		if curVersion[0] < latestVersion[0] or (curVersion[0] == latestVersion[0] and curVersion[1] < latestVersion[1]) or (curVersion[0] == latestVersion[0] and curVersion[1] == latestVersion[1] and curVersion[2] < latestVersion[2]) or (curVersion[0] == latestVersion[0] and curVersion[1] == latestVersion[1] and curVersion[2] == latestVersion[2] and curVersion[3] < latestVersion[3]):
 			msg = QMessageBox(QMessageBox.Information, "Pandora", "A newer version of Pandora is available.\n\nInstalled version:\t%s\nLatest version:\t\tv%s" % (self.version, stdOutData), QMessageBox.Ok, parent=self.messageParent)
-			msg.addButton("Go to downloads page", QMessageBox.YesRole)
+			msg.addButton("Update Pandora", QMessageBox.YesRole)
 			action = msg.exec_()
 
 			if action == 0:
-				self.openWebsite("home")
+				self.updatePandora(source="github")
 
 		else:
-			QMessageBox.information(self.messageParent, "Pandora", "The latest version of Pandora is already installed. (%s)" % self.version)
+			pass
+			#QMessageBox.information(self.messageParent, "Pandora", "The latest version of Pandora is already installed. (%s)" % self.version)
 
 
 	def writeErrorLog(self, text):

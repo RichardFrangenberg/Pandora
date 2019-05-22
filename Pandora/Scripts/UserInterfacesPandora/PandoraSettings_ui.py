@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'PandoraSettings.ui'
 #
-# Created: Mon Oct 29 01:55:55 2018
+# Created: Wed May 22 23:19:36 2019
 #      by: pyside-uic 0.2.15 running on PySide 1.2.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -33,6 +33,10 @@ class Ui_dlg_PandoraSettings(object):
         self.tab_general.setObjectName("tab_general")
         self.verticalLayout_4 = QtGui.QVBoxLayout(self.tab_general)
         self.verticalLayout_4.setObjectName("verticalLayout_4")
+        self.chb_checkForUpdates = QtGui.QCheckBox(self.tab_general)
+        self.chb_checkForUpdates.setChecked(True)
+        self.chb_checkForUpdates.setObjectName("chb_checkForUpdates")
+        self.verticalLayout_4.addWidget(self.chb_checkForUpdates)
         self.chb_pandoraTrayStartup = QtGui.QCheckBox(self.tab_general)
         self.chb_pandoraTrayStartup.setChecked(True)
         self.chb_pandoraTrayStartup.setObjectName("chb_pandoraTrayStartup")
@@ -47,7 +51,6 @@ class Ui_dlg_PandoraSettings(object):
         self.w_rootPath.setObjectName("w_rootPath")
         self.verticalLayout_10 = QtGui.QVBoxLayout(self.w_rootPath)
         self.verticalLayout_10.setContentsMargins(0, 0, 0, 0)
-        self.verticalLayout_10.setContentsMargins(0, 0, 0, 0)
         self.verticalLayout_10.setObjectName("verticalLayout_10")
         self.l_rootPath = QtGui.QLabel(self.w_rootPath)
         self.l_rootPath.setObjectName("l_rootPath")
@@ -55,7 +58,6 @@ class Ui_dlg_PandoraSettings(object):
         self.widget_20 = QtGui.QWidget(self.w_rootPath)
         self.widget_20.setObjectName("widget_20")
         self.horizontalLayout_19 = QtGui.QHBoxLayout(self.widget_20)
-        self.horizontalLayout_19.setContentsMargins(0, 0, 0, 0)
         self.horizontalLayout_19.setContentsMargins(0, 0, 0, 0)
         self.horizontalLayout_19.setObjectName("horizontalLayout_19")
         self.e_rootPath = QtGui.QLineEdit(self.widget_20)
@@ -82,7 +84,6 @@ class Ui_dlg_PandoraSettings(object):
         self.w_rootPath_2.setObjectName("w_rootPath_2")
         self.verticalLayout_11 = QtGui.QVBoxLayout(self.w_rootPath_2)
         self.verticalLayout_11.setContentsMargins(0, 0, 0, 0)
-        self.verticalLayout_11.setContentsMargins(0, 0, 0, 0)
         self.verticalLayout_11.setObjectName("verticalLayout_11")
         self.l_repositoryPath = QtGui.QLabel(self.w_rootPath_2)
         self.l_repositoryPath.setObjectName("l_repositoryPath")
@@ -90,7 +91,6 @@ class Ui_dlg_PandoraSettings(object):
         self.widget_22 = QtGui.QWidget(self.w_rootPath_2)
         self.widget_22.setObjectName("widget_22")
         self.horizontalLayout_21 = QtGui.QHBoxLayout(self.widget_22)
-        self.horizontalLayout_21.setContentsMargins(0, 0, 0, 0)
         self.horizontalLayout_21.setContentsMargins(0, 0, 0, 0)
         self.horizontalLayout_21.setObjectName("horizontalLayout_21")
         self.e_repositoryPath = QtGui.QLineEdit(self.widget_22)
@@ -137,7 +137,6 @@ class Ui_dlg_PandoraSettings(object):
         self.w_sumitterPath.setObjectName("w_sumitterPath")
         self.verticalLayout_9 = QtGui.QVBoxLayout(self.w_sumitterPath)
         self.verticalLayout_9.setContentsMargins(0, 0, 0, 0)
-        self.verticalLayout_9.setContentsMargins(0, 0, 0, 0)
         self.verticalLayout_9.setObjectName("verticalLayout_9")
         self.label_8 = QtGui.QLabel(self.w_sumitterPath)
         font = QtGui.QFont()
@@ -149,7 +148,6 @@ class Ui_dlg_PandoraSettings(object):
         self.widget_4 = QtGui.QWidget(self.w_sumitterPath)
         self.widget_4.setObjectName("widget_4")
         self.horizontalLayout_2 = QtGui.QHBoxLayout(self.widget_4)
-        self.horizontalLayout_2.setContentsMargins(0, 0, 0, 0)
         self.horizontalLayout_2.setContentsMargins(0, 0, 0, 0)
         self.horizontalLayout_2.setObjectName("horizontalLayout_2")
         self.e_submissionPath = QtGui.QLineEdit(self.widget_4)
@@ -178,7 +176,6 @@ class Ui_dlg_PandoraSettings(object):
         self.w_username.setObjectName("w_username")
         self.horizontalLayout_8 = QtGui.QHBoxLayout(self.w_username)
         self.horizontalLayout_8.setContentsMargins(0, 0, 0, 0)
-        self.horizontalLayout_8.setContentsMargins(0, 0, 0, 0)
         self.horizontalLayout_8.setObjectName("horizontalLayout_8")
         self.l_username = QtGui.QLabel(self.w_username)
         self.l_username.setObjectName("l_username")
@@ -206,7 +203,6 @@ class Ui_dlg_PandoraSettings(object):
         self.w_slaveRoot.setObjectName("w_slaveRoot")
         self.verticalLayout_12 = QtGui.QVBoxLayout(self.w_slaveRoot)
         self.verticalLayout_12.setContentsMargins(0, 0, 0, 0)
-        self.verticalLayout_12.setContentsMargins(0, 0, 0, 0)
         self.verticalLayout_12.setObjectName("verticalLayout_12")
         self.label_16 = QtGui.QLabel(self.w_slaveRoot)
         font = QtGui.QFont()
@@ -218,7 +214,6 @@ class Ui_dlg_PandoraSettings(object):
         self.widget_18 = QtGui.QWidget(self.w_slaveRoot)
         self.widget_18.setObjectName("widget_18")
         self.horizontalLayout_17 = QtGui.QHBoxLayout(self.widget_18)
-        self.horizontalLayout_17.setContentsMargins(0, 0, 0, 0)
         self.horizontalLayout_17.setContentsMargins(0, 0, 0, 0)
         self.horizontalLayout_17.setObjectName("horizontalLayout_17")
         self.e_slavePath = QtGui.QLineEdit(self.widget_18)
@@ -265,7 +260,6 @@ class Ui_dlg_PandoraSettings(object):
         self.w_coordinatorRoot.setObjectName("w_coordinatorRoot")
         self.verticalLayout_13 = QtGui.QVBoxLayout(self.w_coordinatorRoot)
         self.verticalLayout_13.setContentsMargins(0, 0, 0, 0)
-        self.verticalLayout_13.setContentsMargins(0, 0, 0, 0)
         self.verticalLayout_13.setObjectName("verticalLayout_13")
         self.label_19 = QtGui.QLabel(self.w_coordinatorRoot)
         font = QtGui.QFont()
@@ -277,7 +271,6 @@ class Ui_dlg_PandoraSettings(object):
         self.widget_21 = QtGui.QWidget(self.w_coordinatorRoot)
         self.widget_21.setObjectName("widget_21")
         self.horizontalLayout_20 = QtGui.QHBoxLayout(self.widget_21)
-        self.horizontalLayout_20.setContentsMargins(0, 0, 0, 0)
         self.horizontalLayout_20.setContentsMargins(0, 0, 0, 0)
         self.horizontalLayout_20.setObjectName("horizontalLayout_20")
         self.e_coordinatorRoot = QtGui.QLineEdit(self.widget_21)
@@ -325,7 +318,6 @@ class Ui_dlg_PandoraSettings(object):
         self.widget.setObjectName("widget")
         self.verticalLayout_6 = QtGui.QVBoxLayout(self.widget)
         self.verticalLayout_6.setContentsMargins(0, 0, 0, 0)
-        self.verticalLayout_6.setContentsMargins(0, 0, 0, 0)
         self.verticalLayout_6.setObjectName("verticalLayout_6")
         self.b_addSlave = QtGui.QPushButton(self.widget)
         self.b_addSlave.setFocusPolicy(QtCore.Qt.NoFocus)
@@ -354,7 +346,6 @@ class Ui_dlg_PandoraSettings(object):
         self.widget_2 = QtGui.QWidget(self.tab_5)
         self.widget_2.setObjectName("widget_2")
         self.verticalLayout_7 = QtGui.QVBoxLayout(self.widget_2)
-        self.verticalLayout_7.setContentsMargins(0, 0, 0, 0)
         self.verticalLayout_7.setContentsMargins(0, 0, 0, 0)
         self.verticalLayout_7.setObjectName("verticalLayout_7")
         self.b_addWS = QtGui.QPushButton(self.widget_2)
@@ -413,6 +404,7 @@ class Ui_dlg_PandoraSettings(object):
 
     def retranslateUi(self, dlg_PandoraSettings):
         dlg_PandoraSettings.setWindowTitle(QtGui.QApplication.translate("dlg_PandoraSettings", "Pandora Settings", None, QtGui.QApplication.UnicodeUTF8))
+        self.chb_checkForUpdates.setText(QtGui.QApplication.translate("dlg_PandoraSettings", "Check for updates (once per week)", None, QtGui.QApplication.UnicodeUTF8))
         self.chb_pandoraTrayStartup.setText(QtGui.QApplication.translate("dlg_PandoraSettings", "Start tray icon on Windows startup", None, QtGui.QApplication.UnicodeUTF8))
         self.chb_localMode.setText(QtGui.QApplication.translate("dlg_PandoraSettings", "Local network mode", None, QtGui.QApplication.UnicodeUTF8))
         self.l_rootPath.setText(QtGui.QApplication.translate("dlg_PandoraSettings", "Pandora Root (network location):", None, QtGui.QApplication.UnicodeUTF8))
