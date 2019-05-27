@@ -66,7 +66,7 @@ class Pandora_Standalone_Functions(object):
 
 	@err_decorator
 	def startup(self, origin):
-		return False
+		return
 
 	
 	@err_decorator

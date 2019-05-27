@@ -105,8 +105,8 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 			if not os.path.exists(self.sourceDir):
 				QMessageBox.warning(self,"Warning", "No Pandora submission folder specified in the Pandora config")
 
-			self.logDir = os.path.join(os.path.dirname(os.path.dirname(self.sourceDir)), "Logs")
-			self.cacheBase = os.path.join(os.path.dirname(self.core.configPath), "temp", "RenderHandler_cache")
+			self.logDir = os.path.join(unicode(os.path.dirname(os.path.dirname(self.sourceDir))), u"Logs")
+			self.cacheBase = os.path.join(unicode(os.path.dirname(self.core.configPath)), u"temp", u"RenderHandler_cache")
 
 			self.writeSettings = True
 
@@ -1351,7 +1351,10 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 					return
 
 			if not os.path.exists(cachePath) and os.path.exists(configPath):
-				shutil.copy2(configPath, cachePath)
+				try:
+					shutil.copy2(configPath, cachePath)
+				except:
+					pass
 
 		if clear:
 			try:
@@ -1662,7 +1665,10 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 		for i in os.walk(self.cacheBase):
 			for f in i[2]:
 				fpath = os.path.join(i[0], f)
-				sourcePath = fpath.replace(self.cacheBase, self.logDir)
+				try:
+					sourcePath = fpath.replace(self.cacheBase, self.logDir)
+				except:
+					continue
 
 				ftime = os.path.getmtime(fpath)
 

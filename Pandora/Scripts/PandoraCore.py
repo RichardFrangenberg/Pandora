@@ -60,7 +60,7 @@ class PandoraCore():
 	def __init__(self, app="Standalone"):
 		try:
 			# set some general variables
-			self.version = "v1.0.3.4"
+			self.version = "v1.0.3.5"
 			self.pandoraRoot = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 
 			# add the custom python libraries to the path variable, so they can be imported
@@ -101,8 +101,6 @@ class PandoraCore():
 			elif sys.argv[-1] == "setupRenderslave":
 				self.setupRenderslave()
 				sys.exit()
-
-			self.updateCheck()
 
 		except Exception as e:
 			exc_type, exc_obj, exc_tb = sys.exc_info()
@@ -238,7 +236,7 @@ class PandoraCore():
 
 
 	@err_decorator
-	def updateCheck(self):
+	def autoUpdateCheck(self):
 		updateEnabled = self.getConfig(cat="globals", param="checkForUpdates")
 		if updateEnabled == False:
 			return
@@ -247,7 +245,7 @@ class PandoraCore():
 		if lastUpdateCheck and (datetime.datetime.now() - datetime.datetime.strptime(lastUpdateCheck, '%Y-%m-%d %H:%M:%S.%f')).total_seconds() < 604.800:
 			return
 
-		self.checkForUpdates()
+		self.checkForUpdates(silent=True)
 		self.setConfig(cat="globals", param="lastUpdateCheck", val=datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f'))
 
 
@@ -305,6 +303,8 @@ class PandoraCore():
 
 		if result is not None:
 			return result
+
+		self.autoUpdateCheck()
 
 
 	@err_decorator
@@ -1607,7 +1607,7 @@ except Exception as e:
 
 
 	@err_decorator
-	def checkForUpdates(self):
+	def checkForUpdates(self, silent=False):
 		pStr = """
 try:
 	import os, sys
@@ -1629,6 +1629,7 @@ try:
 	for line in lines:
 		if 'self.version =' in line:
 			latestVersionStr = line[line.find('\\"')+2:-1]
+			break
 
 	sys.stdout.write(latestVersionStr)
 
@@ -1641,7 +1642,8 @@ except Exception as e:
 		stdOutData, stderrdata = result.communicate()
 
 		if "failed" in str(stdOutData) or len(str(stdOutData).split(".")) < 4:
-			QMessageBox.information(self.messageParent, "Pandora", "Unable to read https://raw.githubusercontent.com/RichardFrangenberg/Pandora/development/Pandora/Scripts/PandoraCore.py. Could not check for updates.\n\n(%s)" % stdOutData)
+			if not silent:
+				QMessageBox.information(self.messageParent, "Pandora", "Unable to read https://raw.githubusercontent.com/RichardFrangenberg/Pandora/development/Pandora/Scripts/PandoraCore.py. Could not check for updates.\n\n(%s)" % stdOutData)
 			return
 
 		if pVersion == 3:
