@@ -86,7 +86,7 @@ class SlaveLogic(QDialog):
 	def __init__(self, core):
 		QDialog.__init__(self)
 		self.core = core
-		self.slaveLogicVersion = "v1.0.3.5"
+		self.slaveLogicVersion = "v1.0.3.6"
 
 		# define some initial variables
 		self.slaveState = "idle"			# slave render status
@@ -1227,6 +1227,17 @@ class SlaveLogic(QDialog):
 				except:
 					self.writeLog("Could not copy file to Job folder: %s %s %s" % (jobData["projectName"], k, jobName), 2)
 
+		if self.localMode:
+			basePath = jobData['outputFolder']
+		else:
+			basePath = os.path.join(self.localSlavePath, "RenderOutput", self.curjob["code"])
+
+		fileNum = 0
+		for i in os.walk(basePath):
+			for k in i[2]:
+				fileNum += 1
+
+		jobData["existingOutputFileNum"] = fileNum
 		self.taskStartTime = time.time()
 
 		self.setState("rendering")
@@ -1427,11 +1438,16 @@ class SlaveLogic(QDialog):
 		syncPath = os.path.join(self.slavePath, "Output", self.curjob["code"])
 
 		hasNewOutput = False
+		fileNum = 0
 		for i in os.walk(basePath):
 			for k in i[2]:
 				fpath = os.path.join(i[0], k)
 				if int(os.path.getmtime(fpath)) > self.taskStartTime:
 					hasNewOutput = True
+				fileNum += 1
+		hasNewOutput = False
+		if fileNum > jobData["existingOutputFileNum"]:
+			hasNewOutput = True
 
 		if self.interrupted:
 			self.writeLog("rendering interrupted - %s - %s" % (self.curTask, self.curjob["name"]), 2)

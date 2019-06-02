@@ -231,9 +231,11 @@ class Pandora_Maya_Functions(object):
 				drivers = ["defaultArnoldDriver"]
 				for i in aAovs:
 					aDriver = cmds.connectionInfo("%s.outputs[0].driver" % i[1], sourceFromDestination=True).rsplit(".",1)[0]
-					if aDriver in drivers or aDriver == "":
-						aDriver = cmds.createNode( 'aiAOVDriver', n='%s_driver' % i[0] )
-						cmds.connectAttr("%s.aiTranslator" % aDriver, "%s.outputs[0].driver" % i[1], force=True)
+					if aDriver in drivers:
+						continue
+					#if aDriver in drivers or aDriver == "":
+					#	aDriver = cmds.createNode( 'aiAOVDriver', n='%s_driver' % i[0] )
+					#	cmds.connectAttr("%s.aiTranslator" % aDriver, "%s.outputs[0].driver" % i[1], force=True)
 
 					passPath = os.path.join(passPrefix, i[0], os.path.basename(outputPrefix)).replace("beauty", i[0])
 					drivers.append(aDriver)

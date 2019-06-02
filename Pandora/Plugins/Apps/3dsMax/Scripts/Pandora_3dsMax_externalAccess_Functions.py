@@ -113,16 +113,27 @@ class Pandora_3dsMax_externalAccess_Functions(object):
 			return False
 
 		preRendScript = """
-rmg = maxOps.GetRenderElementMgr #Production
-for i=0 to (rmg.NumRenderElements() - 1) do(
-curElement = rmg.GetRenderElement i
-curName = curElement.elementName
-curPath = rmg.GetRenderElementFilename i
-curFile = filenamefrompath curPath
-newPath = \"%s\" + curFile 
-newPath = substituteString newPath \"ELEMENTNAME\" curName
-rmg.SetRenderElementFilename i newPath
-makeDir (getFilenamePath newPath)
+separateAOVs = True
+if matchpattern (classof renderers.current as string) pattern: \"V_Ray*\" then (
+	separateAOVs = not renderers.current.output_on
+)
+
+if matchpattern (classof renderers.current as string) pattern: \"Redshift*\" then (
+	separateAOVs = renderers.current.SeparateAovFiles
+)
+
+if separateAOVs then (
+	rmg = maxOps.GetRenderElementMgr #Production
+	for i=0 to (rmg.NumRenderElements() - 1) do(
+	curElement = rmg.GetRenderElement i
+	curName = curElement.elementName
+	curPath = rmg.GetRenderElementFilename i
+	curFile = filenamefrompath curPath
+	newPath = \"%s\" + curFile 
+	newPath = substituteString newPath \"ELEMENTNAME\" curName
+	rmg.SetRenderElementFilename i newPath
+	makeDir (getFilenamePath newPath)
+)
 )""" % ( os.path.dirname(os.path.dirname(newOutput)).replace("\\", "\\\\") + "\\\\ELEMENTNAME\\\\")
 
 		preScriptPath = os.path.join(os.path.dirname(os.path.dirname(sceneFile)), "preRenderScript.ms")

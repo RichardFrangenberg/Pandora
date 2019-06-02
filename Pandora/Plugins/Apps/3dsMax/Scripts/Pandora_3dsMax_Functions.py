@@ -172,7 +172,14 @@ for mapfile in mapfiles collect mapfile")
 		rSettings["elementsActive"] = MaxPlus.RenderElementMgr.GetElementsActive(elementMgr)
 		activePasses = MaxPlus.RenderElementMgr.GetElementsActive(elementMgr)
 
-		if activePasses and elementMgr.NumRenderElements() > 0:
+		separateAOVs = True
+		if self.executeScript(origin, "matchpattern (classof renderers.current as string) pattern: \"V_Ray*\""):
+			separateAOVs = not self.executeScript(origin, "renderers.current.output_on")
+
+		if self.executeScript(origin, "matchpattern (classof renderers.current as string) pattern: \"Redshift*\""):
+			separateAOVs = self.executeScript(origin, "renderers.current.SeparateAovFiles")
+
+		if activePasses and elementMgr.NumRenderElements() > 0 and separateAOVs:
 			bName = os.path.splitext(os.path.basename(rSettings["outputName"]))
 			bName = "%sbeauty.%s" % (bName[0], bName[1])
 			rSettings["outputName"] = os.path.join(os.path.dirname(rSettings["outputName"]), "beauty", bName)
