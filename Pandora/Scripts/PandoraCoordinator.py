@@ -49,7 +49,7 @@ class PandoraCoordinator():
 
 	def __init__(self):
 		try:
-			self.version = "v1.0.3.6"
+			self.version = "v1.0.3.7"
 
 			self.coordUpdateTime = 5 #seconds
 			self.activeThres = 10 # time in min after a slave becomes inactive
@@ -64,7 +64,8 @@ class PandoraCoordinator():
 			self.restartGDriveEnabled = False
 			self.coordConf = ""
 
-			if os.path.exists(pandoraConfig):
+			curPath = os.path.dirname(os.path.abspath(__file__))
+			if not curPath.replace("\\", "/").endswith("/Scripts/PandoraCoordinator"):
 				cData = {}
 				cData["coordEnabled"] = ["coordinator", "enabled"]
 				cData["localMode"] = ["globals", "localMode"]
@@ -126,12 +127,14 @@ class PandoraCoordinator():
 					except:
 						pass
 
-				if not os.path.exists(tslScript):
-					shutil.copy2(slScript, tslScript)
-				if not os.path.exists(thScript):
-					shutil.copy2(hScript, thScript)
+			#	if not os.path.exists(tslScript):
+			#		shutil.copy2(slScript, tslScript)
+			#	if not os.path.exists(thScript):
+			#		shutil.copy2(hScript, thScript)
 			else:
 				self.coordBasePath = os.path.dirname(os.path.abspath(__file__))
+
+			self.writeLog("Coordinator path: %s" % self.coordBasePath)
 
 			self.slPath = os.path.abspath(os.path.join(self.coordBasePath, os.pardir, os.pardir))
 

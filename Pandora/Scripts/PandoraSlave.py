@@ -86,7 +86,7 @@ class SlaveLogic(QDialog):
 	def __init__(self, core):
 		QDialog.__init__(self)
 		self.core = core
-		self.slaveLogicVersion = "v1.0.3.6"
+		self.slaveLogicVersion = "v1.0.3.7"
 
 		# define some initial variables
 		self.slaveState = "idle"			# slave render status
@@ -185,7 +185,7 @@ class SlaveLogic(QDialog):
 				"warnings": {}
 			}
 
-			self.core.setConfig(configPath=self.slaveWarningsConf, confData=warningConfig)
+			self.setConfig(configPath=self.slaveWarningsConf, confData=warningConfig)
 
 		# save the default slave settings to the settings file if they don't exist already
 		self.createSettings(complement=True)
@@ -468,14 +468,17 @@ class SlaveLogic(QDialog):
 				self.writeLog(text, level)
 				return None
 
-		warningConfig = self.core.getConfig(configPath=self.slaveWarningsConf, getConf=True)
-
+		warningConfig = self.core.getConfig(configPath=self.slaveWarningsConf, getConf=True, silent=True)
 		warnings = []
-		if "warnings" in warningConfig:
-			for i in warningConfig["warnings"]:
-				warnings.append(warningConfig["warnings"][i])
 
-			warnings = [x for x in warnings if x[0] != text]
+		if warningConfig == "Error":
+			self.writeLog("cannot read warningConfig", 2, writeWarning=False)
+		else:
+			if "warnings" in warningConfig:
+				for i in warningConfig["warnings"]:
+					warnings.append(warningConfig["warnings"][i])
+
+				warnings = [x for x in warnings if x[0] != text]
 
 		warnings.insert(0, [text, time.time(), level])
 
@@ -485,7 +488,7 @@ class SlaveLogic(QDialog):
 		for idx, val in enumerate(warnings):
 			warningConfig["warnings"]["warning%s" % idx] = val
 
-		result = self.core.setConfig(configPath=self.slaveWarningsConf, confData=warningConfig)
+		result = self.setConfig(configPath=self.slaveWarningsConf, confData=warningConfig)
 		if result:
 			self.writeLog("writeWarning %s" % result, 2, writeWarning=False)
 
@@ -521,7 +524,7 @@ class SlaveLogic(QDialog):
 			self.createSettings()
 
 		if setval:
-			self.core.setConfig(section, setting, value, configPath=self.slaveConf)
+			self.setConfig(section, setting, value, configPath=self.slaveConf)
 
 			if setting == "debugMode":
 				self.debugMode = value
@@ -531,9 +534,22 @@ class SlaveLogic(QDialog):
 				if self.slaveState == "userActive":
 					self.setState("idle")
 		else:
-			val = self.core.getConfig(section, setting, configPath=self.slaveConf)
-			#self.writeLog(setting + " - " + str(val))
+			val = self.core.getConfig(section, setting, configPath=self.slaveConf, silent=True)
+			if val == "Error":
+				self.writeLog("Failed to read config setting: %s %s" % (setting, section), 2)
+				return
+
 			return val
+
+
+	@err_decorator
+	def setConfig(self, cat=None, param=None, val=None, data=None, configPath=None, delete=False, confData=None, silent=True):
+		result = self.core.setConfig(cat=cat, param=param, val=val, data=data, configPath=configPath, delete=delete, confData=confData, silent=silent)
+
+		if type(result) == str and result.startswith("Error"):
+			self.writeLog(result + " (Retry in 10 seconds)", 2)
+			time.sleep(10)
+			self.setConfig(cat=cat, param=param, val=val, data=data, configPath=configPath, delete=delete, confData=confData, silent=silent)
 
 
 	# shutdown this PC
@@ -652,7 +668,11 @@ class SlaveLogic(QDialog):
 		}
 
 		if complement:
-			curConfig = self.core.getConfig(configPath=self.slaveConf, getConf=True)
+			curConfig = self.core.getConfig(configPath=self.slaveConf, getConf=True, silent=True)
+			if curConfig == "Error":
+				self.writeLog("Failed to read config: %s" % self.slaveConf, 2)
+				curConfig = {}
+
 			for i in sConfig:
 				if i not in curConfig:
 					curConfig[i] = {}
@@ -664,7 +684,7 @@ class SlaveLogic(QDialog):
 
 			sConfig = curConfig
 
-		self.core.setConfig(configPath=self.slaveConf, confData=sConfig)
+		self.setConfig(configPath=self.slaveConf, confData=sConfig)
 
 
 	# sets the slavestate and writes it to file
@@ -917,7 +937,10 @@ class SlaveLogic(QDialog):
 					self.writeLog("ERROR - handle cmd - slave warningfile doesn't exist.", 2)
 					return None
 
-				warningConfig = self.core.getConfig(configPath=self.slaveWarningsConf, getConf=True)
+				warningConfig = self.core.getConfig(configPath=self.slaveWarningsConf, getConf=True, silent=True)
+				if warningConfig == "Error":
+					self.writeLog("Failed to read config: %s" % self.slaveWarningsConf, 2)
+					warningConfig = {}
 
 				warnings = []
 				if "warnings" in warningConfig:
@@ -936,7 +959,7 @@ class SlaveLogic(QDialog):
 				for idx, val in enumerate(warnings):
 					warningConfig["warnings"]["warning%s" % idx] = val
 
-				self.core.setConfig(configPath=self.slaveWarningsConf, confData=warningConfig)
+				self.setConfig(configPath=self.slaveWarningsConf, confData=warningConfig)
 			elif command[0] == "clearWarnings":
 				if not os.path.exists(self.slaveWarningsConf):
 					self.writeLog("ERROR - handle cmd - slave warningfile doesn't exist.", 2)
@@ -945,7 +968,7 @@ class SlaveLogic(QDialog):
 				warnData = {
 					"warnings": {}
 				}
-				self.core.setConfig(configPath=self.slaveWarningsConf, confData=warnData)
+				self.setConfig(configPath=self.slaveWarningsConf, confData=warnData)
 			elif command[0] == "deleteJob":
 				jobCode = command[1]
 				jobName = command[1]
@@ -956,10 +979,12 @@ class SlaveLogic(QDialog):
 				if os.path.exists(jobConf):
 					cData = {}
 					cData["jobName"] = ["information", "jobName"]
-					cData = self.core.getConfig(data=cData, configPath=jobConf)
-
-					if cData["jobName"] is not None:
-						jobName = cData["jobName"]
+					cData = self.core.getConfig(data=cData, configPath=jobConf, silent=True)
+					if cData == "Error":
+						self.writeLog("Failed to read config: %s" % jobConf, 2)
+					else:
+						if cData["jobName"] is not None:
+							jobName = cData["jobName"]
 
 				if os.path.exists(jobPath):
 					shutil.rmtree(jobPath)
@@ -1091,7 +1116,10 @@ class SlaveLogic(QDialog):
 			self.writeLog("Warning - JobConfig does not exist %s" % jobCode, 2)
 			return
 
-		jobConfig = self.core.getConfig(configPath=jobConf, getConf=True)
+		jobConfig = self.core.getConfig(configPath=jobConf, getConf=True, silent=True)
+		if jobConfig == "Error":
+			self.writeLog("Warning - Failed to read config: %s" % jobConf, 2)
+			return
 
 		jobData = {}
 		if "jobglobals" in jobConfig:
@@ -1143,7 +1171,10 @@ class SlaveLogic(QDialog):
 							self.writeLog("Warning - dependent JobConfig does not exist %s" % depConf, 2)
 							return
 
-						depOutPath = self.core.getConfig("information", "outputPath", configPath=depConf)
+						depOutPath = self.core.getConfig("information", "outputPath", configPath=depConf, silent=True)
+						if depOutPath == "Error":
+							self.writeLog("Warning - Failed to read config: %s" % depConf, 2)
+							return
 
 						if depOutPath is not None and depOutPath != "":
 							depPath = os.path.dirname(depOutPath)
@@ -1222,8 +1253,13 @@ class SlaveLogic(QDialog):
 
 		if "projectAssets" in jobData:
 			for k in epAssets:
+				local_asset = os.path.join(localPath, os.path.basename(k))
+				if os.path.exists(local_asset) and os.path.getmtime(k) == os.path.getmtime(local_asset):
+					continue
+
 				try:
 					shutil.copy2(k, localPath)
+					self.writeLog("copy asset to slave repository: %s" % k)
 				except:
 					self.writeLog("Could not copy file to Job folder: %s %s %s" % (jobData["projectName"], k, jobName), 2)
 
@@ -1445,7 +1481,7 @@ class SlaveLogic(QDialog):
 				if int(os.path.getmtime(fpath)) > self.taskStartTime:
 					hasNewOutput = True
 				fileNum += 1
-		hasNewOutput = False
+
 		if fileNum > jobData["existingOutputFileNum"]:
 			hasNewOutput = True
 

@@ -60,7 +60,7 @@ class PandoraCore():
 	def __init__(self, app="Standalone"):
 		try:
 			# set some general variables
-			self.version = "v1.0.3.6"
+			self.version = "v1.0.3.7"
 			self.pandoraRoot = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 
 			# add the custom python libraries to the path variable, so they can be imported
@@ -429,6 +429,8 @@ class PandoraCore():
 	def openWebsite(self, url):
 		if url == "home":
 			url = "https://prism-pipeline.com/pandora/"
+		elif url == "documentation":
+			url = "https://pandora-renderfarmmanager.readthedocs.io/en/latest/"
 			
 		import webbrowser
 		webbrowser.open(url)
@@ -642,35 +644,50 @@ class PandoraCore():
 
 	@err_decorator
 	def stopCoordinator(self):
-		cData = {}
-		cData["localMode"] = ["globals", "localMode"]
-		cData["rootPath"] = ["globals", "rootPath"]
-		cData["slavePath"] = ["coordinator", "rootPath"]
-		cData = self.getConfig(data=cData)
-
-		if cData["localMode"] == True:
-			coordRoot = cData["rootPath"]
-		else:
-			coordRoot = cData["slavePath"]
-		
-		if coordRoot is None:
+		coordProc = []
+		try:
+			import psutil
+		except Exception as e:
+			QMessageBox.warning(self.messageParent, "PandoraCoordinator", "Failed to check if the coordinator is running:\n\n%s" % str(e))
 			return
 
-		if not os.path.exists(coordRoot):
+		for x in psutil.pids():
 			try:
-				os.makedirs(coordRoot)
+				if os.path.basename(psutil.Process(x).exe()) == "PandoraCoordinator.exe":
+					coordProc.append(x)
 			except:
+				pass
+
+		if len(coordProc) > 0:
+			cData = {}
+			cData["localMode"] = ["globals", "localMode"]
+			cData["rootPath"] = ["globals", "rootPath"]
+			cData["slavePath"] = ["coordinator", "rootPath"]
+			cData = self.getConfig(data=cData)
+
+			if cData["localMode"] == True:
+				coordRoot = cData["rootPath"]
+			else:
+				coordRoot = cData["slavePath"]
+			
+			if coordRoot is None:
 				return
 
-		coordBasePath = os.path.join(coordRoot, "Scripts", "PandoraCoordinator")
+			if not os.path.exists(coordRoot):
+				try:
+					os.makedirs(coordRoot)
+				except:
+					return
 
-		if not os.path.exists(coordBasePath):
-			os.makedirs(coordBasePath)
+			coordBasePath = os.path.join(coordRoot, "Scripts", "PandoraCoordinator")
 
-		cmdPath = os.path.join(coordBasePath, "command.txt")
+			if not os.path.exists(coordBasePath):
+				os.makedirs(coordBasePath)
 
-		with open(cmdPath, "w") as cmdFile:
-			cmdFile.write("exit")
+			cmdPath = os.path.join(coordBasePath, "command.txt")
+
+			with open(cmdPath, "w") as cmdFile:
+				cmdFile.write("exit")
 
 
 	@err_decorator
@@ -714,8 +731,7 @@ class PandoraCore():
 
 			if isUserConf:
 				warnStr = "The Pandora preferences file seems to be corrupt.\n\nIt will be reset, which means all local Pandora settings will fall back to their defaults."
-				msg = QMessageBox(QMessageBox.Warning, "Warning", warnStr, QMessageBox.Ok, parent=self.messageParent)
-				action = msg.exec_()
+				QMessageBox.warning(self.messageParent, "Pandora", warnStr)
 
 				self.createUserPrefs()
 				with open(configPath, 'r') as f:
@@ -772,7 +788,7 @@ class PandoraCore():
 
 
 	@err_decorator
-	def setConfig(self, cat=None, param=None, val=None, data=None, configPath=None, delete=False, confData=None):
+	def setConfig(self, cat=None, param=None, val=None, data=None, configPath=None, delete=False, confData=None, silent=False):
 		if configPath is None:
 			configPath = self.configPath
 
@@ -783,11 +799,14 @@ class PandoraCore():
 
 		if not os.path.exists(os.path.dirname(configPath)):
 			try:
-				df
 				os.makedirs(os.path.dirname(configPath))
 			except Exception as e:
-				QMessageBox.warning(self.messageParent, "Pandora", "The folder couldn't be created:\n\n%s\n\n%s" % (os.path.dirname(configPath), str(e)))
-				return
+				errStr = "The folder couldn't be created:\n\n%s\n\n%s" % (os.path.dirname(configPath), str(e))
+				if silent:
+					return "Error - " + errStr
+				else:
+					QMessageBox.warning(self.messageParent, "Pandora", errStr)
+					return
 
 		fcontent = os.listdir(os.path.dirname(configPath))
 		if len([x for x in fcontent if x.startswith(os.path.basename(configPath) + ".bak")]):
@@ -800,6 +819,9 @@ class PandoraCore():
 					with open(configPath, 'r') as f:
 						userConfig = json.load(f)
 			except:
+				if silent:
+					return "Error - Cannot read the following file:\n\n%s" % configPath
+
 				if isUserConf:
 					warnStr = "The Pandora preferences file seems to be corrupt.\n\nIt will be reset, which means all local Pandora settings will fall back to their defaults."
 				else:
@@ -838,7 +860,11 @@ class PandoraCore():
 				try:
 					json.dump(userConfig, confFile, indent=4)
 				except UnicodeEncodeError:
-					QMessageBox.warning(self.messageParent, "Pandora", "Cannot save config because it contains illegal characters:\n\n%s" % (unicode(userConfig)), QMessageBox.Ok)
+					errStr =  "Cannot save config because it contains illegal characters:\n\n%s" % (unicode(userConfig))
+					if silent:
+						return "Error - " + errStr
+					else:
+						QMessageBox.warning(self.messageParent, "Pandora", errStr, QMessageBox.Ok)
 
 			try:
 				with open(configPath, 'r') as f:
@@ -852,7 +878,7 @@ class PandoraCore():
 				with open(backupPath, 'w') as confFile:
 					json.dump(userConfig, confFile, indent=4)
 		except IOError as e:
-			return str(e)
+			return "Error - " + str(e)
 
 
 	@err_decorator

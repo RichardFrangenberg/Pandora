@@ -54,11 +54,11 @@ To do this you simply have to place the Coordinator python script in a specific 
 
 First you need the PandoraCoordinator.py file.
 You can find it on a PC, where Pandora was installed with the installer under this path:
-%localappdata%\Pandora\Scripts\PandoraCoordinator.py
+C:/Pandora/Scripts/PandoraCoordinator.py
 You can also download it from GitHub.
 
-Then create a Pandora root folder somewhere on your server. Create a "PandoraFarm", "Scripts" and a "PandoraCoordinator" subfolders and place the PandoraCoordinator.py in there. The path has to look like this:
-Root\PandoraFarm\Scripts\PandoraCoordinator\PandoraCoordinator.py
+Then create a Pandora root folder somewhere on your server. Create "Scripts" and a "PandoraCoordinator" subfolders and place the PandoraCoordinator.py in there. The path has to look like this:
+\.../Scripts/PandoraCoordinator/PandoraCoordinator.py
 
 Now you can execute this script with Python 2.7. A log file called "PandoraCoordinator_Log.txt" will be created in the same folder and it should contain a line, which includes "starting Coordinator".
 
@@ -81,7 +81,7 @@ The setup is very similar to the usual local network setup. At first you need in
 Then uncheck the "Local network mode" in the "General" tab on the Pandora Settings on every computer in the renderfarm (coordinator, slaves and submitters). You need to restart the coordinator and the renderslaves, if they are already running, when you change this setting.
 Enable the Pandora Coordinator and make sure you set the "Pandora Root" folder in the "Coordinator" tab of the Pandora Settings to a location inside the Dropbox folder. The "Local Repository" folder on the "General" tab doesn't need to be in the Dropbox folder. Add new slaves and submitters in the "Coordinator" tab. The names of the slaves/submitters need to be the exact windows computer names. This will create folders in your Pandora root folder which you can synchronize to the slaves/submitters later.
 
-On the renderslave and submitter computers install Dropbox and Pandora, too. You don't need to synchronize the complete Pandora Root folder to the harddrive of the Renderslaves. In the Dropbox options you can select to only synchronize the slave folder (e.g. Root\PandoraFarm\Slaves\S_Richard-PC1).
+On the renderslave and submitter computers install Dropbox and Pandora, too. You don't need to synchronize the complete Pandora Root folder to the harddrive of the Renderslaves. In the Dropbox options you can select to only synchronize the slave folder (e.g. Root/PandoraFarm/Slaves/S_Richard-PC1).
 
 In the Pandora Settings in the "Slave" tab enable the slave and set the synchronized folder as the "Slave Root" path. (the same procedure applies to the submitters)
 

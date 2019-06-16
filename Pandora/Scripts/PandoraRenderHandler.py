@@ -150,6 +150,10 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 
 			helpMenu = QMenu("Help")
 
+			self.actionWebsite = QAction("Documentation", self)
+			self.actionWebsite.triggered.connect(lambda: self.core.openWebsite("documentation"))
+			helpMenu.addAction(self.actionWebsite)
+
 			self.actionWebsite = QAction("Visit website", self)
 			self.actionWebsite.triggered.connect(lambda: self.core.openWebsite("home"))
 			helpMenu.addAction(self.actionWebsite)
