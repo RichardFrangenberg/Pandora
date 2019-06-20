@@ -78,29 +78,34 @@ class Pandora_Maya_Functions(object):
 
 	@err_decorator
 	def startup(self, origin):
-		if QApplication.instance() is None:
-			return False
+		if os.path.basename(sys.executable) != "mayapy.exe":
+			if QApplication.instance() is None:
+				return False
 
-		if not hasattr(qApp, "topLevelWidgets"):
-			return False
+			if not hasattr(qApp, "topLevelWidgets"):
+				return False
 
-		for obj in qApp.topLevelWidgets():
-			if obj.objectName() == 'MayaWindow':
-				mayaQtParent = obj
-				break
+			for obj in qApp.topLevelWidgets():
+				if obj.objectName() == 'MayaWindow':
+					mayaQtParent = obj
+					break
+			else:
+				return False
+
+			try:
+				topLevelShelf = mel.eval('string $m = $gShelfTopLevel')
+			except:
+				return False
+
+			if cmds.shelfTabLayout(topLevelShelf, query=True, tabLabelIndex=True) == None:
+				return False
+
+			origin.timer.stop()
+			origin.messageParent = mayaQtParent
+
 		else:
-			return False
-
-		try:
-			topLevelShelf = mel.eval('string $m = $gShelfTopLevel')
-		except:
-			return False
-
-		if cmds.shelfTabLayout(topLevelShelf, query=True, tabLabelIndex=True) == None:
-			return False
-
-		origin.timer.stop()
-		origin.messageParent = mayaQtParent
+			origin.timer.stop()
+			origin.messageParent = QWidget()
 
 
 	@err_decorator

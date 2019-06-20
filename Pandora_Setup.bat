@@ -1,1 +1,2 @@
-start Pandora/PandoraFiles/Python27/python.exe Pandora/InstallPandora.py
+Pandora/Setup_Integrations.bat
+Pandora/Setup_Startmenu.bat

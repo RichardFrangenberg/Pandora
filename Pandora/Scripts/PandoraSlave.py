@@ -86,7 +86,7 @@ class SlaveLogic(QDialog):
 	def __init__(self, core):
 		QDialog.__init__(self)
 		self.core = core
-		self.slaveLogicVersion = "v1.0.3.7"
+		self.slaveLogicVersion = "v1.0.3.8"
 
 		# define some initial variables
 		self.slaveState = "idle"			# slave render status

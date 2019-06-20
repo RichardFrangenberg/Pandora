@@ -49,7 +49,7 @@ class PandoraCoordinator():
 
 	def __init__(self):
 		try:
-			self.version = "v1.0.3.7"
+			self.version = "v1.0.3.8"
 
 			self.coordUpdateTime = 5 #seconds
 			self.activeThres = 10 # time in min after a slave becomes inactive
@@ -75,7 +75,7 @@ class PandoraCoordinator():
 				cData = self.getConfig(data=cData, configPath=pandoraConfig)
 
 				if cData["coordEnabled"] is not None and cData["coordEnabled"] == False:
-					self.writeLog("coordinator is disabled. Closing Coordinator")
+					self.writeLog("Coordinator is disabled. Closing Coordinator")
 					return
 
 				if cData["localMode"] is not None:
@@ -87,20 +87,20 @@ class PandoraCoordinator():
 					rootPath = cData["coordRootpath"]
 
 				if rootPath is None:
-					self.writeLog("sync directory is not defined. Closing Coordinator")
+					self.writeLog("Sync directory is not defined. Closing Coordinator")
 					return
 
 				if not os.path.exists(rootPath):
 					try:
 						os.makedirs(rootPath)
 					except:
-						self.writeLog("sync directory doesn't exist. Closing Coordinator")
+						self.writeLog("Sync directory doesn't exist. Closing Coordinator")
 						return
 
 				self.coordBasePath = os.path.join(rootPath, "Scripts", "PandoraCoordinator")
 
 				if cData["repositoryPath"] is None or cData["repositoryPath"] == "":
-					self.writeLog("repository is invalid. Fallback to default repository location.")
+					self.writeLog("Repository is invalid. Fallback to default repository location.")
 				else:
 					repoDir = os.path.join(cData["repositoryPath"], "Coordinator")
 					if not os.path.exists(repoDir):
@@ -111,9 +111,9 @@ class PandoraCoordinator():
 
 					if os.path.exists(repoDir):
 						self.repPath = repoDir
-						self.writeLog("set repository: %s" % self.repPath)
+						self.writeLog("Set repository: %s" % self.repPath)
 					else:
-						self.writeLog("repository doesn't exist. Fallback to default repository location.")
+						self.writeLog("Repository doesn't exist. Fallback to default repository location.")
 
 				slScript = os.path.join(os.path.dirname(__file__), "PandoraSlave.py")
 				hScript = os.path.join(os.path.dirname(__file__), "PandoraStartHouJob.py")
@@ -150,13 +150,13 @@ class PandoraCoordinator():
 			self.collectTasks = {}
 			self.jobDirs = []
 
-			self.writeLog("starting Coordinator - %s - %s" % (self.version, socket.gethostname()), 1)
+			self.writeLog("Starting Coordinator - %s - %s" % (self.version, socket.gethostname()), 1)
 
 			repConf = self.getConfig("settings", "repository")
 
 			if repConf is not None and os.path.exists(repConf):
 				self.repPath = repConf
-				self.writeLog("set repository: %s" % self.repPath)
+				self.writeLog("Set repository: %s" % self.repPath)
 
 			if self.repPath == "":
 				self.repPath = os.path.join(self.slPath, "JobRepository")
@@ -166,7 +166,7 @@ class PandoraCoordinator():
 
 			if lmodeConf is not None:
 				self.localMode = lmodeConf == True
-				self.writeLog("set localMode: %s" % self.localMode)
+				self.writeLog("Set localMode: %s" % self.localMode)
 
 			self.writeLog("Repository: %s" % self.repPath, 1)
 			self.writeLog("Coordinatorbase: %s" % self.coordBasePath, 1)
@@ -249,7 +249,7 @@ class PandoraCoordinator():
 			self.writeWarning(text, level)
 
 		with io.open(logPath, 'a', encoding='utf-16') as log:
-			log.write(unicode("[%s] %s : %s\n" % (level, time.strftime("%d/%m/%y %X"), text)))
+			log.write(unicode("[%s] %s - %s : %s\n" % (level, os.getpid(), time.strftime("%d/%m/%y %X"), text)))
 
 		#print "[%s] %s : %s\n" % (level, time.strftime("%d/%m/%y %X"), text)
 
@@ -259,7 +259,7 @@ class PandoraCoordinator():
 			try:
 				open(self.coordWarningsConf, 'a').close()
 			except:
-				self.writeLog("cannot create warning config", 2, writeWarning=False)
+				self.writeLog("Cannot create warning config", 2, writeWarning=False)
 				return None
 
 		warningConfig = self.getConfig(configPath=self.coordWarningsConf, getConf=True, suppressError=True)
@@ -292,7 +292,7 @@ class PandoraCoordinator():
 			self.setConfig("settings", "command", "")
 
 		if val is not None and val != "":
-			self.writeLog("checkCommands - execute: %s" % val, 1)
+			self.writeLog("CheckCommands - execute: %s" % val, 1)
 			try:
 				exec(val)
 			except Exception as e:
@@ -547,6 +547,7 @@ class PandoraCoordinator():
 
 	@err_decorator
 	def startCoordination(self):
+		self.writeLog("Cycle start")
 		# checking slaves
 		if os.path.exists(os.path.join(self.coordBasePath, "EXIT.txt")):
 			return True
@@ -557,21 +558,21 @@ class PandoraCoordinator():
 		if newUTime is None:
 			self.setConfig("settings", "coordUpdateTime", self.coordUpdateTime)
 		elif newUTime != self.coordUpdateTime:
-			self.writeLog("updating updateTime from %s to %s" % (self.coordUpdateTime, newUTime), 1)
+			self.writeLog("Updating updateTime from %s to %s" % (self.coordUpdateTime, newUTime), 1)
 			self.coordUpdateTime = newUTime
 
 		newCInterval = self.getConfig("settings", "notifySlaveInterval")
 		if newCInterval is None:
 			self.setConfig("settings", "notifySlaveInterval", self.notifySlaveInterval)
 		elif newCInterval != self.notifySlaveInterval:
-			self.writeLog("updating notifySlaveInterval from %s to %s" % (self.notifySlaveInterval, newCInterval), 1)
+			self.writeLog("Updating notifySlaveInterval from %s to %s" % (self.notifySlaveInterval, newCInterval), 1)
 			self.notifySlaveInterval = newCInterval
 
 		rgdrive = self.getConfig("settings", "restartGDrive")
 		if rgdrive is None:
 			self.setConfig("settings", "restartGDrive", self.restartGDriveEnabled)
 		elif rgdrive != self.restartGDriveEnabled:
-			self.writeLog("updating restartGDrive from %s to %s" % (self.restartGDriveEnabled, rgdrive), 1)
+			self.writeLog("Updating restartGDrive from %s to %s" % (self.restartGDriveEnabled, rgdrive), 1)
 			self.restartGDriveEnabled = rgdrive
 
 		self.activeSlaves = {}
@@ -599,11 +600,13 @@ class PandoraCoordinator():
 		self.notifyWorkstations()
 		self.notifySlaves()
 
-		self.writeLog("cycle finished")
+		self.writeLog("Cycle finished")
 
 
 	@err_decorator
 	def handleCmd(self, cmFile, origin=""):
+		self.writeLog("Handle cmd file: %s" % cmFile)
+
 		with open(cmFile, 'r') as comFile:
 			cmdText = comFile.read()
 			command = None
@@ -647,7 +650,7 @@ class PandoraCoordinator():
 						continue
 
 					if type(taskData) != list or len(taskData) != 7 or (taskData[2] == "rendering" and taskData[3] != origin) or taskData[2] in ["finished", "disabled"]:
-						self.writeLog("could not set taskdata on job %s for task %s - %s (%s)" % (jobName, taskName, command, origin), 1)
+						self.writeLog("Could not set taskdata on job %s for task %s - %s (%s)" % (jobName, taskName, command, origin), 1)
 						continue
 
 					if taskData[2] == "rendering" and [jobCode, taskName] in self.renderingTasks:
@@ -672,7 +675,7 @@ class PandoraCoordinator():
 						else:
 							self.collectTasks[origin] = {jobCode: outputFileNum}
 
-					self.writeLog("updated Task %s in %s to %s (%s)" % (taskName, jobName, str(taskData), origin), 1)
+					self.writeLog("Updated Task %s in %s to %s (%s)" % (taskName, jobName, str(taskData), origin), 1)
 
 				elif command[0] == "setSetting":
 					settingType = command[1]
@@ -685,7 +688,7 @@ class PandoraCoordinator():
 						section = "jobglobals"
 					elif settingType == "Slave":
 						self.sendCommand(parentName, ["setSetting", settingName, settingVal])
-						self.writeLog("set config setting %s - %s: %s (%s)" % (parentName, settingName, settingVal, origin), 1)
+						self.writeLog("Set config setting %s - %s: %s (%s)" % (parentName, settingName, settingVal, origin), 1)
 
 						if settingType == "Slave" and settingName in ["command", "corecommand"] and settingVal == "self.startTeamviewer()":
 							if len([x for x in self.tvRequests if x["slave"] == parentName and x["workstation"] == origin]) == 0:
@@ -705,7 +708,7 @@ class PandoraCoordinator():
 					if settingType == "Job" and settingName == "priority":
 						self.setConfig(parentName, "priority", settingVal, configPath=self.prioList)
 
-					self.writeLog("set config setting %s - %s: %s (%s)" % (parentName, settingName, settingVal, origin), 1)
+					self.writeLog("Set config setting %s - %s: %s (%s)" % (parentName, settingName, settingVal, origin), 1)
 
 				elif command[0] == "deleteJob":
 					if os.path.exists(self.prioList):
@@ -771,7 +774,7 @@ class PandoraCoordinator():
 								except:
 									self.writeLog("ERROR - cannot remove file(s): %s (%s)" % (k, origin), 3)
 
-					self.writeLog("deleted Job %s (%s)" % (jobName, origin), 1)
+					self.writeLog("Deleted Job %s (%s)" % (jobName, origin), 1)
 
 				elif command[0] == "restartTask":
 					jobCode = command[1]
@@ -799,7 +802,7 @@ class PandoraCoordinator():
 					taskData[6] = ""
 					self.setConfig("jobtasks", "task%04d" % taskNum, taskData, configPath=jobConf)
 
-					self.writeLog("restarted Task %s from Job %s (%s)" % (taskNum, jobName, origin), 1)
+					self.writeLog("Restarted Task %s from Job %s (%s)" % (taskNum, jobName, origin), 1)
 
 				elif command[0] == "disableTask":
 					jobCode = command[1]
@@ -869,9 +872,9 @@ class PandoraCoordinator():
 						self.sendCommand(slaveName, ["deleteWarning", warnText, warnTime])
 
 					if warnType == "Slave":
-						self.writeLog("warning deleted: %s (%s)" % (slaveName, origin), 1)
+						self.writeLog("Warning deleted: %s (%s)" % (slaveName, origin), 1)
 					elif warnType == "Coordinator":
-						self.writeLog("coordinator warning deleted (%s)" % origin, 1)
+						self.writeLog("Coordinator warning deleted (%s)" % origin, 1)
 
 				elif command[0] == "clearWarnings":
 					warnType = command[1]
@@ -887,9 +890,9 @@ class PandoraCoordinator():
 						self.sendCommand(slaveName, ["clearWarnings"])
 
 					if warnType == "Slave":
-						self.writeLog("warnings cleared: %s (%s)" % (slaveName, origin), 1)
+						self.writeLog("Warnings cleared: %s (%s)" % (slaveName, origin), 1)
 					elif warnType == "Coordinator":
-						self.writeLog("coordinator warnings cleared (%s)" % origin, 1)
+						self.writeLog("Coordinator warnings cleared (%s)" % origin, 1)
 
 				elif command[0] == "clearLog":
 					logType = command[1]
@@ -971,6 +974,8 @@ class PandoraCoordinator():
 
 	@err_decorator
 	def getJobAssignments(self):
+		self.writeLog("Check job submissions")
+
 		if not os.path.exists(os.path.join(self.slPath, "Workstations")):
 			self.writeWarning("Workstations folder doesn't exist (%s)" % (os.path.join(self.slPath, "Workstations")), 2)
 			return
@@ -1002,6 +1007,7 @@ class PandoraCoordinator():
 						continue
 
 					jobCode = k
+					self.writeLog("Found job %s on workstation %s." % (jobCode, wsName))
 
 					jobConf = os.path.join(jobDir, jobCode, "PandoraJob.json")
 					if not os.path.exists(jobConf):
@@ -1057,18 +1063,18 @@ class PandoraCoordinator():
 
 					jobFilesDir = os.path.join(jobDir, jobCode, "JobFiles")
 					if not os.path.isdir(jobFilesDir):
-						self.writeLog("jobfiles folder does not exist for job %s (%s)" % (jobName, wsName), 1)
+						self.writeLog("Jobfiles folder does not exist for job %s (%s)" % (jobName, wsName), 1)
 						continue
 
 					if (len(os.listdir(jobFilesDir)) + existingFiles) < jobFileCount:
-						self.writeLog("not all required files for job %s exists (%s)" % (jobName, wsName))
+						self.writeLog("Not all required files for job %s exists (%s)" % (jobName, wsName))
 						continue
 
 					targetPath = os.path.join(self.repPath, "Jobs", jobCode)
 
 					while os.path.exists(targetPath):
 						newjobCode = ''.join(random.choice(string.lowercase) for x in range(10))
-						self.writeLog("renamed job %s to %s" % (jobCode, newjobCode))
+						self.writeLog("Renamed job %s to %s" % (jobCode, newjobCode))
 						jobCode = newjobCode
 						targetPath = os.path.join(self.repPath, "Jobs", jobCode)
 
@@ -1077,6 +1083,7 @@ class PandoraCoordinator():
 					cData.append(["information", "submitWorkstation", wsName])
 					cData = self.setConfig(configPath=jobConf, data=cData)
 
+					self.writeLog("Copying job %s (%s) to coordinator repository." % (jobName, jobCode))
 					try:
 						shutil.move(os.path.join(jobDir, jobCode) ,targetPath)
 					except:
@@ -1094,6 +1101,7 @@ class PandoraCoordinator():
 	@err_decorator
 	def checkSlaves(self):
 		# checks for updated slave script and handles slaveout commands
+		self.writeLog("Checking slave commands.")
 
 		for i in os.listdir(os.path.join(self.slPath, "Slaves")):
 			try:
@@ -1137,7 +1145,7 @@ class PandoraCoordinator():
 
 						if mFileDate > sFileDate:
 							shutil.copy2(masterScriptPath, slaveScriptPath)
-							self.writeLog("updated Slave for %s" % slaveName, 1)
+							self.writeLog("Updated Slave for %s" % slaveName, 1)
 
 					except Exception as e:
 						exc_type, exc_obj, exc_tb = sys.exc_info()
@@ -1162,7 +1170,7 @@ class PandoraCoordinator():
 
 						if mFileDate > sFileDate:
 							shutil.copy2(mhouJobPath, shouJobPath)
-							self.writeLog("updated houJobScript for %s" % slaveName, 1)
+							self.writeLog("Updated houJobScript for %s" % slaveName, 1)
 
 					except Exception as e:
 						exc_type, exc_obj, exc_tb = sys.exc_info()
@@ -1174,7 +1182,7 @@ class PandoraCoordinator():
 					try:
 						os.makedirs(slaveComPath)
 					except:
-						self.writeLog("could not create Communication folder for %s" % slaveName, 3)
+						self.writeLog("Could not create Communication folder for %s" % slaveName, 3)
 						continue
 
 				for k in sorted(os.listdir(slaveComPath)):
@@ -1205,7 +1213,7 @@ class PandoraCoordinator():
 		if "psutil" not in locals():
 			return
 			
-		self.writeLog("restart gdrive")
+		self.writeLog("Restart gdrive")
 		PROCNAME = 'googledrivesync.exe'
 		for proc in psutil.process_iter():
 			if proc.name() == PROCNAME:
@@ -1235,11 +1243,13 @@ class PandoraCoordinator():
 		except:
 			self.gdrive = ""
 
-		self.writeLog("set gdrive path to: %s" % self.gdrive)
+		self.writeLog("Set gdrive path to: %s" % self.gdrive)
 
 
 	@err_decorator
 	def checkRenderingTasks(self):
+		self.writeLog("Checking rendering tasks.")
+
 		removed = []
 		for i in self.renderingTasks:
 			jobName = i[0]
@@ -1286,7 +1296,7 @@ class PandoraCoordinator():
 					self.setConfig("jobtasks", taskName, taskData, configPath=confPath)
 
 					removed.append(i)
-					self.writeLog("reset task %s of job %s" % (taskName, jobName))
+					self.writeLog("Reset task %s of job %s" % (taskName, jobName))
 
 		for i in removed:
 			self.renderingTasks.remove(i)
@@ -1294,6 +1304,8 @@ class PandoraCoordinator():
 
 	@err_decorator
 	def getAvailableSlaves(self):
+		self.writeLog("Getting available slaves.")
+
 		jobBase = os.path.join(self.repPath, "Jobs")
 		unavailableSlaves = []
 
@@ -1379,7 +1391,7 @@ class PandoraCoordinator():
 
 	@err_decorator
 	def assignJobs(self):
-		self.writeLog("start checking jobs")
+		self.writeLog("Start checking jobs")
 
 		jobPrios = self.getConfig(configPath=self.prioList, getConf=True)
 		self.jobDirs = [x for x in reversed(sorted(jobPrios, key=lambda x: jobPrios[x]["priority"])) if os.path.exists(os.path.join(self.repPath, "Jobs", x))]
@@ -1417,7 +1429,7 @@ class PandoraCoordinator():
 			if cData["fileCount"] is not None:
 				jobFileCount = cData["fileCount"]
 				if len(os.listdir(os.path.join(self.jobPath, jobDir, "JobFiles"))) < jobFileCount and cData["projectAssets"] is None:
-					self.writeLog("assign job - not all required files for job %s exists" % jobName, 1)
+					self.writeLog("Assign job - not all required files for job %s exists" % jobName, 1)
 					continue
 			else:
 				self.writeWarning("Job has no fileCount option: %s" % jobName, 2)
@@ -1526,7 +1538,10 @@ class PandoraCoordinator():
 				
 				slaveJobPath = os.path.join(slavePath, "AssignedJobs", "%s" % jobDir)
 
+				self.writeLog("Assigning job %s to slave %s." % (jobName, assignedSlave))
+
 				if not os.path.exists(slaveJobPath):
+					self.writeLog("Copying job files for job %s to slave %s." % (jobName, assignedSlave))
 					shutil.copytree(os.path.join(self.jobPath, jobDir), slaveJobPath)
 
 				if cData["projectAssets"] is not None:
@@ -1546,6 +1561,8 @@ class PandoraCoordinator():
 						if os.path.exists(sPAsset) and os.path.getmtime(paPath) == os.path.getmtime(sPAsset):
 							continue
 
+						self.writeLog("Copying project asset %s to slave %s." % (k[0], assignedSlave))
+
 						shutil.copy2(paPath, sPAsset)
 
 				cmd = str(["renderTask", jobDir, jobName, i])
@@ -1558,7 +1575,7 @@ class PandoraCoordinator():
 				self.availableSlaves.remove(assignedSlave)
 
 				self.setConfig("jobtasks", i, taskData, configPath=confPath)
-				self.writeLog("assigned %s to %s in job %s" % (assignedSlave, i, jobName), 1)
+				self.writeLog("Assigned %s to %s in job %s" % (assignedSlave, i, jobName), 1)
 
 
 	@err_decorator
@@ -1579,6 +1596,8 @@ class PandoraCoordinator():
 
 		cmdFile = os.path.join(cmdDir, "slaveIn_%s_%s.txt" % (format(curNum, '04'), time.time()))
 
+		self.writeLog("Sending command: %s" % cmd)
+
 		with open(cmdFile, 'w') as cFile:
 			cFile.write(str(cmd))
 
@@ -1588,7 +1607,7 @@ class PandoraCoordinator():
 		handledRequests = []
 
 		for i in self.tvRequests:
-			self.writeLog("handling teamviewer request: %s" % i)
+			self.writeLog("Handling teamviewer request: %s" % i)
 			ssPath = os.path.join(self.slPath, "Slaves", "S_%s" % i["slave"], "ScreenShot_%s.jpg" % i["slave"])
 			if os.path.exists(ssPath) and os.path.getmtime(ssPath) > i["requestTime"]:
 				targetPath = os.path.join(self.slPath, "Workstations", "WS_%s" % i["workstation"],  "Screenshots")
@@ -1746,6 +1765,8 @@ class PandoraCoordinator():
 
 	@err_decorator
 	def notifyWorkstations(self):
+		self.writeLog("Notify workstations")
+
 		logDir = os.path.join(self.slPath, "Workstations", "Logs")
 
 		if not os.path.exists(logDir):
@@ -1784,6 +1805,8 @@ class PandoraCoordinator():
 		if (time.time() - self.lastNotifyTime) < (self.notifySlaveInterval*60):
 			return
 
+		self.writeLog("Notify slaves")
+
 		for i in os.listdir(os.path.join(self.slPath, "Slaves")):
 			if not i.startswith("S_"):
 				continue
@@ -1811,7 +1834,7 @@ class PandoraCoordinator():
 		for i in files:
 			#self.writeLog(i)
 			if not os.path.exists(i):
-				self.writeLog("copy logs: skipping %s" % i)
+				self.writeLog("Copy logs: skipping %s" % i)
 				continue
 
 			origTime = int(os.path.getmtime(i))
