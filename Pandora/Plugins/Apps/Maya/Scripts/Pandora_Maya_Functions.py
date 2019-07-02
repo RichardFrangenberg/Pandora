@@ -250,7 +250,7 @@ class Pandora_Maya_Functions(object):
 			if not driver:
 				mel.eval('RenderGlobalsWindow;')
 
-			rSettings["vr_imageFilePrefix"] = cmds.getAttr("vraySettings.fileNamePrefix")
+			rSettings["vr_imageFilePrefix"] = cmds.getAttr("vraySettings.fileNamePrefix") or ""
 			rSettings["vr_fileformat"] = cmds.getAttr("vraySettings.imageFormatStr")
 			rSettings["vr_sepRGBA"] = cmds.getAttr("vraySettings.relements_separateRGBA")
 			rSettings["vr_animation"] = cmds.getAttr("vraySettings.animType")
