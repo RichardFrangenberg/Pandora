@@ -86,7 +86,7 @@ class SlaveLogic(QDialog):
 	def __init__(self, core):
 		QDialog.__init__(self)
 		self.core = core
-		self.slaveLogicVersion = "v1.0.3.9"
+		self.slaveLogicVersion = "v1.0.3.10"
 
 		# define some initial variables
 		self.slaveState = "idle"			# slave render status
@@ -1371,6 +1371,27 @@ class SlaveLogic(QDialog):
 
 			elif curFileDate > latestFileDate:
 				self.writeWarning("local PandoraStartHouJob.py is newer than the global", 2)
+
+		# zip Pandora update
+		latestFile = self.slavePath + "\\Scripts\\%s\\Pandora-development.zip" % socket.gethostname()
+		if not os.path.exists(latestFile):
+			latestFile = os.path.join(os.path.dirname(os.path.dirname(latestFile)), os.path.basename(latestFile))
+
+		if os.path.exists(latestFile):
+			targetdir = os.path.join(os.environ["temp"], "PandoraSlaveUpdate", "Pandora_update.zip")
+
+			if not os.path.exists(os.path.dirname(targetdir)):
+				try:
+					os.makedirs(os.path.dirname(targetdir))
+				except:
+					self.writeLog("could not create PandoraUpdate folder", 2)
+					return
+
+			shutil.move(latestFile, targetdir)
+
+			self.writeLog("restart for Pandora update", 1)
+			self.stopRender()
+			self.core.updatePandora(filepath=targetdir, silent=True, startSlave=True)
 
 
 	# start the thread for the rendering process

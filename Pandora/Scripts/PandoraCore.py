@@ -60,7 +60,7 @@ class PandoraCore():
 	def __init__(self, app="Standalone"):
 		try:
 			# set some general variables
-			self.version = "v1.0.3.9"
+			self.version = "v1.0.3.10"
 			self.pandoraRoot = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 
 			# add the custom python libraries to the path variable, so they can be imported
@@ -1379,7 +1379,7 @@ class PandoraCore():
 
 
 	@err_decorator
-	def updatePandora(self, filepath="", source=""):
+	def updatePandora(self, filepath="", source="", downloadOnly=False, silent=False, startSlave=False):
 		targetdir = os.path.join(os.environ["temp"], "PandoraUpdate")
 
 		if os.path.exists(targetdir):
@@ -1426,13 +1426,17 @@ class PandoraCore():
 		if not os.path.exists(filepath):
 			return
 
+		if downloadOnly:
+			return filepath
+
 		import zipfile
 
-		waitmsg = QMessageBox(QMessageBox.NoIcon, "Pandora update", "Extracting - please wait..", QMessageBox.Cancel)
-		waitmsg.buttons()[0].setHidden(True)
-		self.parentWindow(waitmsg)
-		waitmsg.show()
-		QCoreApplication.processEvents()
+		if not silent:
+			waitmsg = QMessageBox(QMessageBox.NoIcon, "Pandora update", "Extracting - please wait..", QMessageBox.Cancel)
+			waitmsg.buttons()[0].setHidden(True)
+			self.parentWindow(waitmsg)
+			waitmsg.show()
+			QCoreApplication.processEvents()
 
 		with zipfile.ZipFile(filepath,"r") as zip_ref:
 			zip_ref.extractall(targetdir)
@@ -1443,19 +1447,20 @@ class PandoraCore():
 
 		updateRoot = os.path.join(targetdir, dirs[0], "Pandora")
 
-		if "waitmsg" in locals() and waitmsg.isVisible():
-			waitmsg.close()
+		if not silent:
+			if "waitmsg" in locals() and waitmsg.isVisible():
+				waitmsg.close()
 
-		msgText = "Are you sure you want to continue?\n\nThis will overwrite existing files in your Pandora installation folder."
-		if psVersion == 1:
-			flags = QMessageBox.StandardButton.Yes
-			flags |= QMessageBox.StandardButton.No
-			result = QMessageBox.question(self.messageParent, "Pandora update", msgText, flags)
-		else:
-			result = QMessageBox.question(self.messageParent, "Pandora update", msgText)
+			msgText = "Are you sure you want to continue?\n\nThis will overwrite existing files in your Pandora installation folder."
+			if psVersion == 1:
+				flags = QMessageBox.StandardButton.Yes
+				flags |= QMessageBox.StandardButton.No
+				result = QMessageBox.question(self.messageParent, "Pandora update", msgText, flags)
+			else:
+				result = QMessageBox.question(self.messageParent, "Pandora update", msgText)
 
-		if not str(result).endswith(".Yes"):
-			return
+			if not str(result).endswith(".Yes"):
+				return
 
 		for i in os.walk(updateRoot):
 			for k in i[2]:
@@ -1493,13 +1498,19 @@ class PandoraCore():
 		if os.path.exists(trayPath):
 			subprocess.Popen([trayPath], shell=True)
 
-		msgStr = "Successfully updated Pandora"
-		if self.appPlugin.pluginName == "Standalone":
-			msgStr += "\n\nPandora will now close. Please restart all your currently open DCC apps."
-		else:
-			msgStr += "\nPlease restart %s in order to reload Pandora." % self.appPlugin.pluginName
+		if startSlave:
+			slavePath = os.path.join(self.pandoraRoot, "Tools", "PandoraSlave.lnk")
+			if os.path.exists(slavePath):
+				subprocess.Popen([slavePath], shell=True)
 
-		QMessageBox.information(self.messageParent, "Pandora update", msgStr)
+		if not silent:
+			msgStr = "Successfully updated Pandora"
+			if self.appPlugin.pluginName == "Standalone":
+				msgStr += "\n\nPandora will now close. Please restart all your currently open DCC apps."
+			else:
+				msgStr += "\nPlease restart %s in order to reload Pandora." % self.appPlugin.pluginName
+
+			QMessageBox.information(self.messageParent, "Pandora update", msgStr)
 
 		if self.appPlugin.pluginName == "Standalone":
 			sys.exit()

@@ -162,6 +162,10 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 			self.actionSendFeedback.triggered.connect(self.core.sendFeedback)
 			helpMenu.addAction(self.actionSendFeedback)
 
+			self.actionUpdateSlaves = QAction("Update slaves...", self)
+			self.actionUpdateSlaves.triggered.connect(self.updatePandoraSlaves)
+			helpMenu.addAction(self.actionUpdateSlaves)
+
 			self.actionAbout = QAction("About...", self)
 			self.actionAbout.triggered.connect(self.core.showAbout)
 			helpMenu.addAction(self.actionAbout)
@@ -362,6 +366,26 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 			self.seconds = self.refreshPeriod
 			self.refresh()
 			self.l_refreshCounter.setText("Refresh in %s seconds." % self.seconds)
+
+
+	@err_decorator
+	def updatePandoraSlaves(self):
+		message = "Do you want to download the latest Pandora version and install it on all renderslaves?"
+
+		msg = QMessageBox(QMessageBox.Question, "Pandora", message, QMessageBox.No)
+		msg.addButton("Yes", QMessageBox.YesRole)
+		self.core.parentWindow(msg)
+		result = msg.exec_()
+
+		if result == 0:
+			zipFile = self.core.updatePandora(source="github", downloadOnly=True) or ""
+
+			if not zipFile:
+				return
+
+			cmdDir = os.path.join(self.sourceDir, "Commands")
+
+			shutil.copy2(zipFile, cmdDir)
 
 
 	@err_decorator
@@ -1900,6 +1924,8 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 			pItem = self.tw_slaves.item(self.tw_slaves.currentRow(), 7)
 			if pItem is None:
 				return
+
+			slaveName = self.tw_slaves.item(self.tw_slaves.currentRow(), 0).text()
 				
 			slaveLog = pItem.text()
 			if os.path.exists(slaveLog):
@@ -1923,6 +1949,9 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 				folderAct = QAction("Open Folder", self)
 				folderAct.triggered.connect(slaveFolder)
 				rcmenu.addAction(folderAct)
+				restartAct = QAction("Restart Slave", self)
+				restartAct.triggered.connect(lambda: self.restartSlave(slaveName))
+				rcmenu.addAction(restartAct)
 
 			elif listType == "sl":
 				logAct = QAction("Open Log", self)
@@ -2151,6 +2180,12 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 			os.makedirs(ssDir)
 
 		self.core.openFile(ssDir)
+
+
+	@err_decorator
+	def restartSlave(self, slaveName):
+		cmd = ["setSetting", "Slave", slaveName, "command", "self.restartLogic()"]
+		self.writeCmd(cmd)
 
 
 	@err_decorator

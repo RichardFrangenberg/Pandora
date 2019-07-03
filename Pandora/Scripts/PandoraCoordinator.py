@@ -49,7 +49,7 @@ class PandoraCoordinator():
 
 	def __init__(self):
 		try:
-			self.version = "v1.0.3.9"
+			self.version = "v1.0.3.10"
 
 			self.coordUpdateTime = 5 #seconds
 			self.activeThres = 10 # time in min after a slave becomes inactive
@@ -930,10 +930,10 @@ class PandoraCoordinator():
 
 					self.writeLog(collectStr + " (%s)" % (origin), errorLvl)
 
-			try:
-				os.remove(cmFile)
-			except:
-				self.writeLog("ERROR - cannot remove file: %s (%s)" % (cmFile, origin), 3)
+		try:
+			os.remove(cmFile)
+		except:
+			self.writeLog("ERROR - cannot remove file: %s (%s)" % (cmFile, origin), 3)
 
 
 	@err_decorator
@@ -990,10 +990,15 @@ class PandoraCoordinator():
 
 				if os.path.exists(cmdDir):
 					for k in sorted(os.listdir(cmdDir)):
+						cmFile = os.path.join(cmdDir, k)
+
+						if k == "Pandora_update.zip":
+							shutil.move(cmFile, os.path.join(self.slPath, "Scripts", "PandoraSlaves", "Pandora-development.zip"))
+							continue
+
 						if not k.startswith("handlerOut_"):
 							continue
 
-						cmFile = os.path.join(cmdDir, k)
 						self.handleCmd(cmFile, origin=wsName)
 
 				jobDir = os.path.join(self.slPath, "Workstations", i, "JobSubmissions")
@@ -1177,6 +1182,34 @@ class PandoraCoordinator():
 						self.writeLog("ERROR -- checkSlaves mhp -- %s\n%s\n%s" % (str(e), exc_type, exc_tb.tb_lineno), 3)
 				else:
 					self.writeWarning("WARNING -- master houJob script does not exist", 2)
+
+				sZipPath = os.path.join(slavePath, "Scripts", "Pandora-development.zip")
+				mZipPath = os.path.join(self.slPath, "Scripts", "PandoraSlaves", "Pandora-development.zip")
+
+				if os.path.exists(mZipPath):
+					try:
+						if not os.path.exists(os.path.dirname(sZipPath)):
+							os.makedirs(os.path.dirname(sZipPath))
+
+						if os.path.exists(sZipPath):
+							sFileDate = int(os.path.getmtime(sZipPath))
+						else:
+							sFileDate = 0
+
+						mFileDate = int(os.path.getmtime(mZipPath))
+
+						if mFileDate > sFileDate:
+							shutil.copy2(mZipPath, sZipPath)
+							self.writeLog("Updated Pandora for %s" % slaveName, 1)
+
+					except Exception as e:
+						exc_type, exc_obj, exc_tb = sys.exc_info()
+						self.writeLog("ERROR -- checkSlaves mzp -- %s\n%s\n%s" % (str(e), exc_type, exc_tb.tb_lineno), 3)
+					
+					try:
+						os.remove(mZipPath)
+					except:
+						pass
 
 				if not os.path.exists(slaveComPath):
 					try:
