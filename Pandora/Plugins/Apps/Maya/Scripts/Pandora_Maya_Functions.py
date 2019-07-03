@@ -220,8 +220,8 @@ class Pandora_Maya_Functions(object):
 			rSettings["ar_exrCompression"] = cmds.getAttr("defaultArnoldDriver.exrCompression")
 
 			cmds.setAttr("defaultArnoldDriver.ai_translator", "exr", type="string")
-			cmds.setAttr("defaultArnoldDriver.halfPrecision", 1) # 16 bit
-			cmds.setAttr("defaultArnoldDriver.exrCompression", 3) # ZIP compression
+		#	cmds.setAttr("defaultArnoldDriver.halfPrecision", 1) # 16 bit
+		#	cmds.setAttr("defaultArnoldDriver.exrCompression", 3) # ZIP compression
 
 			aAovs = maovs.AOVInterface().getAOVNodes(names=True)
 			aAovs = [x for x in aAovs if cmds.getAttr(x[1] + '.enabled')]
