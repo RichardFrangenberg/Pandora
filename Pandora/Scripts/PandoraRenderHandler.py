@@ -385,6 +385,13 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 
 			cmdDir = os.path.join(self.sourceDir, "Commands")
 
+			if not os.path.exists(cmdDir):
+				try:
+					os.makedirs(cmdDir)
+				except:
+					QMessageBox.warning(self, "Warning", "Could not create command folder: " % cmdDir)
+					return
+
 			shutil.copy2(zipFile, cmdDir)
 
 
