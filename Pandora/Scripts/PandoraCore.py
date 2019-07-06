@@ -60,7 +60,7 @@ class PandoraCore():
 	def __init__(self, app="Standalone"):
 		try:
 			# set some general variables
-			self.version = "v1.0.3.12"
+			self.version = "v1.0.3.13"
 			self.pandoraRoot = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 
 			# add the custom python libraries to the path variable, so they can be imported
@@ -801,7 +801,7 @@ class PandoraCore():
 			try:
 				os.makedirs(os.path.dirname(configPath))
 			except Exception as e:
-				errStr = "The folder couldn't be created:\n\n%s\n\n%s" % (os.path.dirname(configPath), str(e))
+				errStr = "The folder couldn't be created:\n\n%s\n\n%s" % (os.path.dirname(configPath), unicode(e))
 				if silent:
 					return "Error - " + errStr
 				else:
