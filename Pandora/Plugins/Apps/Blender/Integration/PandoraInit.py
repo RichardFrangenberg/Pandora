@@ -103,30 +103,6 @@ class PandoraSettings(bpy.types.Operator):
 		Pandora.openSettings()
 		return {'FINISHED'}
 
-if bpy.app.version < (2,80,0):
-	Region = "TOOLS"
-else:
-	Region = "UI"
-
-class PandoraPanel(bpy.types.Panel):
-	bl_label = "Pandora Tools"
-	bl_idname = "pandoraToolsPanel"
-	bl_space_type = 'VIEW_3D'
-	bl_region_type = Region
-	bl_category = "Pandora"
-
-	def draw(self, context):
-		layout = self.layout
-
-		row = layout.row()
-		row.operator("object.pandora_submitter")
-
-		row = layout.row()
-		row.operator("object.pandora_renderhandler")
-
-		row = layout.row()
-		row.operator("object.pandora_settings")
-
 
 def register():
 	if bpy.app.background:
@@ -155,7 +131,6 @@ def register():
 		bpy.utils.register_class(PandoraSubmitter)
 		bpy.utils.register_class(PandoraRenderHandler)
 		bpy.utils.register_class(PandoraSettings)
-		bpy.utils.register_class(PandoraPanel)
 		#	qapp.exec_()
 
 	except Exception as e:
@@ -170,4 +145,3 @@ def unregister():
 	bpy.utils.unregister_class(PandoraSubmitter)
 	bpy.utils.unregister_class(PandoraRenderHandler)
 	bpy.utils.unregister_class(PandoraSettings)
-	bpy.utils.unregister_class(PandoraPanel)
