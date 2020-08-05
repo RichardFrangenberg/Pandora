@@ -9,6 +9,7 @@
 
 from PySide import QtCore, QtGui
 
+
 class Ui_dlg_SlaveAssignment(object):
     def setupUi(self, dlg_SlaveAssignment):
         dlg_SlaveAssignment.setObjectName("dlg_SlaveAssignment")
@@ -34,7 +35,9 @@ class Ui_dlg_SlaveAssignment(object):
         self.horizontalLayout.setContentsMargins(0, 0, 0, 0)
         self.horizontalLayout.setContentsMargins(0, 0, 0, 0)
         self.horizontalLayout.setObjectName("horizontalLayout")
-        spacerItem = QtGui.QSpacerItem(20, 20, QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Minimum)
+        spacerItem = QtGui.QSpacerItem(
+            20, 20, QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Minimum
+        )
         self.horizontalLayout.addItem(spacerItem)
         self.w_slaveGroups = QtGui.QWidget(self.widget_3)
         self.w_slaveGroups.setObjectName("w_slaveGroups")
@@ -43,7 +46,9 @@ class Ui_dlg_SlaveAssignment(object):
         self.rb_custom = QtGui.QRadioButton(self.widget_2)
         self.rb_custom.setObjectName("rb_custom")
         self.verticalLayout_2.addWidget(self.rb_custom)
-        spacerItem1 = QtGui.QSpacerItem(20, 40, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
+        spacerItem1 = QtGui.QSpacerItem(
+            20, 40, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding
+        )
         self.verticalLayout_2.addItem(spacerItem1)
         self.gridLayout.addWidget(self.widget_2, 0, 0, 2, 1)
         self.widget = QtGui.QWidget(dlg_SlaveAssignment)
@@ -72,20 +77,52 @@ class Ui_dlg_SlaveAssignment(object):
         self.gridLayout.addWidget(self.widget, 0, 2, 1, 1)
         self.buttonBox = QtGui.QDialogButtonBox(dlg_SlaveAssignment)
         self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
-        self.buttonBox.setStandardButtons(QtGui.QDialogButtonBox.Cancel|QtGui.QDialogButtonBox.Ok)
+        self.buttonBox.setStandardButtons(
+            QtGui.QDialogButtonBox.Cancel | QtGui.QDialogButtonBox.Ok
+        )
         self.buttonBox.setObjectName("buttonBox")
         self.gridLayout.addWidget(self.buttonBox, 1, 2, 1, 1)
 
         self.retranslateUi(dlg_SlaveAssignment)
-        QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL("accepted()"), dlg_SlaveAssignment.accept)
-        QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL("rejected()"), dlg_SlaveAssignment.reject)
+        QtCore.QObject.connect(
+            self.buttonBox, QtCore.SIGNAL("accepted()"), dlg_SlaveAssignment.accept
+        )
+        QtCore.QObject.connect(
+            self.buttonBox, QtCore.SIGNAL("rejected()"), dlg_SlaveAssignment.reject
+        )
         QtCore.QMetaObject.connectSlotsByName(dlg_SlaveAssignment)
 
     def retranslateUi(self, dlg_SlaveAssignment):
-        dlg_SlaveAssignment.setWindowTitle(QtGui.QApplication.translate("dlg_SlaveAssignment", "Slave assigment", None, QtGui.QApplication.UnicodeUTF8))
-        self.rb_all.setText(QtGui.QApplication.translate("dlg_SlaveAssignment", "All", None, QtGui.QApplication.UnicodeUTF8))
-        self.rb_group.setText(QtGui.QApplication.translate("dlg_SlaveAssignment", "By group", None, QtGui.QApplication.UnicodeUTF8))
-        self.rb_custom.setText(QtGui.QApplication.translate("dlg_SlaveAssignment", "Custom", None, QtGui.QApplication.UnicodeUTF8))
-        self.rb_include.setText(QtGui.QApplication.translate("dlg_SlaveAssignment", "Include", None, QtGui.QApplication.UnicodeUTF8))
-        self.rb_exclude.setText(QtGui.QApplication.translate("dlg_SlaveAssignment", "Exclude", None, QtGui.QApplication.UnicodeUTF8))
-
+        dlg_SlaveAssignment.setWindowTitle(
+            QtGui.QApplication.translate(
+                "dlg_SlaveAssignment",
+                "Slave assigment",
+                None,
+                QtGui.QApplication.UnicodeUTF8,
+            )
+        )
+        self.rb_all.setText(
+            QtGui.QApplication.translate(
+                "dlg_SlaveAssignment", "All", None, QtGui.QApplication.UnicodeUTF8
+            )
+        )
+        self.rb_group.setText(
+            QtGui.QApplication.translate(
+                "dlg_SlaveAssignment", "By group", None, QtGui.QApplication.UnicodeUTF8
+            )
+        )
+        self.rb_custom.setText(
+            QtGui.QApplication.translate(
+                "dlg_SlaveAssignment", "Custom", None, QtGui.QApplication.UnicodeUTF8
+            )
+        )
+        self.rb_include.setText(
+            QtGui.QApplication.translate(
+                "dlg_SlaveAssignment", "Include", None, QtGui.QApplication.UnicodeUTF8
+            )
+        )
+        self.rb_exclude.setText(
+            QtGui.QApplication.translate(
+                "dlg_SlaveAssignment", "Exclude", None, QtGui.QApplication.UnicodeUTF8
+            )
+        )

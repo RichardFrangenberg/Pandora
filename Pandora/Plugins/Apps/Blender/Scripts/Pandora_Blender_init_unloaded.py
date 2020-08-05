@@ -11,7 +11,7 @@
 ####################################################
 #
 #
-# Copyright (C) 2016-2019 Richard Frangenberg
+# Copyright (C) 2016-2020 Richard Frangenberg
 #
 # Licensed under GNU GPL-3.0-or-later
 #
@@ -31,14 +31,19 @@
 # along with Pandora.  If not, see <https://www.gnu.org/licenses/>.
 
 
-
 from Pandora_Blender_Variables import Pandora_Blender_Variables
-from Pandora_Blender_externalAccess_Functions import Pandora_Blender_externalAccess_Functions
+from Pandora_Blender_externalAccess_Functions import (
+    Pandora_Blender_externalAccess_Functions,
+)
 from Pandora_Blender_Integration import Pandora_Blender_Integration
 
 
-class Pandora_Blender_unloaded(Pandora_Blender_Variables, Pandora_Blender_externalAccess_Functions, Pandora_Blender_Integration):
-	def __init__(self, core):
-		Pandora_Blender_Variables.__init__(self, core, self)
-		Pandora_Blender_externalAccess_Functions.__init__(self, core, self)
-		Pandora_Blender_Integration.__init__(self, core, self)
+class Pandora_Blender_unloaded(
+    Pandora_Blender_Variables,
+    Pandora_Blender_externalAccess_Functions,
+    Pandora_Blender_Integration,
+):
+    def __init__(self, core):
+        Pandora_Blender_Variables.__init__(self, core, self)
+        Pandora_Blender_externalAccess_Functions.__init__(self, core, self)
+        Pandora_Blender_Integration.__init__(self, core, self)

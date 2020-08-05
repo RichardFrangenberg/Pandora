@@ -11,7 +11,7 @@
 ####################################################
 #
 #
-# Copyright (C) 2016-2019 Richard Frangenberg
+# Copyright (C) 2016-2020 Richard Frangenberg
 #
 # Licensed under GNU GPL-3.0-or-later
 #
@@ -31,13 +31,19 @@
 # along with Pandora.  If not, see <https://www.gnu.org/licenses/>.
 
 
-
 from Pandora_Standalone_Variables import Pandora_Standalone_Variables
-from Pandora_Standalone_externalAccess_Functions import Pandora_Standalone_externalAccess_Functions
+from Pandora_Standalone_externalAccess_Functions import (
+    Pandora_Standalone_externalAccess_Functions,
+)
 from Pandora_Standalone_Functions import Pandora_Standalone_Functions
 
-class Pandora_Plugin_Standalone(Pandora_Standalone_Variables, Pandora_Standalone_externalAccess_Functions, Pandora_Standalone_Functions):
-	def __init__(self, core):
-		Pandora_Standalone_Variables.__init__(self, core, self)
-		Pandora_Standalone_externalAccess_Functions.__init__(self, core, self)
-		Pandora_Standalone_Functions.__init__(self, core, self)
+
+class Pandora_Plugin_Standalone(
+    Pandora_Standalone_Variables,
+    Pandora_Standalone_externalAccess_Functions,
+    Pandora_Standalone_Functions,
+):
+    def __init__(self, core):
+        Pandora_Standalone_Variables.__init__(self, core, self)
+        Pandora_Standalone_externalAccess_Functions.__init__(self, core, self)
+        Pandora_Standalone_Functions.__init__(self, core, self)

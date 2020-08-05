@@ -31,9 +31,37 @@
 # along with Pandora.  If not, see <https://www.gnu.org/licenses/>.
 
 
-class Pandora_PluginPreset_Variables(object):
-    def __init__(self, core, plugin):
-        self.version = "v1.0.3.0"
-        self.pluginName = "PluginPreset"
-        self.pluginType = "Custom"
-        self.platforms = ["Windows"]
+import os
+import sys
+import traceback
+
+prismRoot = sys.argv[-4]
+pyLibs = sys.argv[-3]
+subject = sys.argv[-2]
+message = sys.argv[-1]
+
+try:
+    pyLibPath = os.path.join(prismRoot, 'PythonLibs', pyLibs)
+    if pyLibPath not in sys.path:
+        sys.path.insert(0, pyLibPath)
+
+    pyLibPath = os.path.join(prismRoot, 'PythonLibs', 'CrossPlatform')
+    if pyLibPath not in sys.path:
+        sys.path.insert(0, pyLibPath)
+
+    import requests
+    url = "https://prism-pipeline.com/wp-json/contact-form-7/v1/contact-forms/1042/feedback"
+    form = {
+        "your-name": (None, "PrismMessage"),
+        "your-subject": (None, subject),
+        "your-message": (None, message),
+    }
+
+    response = requests.post(url, files=form)
+
+    if 'Thank you for your message. It has been sent.' in response.text:
+        sys.stdout.write('success')
+    else:
+        sys.stdout.write('failed')
+except:
+    sys.stdout.write('failed %s' % traceback.format_exc())

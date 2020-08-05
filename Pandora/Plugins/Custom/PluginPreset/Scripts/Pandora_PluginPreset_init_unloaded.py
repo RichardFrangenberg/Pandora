@@ -11,7 +11,7 @@
 ####################################################
 #
 #
-# Copyright (C) 2016-2019 Richard Frangenberg
+# Copyright (C) 2016-2020 Richard Frangenberg
 #
 # Licensed under GNU GPL-3.0-or-later
 #
@@ -31,11 +31,13 @@
 # along with Pandora.  If not, see <https://www.gnu.org/licenses/>.
 
 
-
 from Pandora_PluginPreset_Variables import Pandora_PluginPreset_Variables
 from Pandora_PluginPreset_Functions import Pandora_PluginPreset_Functions
 
-class Pandora_PluginPreset_unloaded(Pandora_PluginPreset_Variables, Pandora_PluginPreset_Functions):
-	def __init__(self, core):
-		Pandora_PluginPreset_Variables.__init__(self, core, self)
-		Pandora_PluginPreset_Functions.__init__(self, core, self)
+
+class Pandora_PluginPreset_unloaded(
+    Pandora_PluginPreset_Variables, Pandora_PluginPreset_Functions
+):
+    def __init__(self, core):
+        Pandora_PluginPreset_Variables.__init__(self, core, self)
+        Pandora_PluginPreset_Functions.__init__(self, core, self)

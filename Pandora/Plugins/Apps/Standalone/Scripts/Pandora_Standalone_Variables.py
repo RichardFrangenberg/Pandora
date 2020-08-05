@@ -11,7 +11,7 @@
 ####################################################
 #
 #
-# Copyright (C) 2016-2019 Richard Frangenberg
+# Copyright (C) 2016-2020 Richard Frangenberg
 #
 # Licensed under GNU GPL-3.0-or-later
 #
@@ -31,14 +31,13 @@
 # along with Pandora.  If not, see <https://www.gnu.org/licenses/>.
 
 
-
 class Pandora_Standalone_Variables(object):
-	def __init__(self, core, plugin):
-		self.version = "v1.0.3.0"
-		self.pluginName = "Standalone"
-		self.pluginType = "App"
-		self.appShortName = "So"
-		self.appType = "standalone"
-		self.hasQtParent = False
-		self.sceneFormats = []
-		self.platforms = ["Windows"]
+    def __init__(self, core, plugin):
+        self.version = "v1.0.3.0"
+        self.pluginName = "Standalone"
+        self.pluginType = "App"
+        self.appShortName = "So"
+        self.appType = "standalone"
+        self.hasQtParent = False
+        self.sceneFormats = []
+        self.platforms = ["Windows"]

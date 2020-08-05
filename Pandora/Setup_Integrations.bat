@@ -1,1 +1,1 @@
-start Python27/pythonw.exe Scripts/PandoraInstaller.py
+start Python37/pythonw.exe Scripts/PandoraInstaller.py

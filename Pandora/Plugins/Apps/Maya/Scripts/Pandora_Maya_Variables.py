@@ -11,7 +11,7 @@
 ####################################################
 #
 #
-# Copyright (C) 2016-2019 Richard Frangenberg
+# Copyright (C) 2016-2020 Richard Frangenberg
 #
 # Licensed under GNU GPL-3.0-or-later
 #
@@ -31,18 +31,17 @@
 # along with Pandora.  If not, see <https://www.gnu.org/licenses/>.
 
 
-
 class Pandora_Maya_Variables(object):
-	def __init__(self, core, plugin):
-		self.version = "v1.0.3.2"
-		self.pluginName = "Maya"
-		self.pluginType = "App"
-		self.appShortName = "Maya"
-		self.appType = "3d"
-		self.hasQtParent = True
-		self.sceneFormats = [".ma", ".mb"]
-		self.appSpecificFormats = self.sceneFormats
-		self.appColor = [44,121,207]
-		self.platforms = ["Windows"]
-		self.executableName = "Render.exe"
-		self.frameString = ""
+    def __init__(self, core, plugin):
+        self.version = "v1.0.3.2"
+        self.pluginName = "Maya"
+        self.pluginType = "App"
+        self.appShortName = "Maya"
+        self.appType = "3d"
+        self.hasQtParent = True
+        self.sceneFormats = [".ma", ".mb"]
+        self.appSpecificFormats = self.sceneFormats
+        self.appColor = [44, 121, 207]
+        self.platforms = ["Windows"]
+        self.executableName = "Render.exe"
+        self.frameString = ""

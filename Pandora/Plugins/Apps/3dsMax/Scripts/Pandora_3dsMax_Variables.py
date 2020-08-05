@@ -11,7 +11,7 @@
 ####################################################
 #
 #
-# Copyright (C) 2016-2019 Richard Frangenberg
+# Copyright (C) 2016-2020 Richard Frangenberg
 #
 # Licensed under GNU GPL-3.0-or-later
 #
@@ -31,18 +31,17 @@
 # along with Pandora.  If not, see <https://www.gnu.org/licenses/>.
 
 
-
 class Pandora_3dsMax_Variables(object):
-	def __init__(self, core, plugin):
-		self.version = "v1.0.3.0"
-		self.pluginName = "3dsMax"
-		self.pluginType = "App"
-		self.appShortName = "Max"
-		self.appType = "3d"
-		self.hasQtParent = True
-		self.sceneFormats = [".max"]
-		self.appSpecificFormats = self.sceneFormats
-		self.appColor = [0,170,170]
-		self.platforms = ["Windows"]
-		self.executableName = "3dsmaxcmd.exe"
-		self.frameString = "."
+    def __init__(self, core, plugin):
+        self.version = "v1.0.3.0"
+        self.pluginName = "3dsMax"
+        self.pluginType = "App"
+        self.appShortName = "Max"
+        self.appType = "3d"
+        self.hasQtParent = True
+        self.sceneFormats = [".max"]
+        self.appSpecificFormats = self.sceneFormats
+        self.appColor = [0, 170, 170]
+        self.platforms = ["Windows"]
+        self.executableName = "3dsmaxcmd.exe"
+        self.frameString = "."

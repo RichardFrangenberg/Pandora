@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<shelfDocument>
+  <!-- This file contains definitions of shelves, toolbars, and tools.
+ It should not be hand-edited when it is being used by the application.
+ Note, that two definitions of the same element are not allowed in
+ a single file. -->
+
+  <toolshelf name="pandora-v1.1.0" label="Pandora">
+    <memberTool name="pandora_submitter"/>
+    <memberTool name="pandora_renderhandler"/>
+    <memberTool name="pandora_settings"/>
+  </toolshelf>
+
+  <tool name="pandora_submitter" label="Submitter" icon="pandoraSubmitter.png">
+    <helpText><![CDATA["""Open the Pandora renderjob submitter"""]]></helpText>
+    <script scriptType="python"><![CDATA[import Pandora
+
+Pandora.core.openSubmitter()]]></script>
+  </tool>
+
+  <tool name="pandora_renderhandler" label="Render-Handler" icon="pandoraRenderHandler.png">
+    <helpText><![CDATA["""Open the Pandora Render-Handler"""]]></helpText>
+    <script scriptType="python"><![CDATA[import Pandora
+
+Pandora.core.openRenderHandler()]]></script>
+  </tool>
+
+  <tool name="pandora_settings" label="Settings" icon="pandoraSettings.png">
+    <helpText><![CDATA["""Open the Pandora settings"""]]></helpText>
+    <script scriptType="python"><![CDATA[import Pandora
+
+Pandora.core.openSettings()]]></script>
+  </tool>
+
+</shelfDocument>

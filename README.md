@@ -19,12 +19,12 @@ Currently Pandora runs on Windows only.
 
 * To install the latest development version download or clone this repository and the Pandora dependencies:
 
-[Windows-dependencies](https://dl.dropboxusercontent.com/s/9dfvp47j7zdcshb/Pandora_v1.0.3_dependencies_Win.zip?dl=0)
+[Pandora-dependencies](https://dl.dropboxusercontent.com/s/poi0prze4xwyhgy/Pandora_v1.1.0_dependencies.zip?dl=1)
 
 * Extract the dependencies and copy the extracted folders into Pandora/PandoraFiles of this repository.
 
 * Now the "PandoraFiles" folder should contain the folders like:
-"Python27", "PythonLibs", "Scripts" ...
+"Python37", "PythonLibs", "Scripts" ...
 
 * Now go two folders up and execute the Pandora_Setup.bat.
 

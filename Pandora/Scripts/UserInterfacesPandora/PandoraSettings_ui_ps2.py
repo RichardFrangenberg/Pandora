@@ -3,7 +3,7 @@
 # Form implementation generated from reading ui file 'PandoraSettings.ui',
 # licensing of 'PandoraSettings.ui' applies.
 #
-# Created: Wed May 22 23:19:36 2019
+# Created: Mon Aug  3 19:57:01 2020
 #      by: pyside2-uic  running on PySide2 5.9.0a1.dev1528389443
 #
 # WARNING! All changes made in this file will be lost!
@@ -13,7 +13,7 @@ from PySide2 import QtCore, QtGui, QtWidgets
 class Ui_dlg_PandoraSettings(object):
     def setupUi(self, dlg_PandoraSettings):
         dlg_PandoraSettings.setObjectName("dlg_PandoraSettings")
-        dlg_PandoraSettings.resize(676, 603)
+        dlg_PandoraSettings.resize(814, 631)
         self.verticalLayout = QtWidgets.QVBoxLayout(dlg_PandoraSettings)
         self.verticalLayout.setSpacing(0)
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
@@ -22,7 +22,7 @@ class Ui_dlg_PandoraSettings(object):
         self.scrollArea.setWidgetResizable(True)
         self.scrollArea.setObjectName("scrollArea")
         self.scrollAreaWidgetContents = QtWidgets.QWidget()
-        self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 674, 601))
+        self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 812, 629))
         self.scrollAreaWidgetContents.setObjectName("scrollAreaWidgetContents")
         self.verticalLayout_5 = QtWidgets.QVBoxLayout(self.scrollAreaWidgetContents)
         self.verticalLayout_5.setSpacing(20)
@@ -46,6 +46,10 @@ class Ui_dlg_PandoraSettings(object):
         self.chb_localMode.setChecked(True)
         self.chb_localMode.setObjectName("chb_localMode")
         self.verticalLayout_4.addWidget(self.chb_localMode)
+        self.chb_errorReports = QtWidgets.QCheckBox(self.tab_general)
+        self.chb_errorReports.setChecked(True)
+        self.chb_errorReports.setObjectName("chb_errorReports")
+        self.verticalLayout_4.addWidget(self.chb_errorReports)
         spacerItem = QtWidgets.QSpacerItem(20, 15, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
         self.verticalLayout_4.addItem(spacerItem)
         self.w_rootPath = QtWidgets.QWidget(self.tab_general)
@@ -408,6 +412,7 @@ class Ui_dlg_PandoraSettings(object):
         self.chb_checkForUpdates.setText(QtWidgets.QApplication.translate("dlg_PandoraSettings", "Check for updates (once per week)", None, -1))
         self.chb_pandoraTrayStartup.setText(QtWidgets.QApplication.translate("dlg_PandoraSettings", "Start tray icon on Windows startup", None, -1))
         self.chb_localMode.setText(QtWidgets.QApplication.translate("dlg_PandoraSettings", "Local network mode", None, -1))
+        self.chb_errorReports.setText(QtWidgets.QApplication.translate("dlg_PandoraSettings", "Send anonymous error reports", None, -1))
         self.l_rootPath.setText(QtWidgets.QApplication.translate("dlg_PandoraSettings", "Pandora Root (network location):", None, -1))
         self.b_browseRoot.setText(QtWidgets.QApplication.translate("dlg_PandoraSettings", "...", None, -1))
         self.l_repositoryPath.setText(QtWidgets.QApplication.translate("dlg_PandoraSettings", "Local repository:", None, -1))

@@ -11,7 +11,7 @@
 ####################################################
 #
 #
-# Copyright (C) 2016-2019 Richard Frangenberg
+# Copyright (C) 2016-2020 Richard Frangenberg
 #
 # Licensed under GNU GPL-3.0-or-later
 #
@@ -31,15 +31,20 @@
 # along with Pandora.  If not, see <https://www.gnu.org/licenses/>.
 
 
-
 from Pandora_3dsMax_Variables import Pandora_3dsMax_Variables
 from Pandora_3dsMax_externalAccess_Functions import Pandora_3dsMax_externalAccess_Functions
 from Pandora_3dsMax_Functions import Pandora_3dsMax_Functions
 from Pandora_3dsMax_Integration import Pandora_3dsMax_Integration
 
-class Pandora_Plugin_3dsMax(Pandora_3dsMax_Variables, Pandora_3dsMax_externalAccess_Functions, Pandora_3dsMax_Functions, Pandora_3dsMax_Integration):
-	def __init__(self, core):
-		Pandora_3dsMax_Variables.__init__(self, core, self)
-		Pandora_3dsMax_externalAccess_Functions.__init__(self, core, self)
-		Pandora_3dsMax_Functions.__init__(self, core, self)
-		Pandora_3dsMax_Integration.__init__(self, core, self)
+
+class Pandora_Plugin_3dsMax(
+    Pandora_3dsMax_Variables,
+    Pandora_3dsMax_externalAccess_Functions,
+    Pandora_3dsMax_Functions,
+    Pandora_3dsMax_Integration,
+):
+    def __init__(self, core):
+        Pandora_3dsMax_Variables.__init__(self, core, self)
+        Pandora_3dsMax_externalAccess_Functions.__init__(self, core, self)
+        Pandora_3dsMax_Functions.__init__(self, core, self)
+        Pandora_3dsMax_Integration.__init__(self, core, self)

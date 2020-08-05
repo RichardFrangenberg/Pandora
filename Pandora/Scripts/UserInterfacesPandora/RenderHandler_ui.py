@@ -9,6 +9,7 @@
 
 from PySide import QtCore, QtGui
 
+
 class Ui_mw_RenderHandler(object):
     def setupUi(self, mw_RenderHandler):
         mw_RenderHandler.setObjectName("mw_RenderHandler")
@@ -32,7 +33,9 @@ class Ui_mw_RenderHandler(object):
         self.splitter_2.setOrientation(QtCore.Qt.Horizontal)
         self.splitter_2.setObjectName("splitter_2")
         self.tw_jobs = QtGui.QTableWidget(self.splitter_2)
-        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
+        sizePolicy = QtGui.QSizePolicy(
+            QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding
+        )
         sizePolicy.setHorizontalStretch(10)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.tw_jobs.sizePolicy().hasHeightForWidth())
@@ -52,7 +55,9 @@ class Ui_mw_RenderHandler(object):
         self.tw_jobs.horizontalHeader().setHighlightSections(False)
         self.tw_jobs.horizontalHeader().setStretchLastSection(True)
         self.tb_jobs = QtGui.QTabWidget(self.splitter_2)
-        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
+        sizePolicy = QtGui.QSizePolicy(
+            QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding
+        )
         sizePolicy.setHorizontalStretch(7)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.tb_jobs.sizePolicy().hasHeightForWidth())
@@ -82,7 +87,9 @@ class Ui_mw_RenderHandler(object):
         self.verticalLayout_6 = QtGui.QVBoxLayout(self.tab_7)
         self.verticalLayout_6.setObjectName("verticalLayout_6")
         self.tw_jobSettings = QtGui.QTableWidget(self.tab_7)
-        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
+        sizePolicy = QtGui.QSizePolicy(
+            QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding
+        )
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.tw_jobSettings.sizePolicy().hasHeightForWidth())
@@ -106,7 +113,9 @@ class Ui_mw_RenderHandler(object):
         self.verticalLayout_8 = QtGui.QVBoxLayout(self.t_coordSettings)
         self.verticalLayout_8.setObjectName("verticalLayout_8")
         self.tw_coordSettings = QtGui.QTableWidget(self.t_coordSettings)
-        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
+        sizePolicy = QtGui.QSizePolicy(
+            QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding
+        )
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.tw_coordSettings.sizePolicy().hasHeightForWidth())
@@ -115,7 +124,9 @@ class Ui_mw_RenderHandler(object):
         self.tw_coordSettings.setEditTriggers(QtGui.QAbstractItemView.DoubleClicked)
         self.tw_coordSettings.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)
         self.tw_coordSettings.setVerticalScrollMode(QtGui.QAbstractItemView.ScrollPerPixel)
-        self.tw_coordSettings.setHorizontalScrollMode(QtGui.QAbstractItemView.ScrollPerPixel)
+        self.tw_coordSettings.setHorizontalScrollMode(
+            QtGui.QAbstractItemView.ScrollPerPixel
+        )
         self.tw_coordSettings.setObjectName("tw_coordSettings")
         self.tw_coordSettings.setColumnCount(0)
         self.tw_coordSettings.setRowCount(0)
@@ -144,7 +155,9 @@ class Ui_mw_RenderHandler(object):
         self.l_coordLogSize.setText("")
         self.l_coordLogSize.setObjectName("l_coordLogSize")
         self.horizontalLayout_2.addWidget(self.l_coordLogSize)
-        spacerItem = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
+        spacerItem = QtGui.QSpacerItem(
+            40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum
+        )
         self.horizontalLayout_2.addItem(spacerItem)
         self.label_2 = QtGui.QLabel(self.widget_2)
         self.label_2.setObjectName("label_2")
@@ -164,7 +177,9 @@ class Ui_mw_RenderHandler(object):
         self.tw_coordWarnings.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
         self.tw_coordWarnings.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
         self.tw_coordWarnings.setVerticalScrollMode(QtGui.QAbstractItemView.ScrollPerPixel)
-        self.tw_coordWarnings.setHorizontalScrollMode(QtGui.QAbstractItemView.ScrollPerPixel)
+        self.tw_coordWarnings.setHorizontalScrollMode(
+            QtGui.QAbstractItemView.ScrollPerPixel
+        )
         self.tw_coordWarnings.setColumnCount(2)
         self.tw_coordWarnings.setObjectName("tw_coordWarnings")
         self.tw_coordWarnings.setColumnCount(2)
@@ -183,7 +198,9 @@ class Ui_mw_RenderHandler(object):
         self.splitter.setOrientation(QtCore.Qt.Horizontal)
         self.splitter.setObjectName("splitter")
         self.tw_slaves = QtGui.QTableWidget(self.splitter)
-        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
+        sizePolicy = QtGui.QSizePolicy(
+            QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding
+        )
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.tw_slaves.sizePolicy().hasHeightForWidth())
@@ -212,7 +229,9 @@ class Ui_mw_RenderHandler(object):
         self.tw_slaveSettings.setEditTriggers(QtGui.QAbstractItemView.DoubleClicked)
         self.tw_slaveSettings.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)
         self.tw_slaveSettings.setVerticalScrollMode(QtGui.QAbstractItemView.ScrollPerPixel)
-        self.tw_slaveSettings.setHorizontalScrollMode(QtGui.QAbstractItemView.ScrollPerPixel)
+        self.tw_slaveSettings.setHorizontalScrollMode(
+            QtGui.QAbstractItemView.ScrollPerPixel
+        )
         self.tw_slaveSettings.setObjectName("tw_slaveSettings")
         self.tw_slaveSettings.setColumnCount(0)
         self.tw_slaveSettings.setRowCount(0)
@@ -241,7 +260,9 @@ class Ui_mw_RenderHandler(object):
         self.l_slaveLogSize.setText("")
         self.l_slaveLogSize.setObjectName("l_slaveLogSize")
         self.horizontalLayout.addWidget(self.l_slaveLogSize)
-        spacerItem1 = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
+        spacerItem1 = QtGui.QSpacerItem(
+            40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum
+        )
         self.horizontalLayout.addItem(spacerItem1)
         self.label = QtGui.QLabel(self.widget)
         self.label.setObjectName("label")
@@ -261,7 +282,9 @@ class Ui_mw_RenderHandler(object):
         self.tw_slaveWarnings.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
         self.tw_slaveWarnings.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
         self.tw_slaveWarnings.setVerticalScrollMode(QtGui.QAbstractItemView.ScrollPerPixel)
-        self.tw_slaveWarnings.setHorizontalScrollMode(QtGui.QAbstractItemView.ScrollPerPixel)
+        self.tw_slaveWarnings.setHorizontalScrollMode(
+            QtGui.QAbstractItemView.ScrollPerPixel
+        )
         self.tw_slaveWarnings.setColumnCount(2)
         self.tw_slaveWarnings.setObjectName("tw_slaveWarnings")
         self.tw_slaveWarnings.setColumnCount(2)
@@ -294,22 +317,95 @@ class Ui_mw_RenderHandler(object):
         QtCore.QMetaObject.connectSlotsByName(mw_RenderHandler)
 
     def retranslateUi(self, mw_RenderHandler):
-        mw_RenderHandler.setWindowTitle(QtGui.QApplication.translate("mw_RenderHandler", "Render Handler", None, QtGui.QApplication.UnicodeUTF8))
-        self.gb_jobs.setTitle(QtGui.QApplication.translate("mw_RenderHandler", "Jobs", None, QtGui.QApplication.UnicodeUTF8))
+        mw_RenderHandler.setWindowTitle(
+            QtGui.QApplication.translate(
+                "mw_RenderHandler", "Render Handler", None, QtGui.QApplication.UnicodeUTF8
+            )
+        )
+        self.gb_jobs.setTitle(
+            QtGui.QApplication.translate(
+                "mw_RenderHandler", "Jobs", None, QtGui.QApplication.UnicodeUTF8
+            )
+        )
         self.tw_jobs.setSortingEnabled(True)
         self.tw_taskList.setSortingEnabled(True)
-        self.tb_jobs.setTabText(self.tb_jobs.indexOf(self.tab), QtGui.QApplication.translate("mw_RenderHandler", "Task List", None, QtGui.QApplication.UnicodeUTF8))
-        self.tb_jobs.setTabText(self.tb_jobs.indexOf(self.tab_7), QtGui.QApplication.translate("mw_RenderHandler", "Settings", None, QtGui.QApplication.UnicodeUTF8))
-        self.tb_jobs.setTabText(self.tb_jobs.indexOf(self.t_coordSettings), QtGui.QApplication.translate("mw_RenderHandler", "Coordinator Settings", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_2.setText(QtGui.QApplication.translate("mw_RenderHandler", "Filter Level:", None, QtGui.QApplication.UnicodeUTF8))
-        self.tb_jobs.setTabText(self.tb_jobs.indexOf(self.t_coordLog), QtGui.QApplication.translate("mw_RenderHandler", "Coordinator Log", None, QtGui.QApplication.UnicodeUTF8))
-        self.tb_jobs.setTabText(self.tb_jobs.indexOf(self.t_coordWarnings), QtGui.QApplication.translate("mw_RenderHandler", "Coordinator Warnings", None, QtGui.QApplication.UnicodeUTF8))
-        self.gb_slaves.setTitle(QtGui.QApplication.translate("mw_RenderHandler", "Slaves", None, QtGui.QApplication.UnicodeUTF8))
+        self.tb_jobs.setTabText(
+            self.tb_jobs.indexOf(self.tab),
+            QtGui.QApplication.translate(
+                "mw_RenderHandler", "Task List", None, QtGui.QApplication.UnicodeUTF8
+            ),
+        )
+        self.tb_jobs.setTabText(
+            self.tb_jobs.indexOf(self.tab_7),
+            QtGui.QApplication.translate(
+                "mw_RenderHandler", "Settings", None, QtGui.QApplication.UnicodeUTF8
+            ),
+        )
+        self.tb_jobs.setTabText(
+            self.tb_jobs.indexOf(self.t_coordSettings),
+            QtGui.QApplication.translate(
+                "mw_RenderHandler",
+                "Coordinator Settings",
+                None,
+                QtGui.QApplication.UnicodeUTF8,
+            ),
+        )
+        self.label_2.setText(
+            QtGui.QApplication.translate(
+                "mw_RenderHandler", "Filter Level:", None, QtGui.QApplication.UnicodeUTF8
+            )
+        )
+        self.tb_jobs.setTabText(
+            self.tb_jobs.indexOf(self.t_coordLog),
+            QtGui.QApplication.translate(
+                "mw_RenderHandler", "Coordinator Log", None, QtGui.QApplication.UnicodeUTF8
+            ),
+        )
+        self.tb_jobs.setTabText(
+            self.tb_jobs.indexOf(self.t_coordWarnings),
+            QtGui.QApplication.translate(
+                "mw_RenderHandler",
+                "Coordinator Warnings",
+                None,
+                QtGui.QApplication.UnicodeUTF8,
+            ),
+        )
+        self.gb_slaves.setTitle(
+            QtGui.QApplication.translate(
+                "mw_RenderHandler", "Slaves", None, QtGui.QApplication.UnicodeUTF8
+            )
+        )
         self.tw_slaves.setSortingEnabled(True)
-        self.tb_slaves.setTabText(self.tb_slaves.indexOf(self.tab_5), QtGui.QApplication.translate("mw_RenderHandler", "Settings", None, QtGui.QApplication.UnicodeUTF8))
-        self.label.setText(QtGui.QApplication.translate("mw_RenderHandler", "Filter Level:", None, QtGui.QApplication.UnicodeUTF8))
-        self.tb_slaves.setTabText(self.tb_slaves.indexOf(self.tab_6), QtGui.QApplication.translate("mw_RenderHandler", "Log", None, QtGui.QApplication.UnicodeUTF8))
-        self.tb_slaves.setTabText(self.tb_slaves.indexOf(self.tab_2), QtGui.QApplication.translate("mw_RenderHandler", "Warnings", None, QtGui.QApplication.UnicodeUTF8))
-        self.menuOptions.setTitle(QtGui.QApplication.translate("mw_RenderHandler", "Options", None, QtGui.QApplication.UnicodeUTF8))
-        self.actionShowCoord.setText(QtGui.QApplication.translate("mw_RenderHandler", "Show Coordinator", None, QtGui.QApplication.UnicodeUTF8))
-
+        self.tb_slaves.setTabText(
+            self.tb_slaves.indexOf(self.tab_5),
+            QtGui.QApplication.translate(
+                "mw_RenderHandler", "Settings", None, QtGui.QApplication.UnicodeUTF8
+            ),
+        )
+        self.label.setText(
+            QtGui.QApplication.translate(
+                "mw_RenderHandler", "Filter Level:", None, QtGui.QApplication.UnicodeUTF8
+            )
+        )
+        self.tb_slaves.setTabText(
+            self.tb_slaves.indexOf(self.tab_6),
+            QtGui.QApplication.translate(
+                "mw_RenderHandler", "Log", None, QtGui.QApplication.UnicodeUTF8
+            ),
+        )
+        self.tb_slaves.setTabText(
+            self.tb_slaves.indexOf(self.tab_2),
+            QtGui.QApplication.translate(
+                "mw_RenderHandler", "Warnings", None, QtGui.QApplication.UnicodeUTF8
+            ),
+        )
+        self.menuOptions.setTitle(
+            QtGui.QApplication.translate(
+                "mw_RenderHandler", "Options", None, QtGui.QApplication.UnicodeUTF8
+            )
+        )
+        self.actionShowCoord.setText(
+            QtGui.QApplication.translate(
+                "mw_RenderHandler", "Show Coordinator", None, QtGui.QApplication.UnicodeUTF8
+            )
+        )

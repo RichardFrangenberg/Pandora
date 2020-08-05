@@ -1,5 +1,4 @@
-
-#>>>PandoraStart
+# >>>PandoraStart
 class TOPBAR_MT_pandora(Menu):
     bl_label = "Pandora"
 
@@ -14,4 +13,6 @@ class TOPBAR_MT_pandora(Menu):
 
         row = layout.row()
         row.operator("object.pandora_settings")
-#<<<PandoraEnd
+
+
+# <<<PandoraEnd

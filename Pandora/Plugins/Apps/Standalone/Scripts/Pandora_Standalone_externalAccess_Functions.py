@@ -11,7 +11,7 @@
 ####################################################
 #
 #
-# Copyright (C) 2016-2019 Richard Frangenberg
+# Copyright (C) 2016-2020 Richard Frangenberg
 #
 # Licensed under GNU GPL-3.0-or-later
 #
@@ -31,7 +31,6 @@
 # along with Pandora.  If not, see <https://www.gnu.org/licenses/>.
 
 
-
 class Pandora_Standalone_externalAccess_Functions(object):
-	def __init__(self, core, plugin):
-		pass
+    def __init__(self, core, plugin):
+        pass

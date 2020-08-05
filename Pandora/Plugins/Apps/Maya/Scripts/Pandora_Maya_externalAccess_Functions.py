@@ -11,7 +11,7 @@
 ####################################################
 #
 #
-# Copyright (C) 2016-2019 Richard Frangenberg
+# Copyright (C) 2016-2020 Richard Frangenberg
 #
 # Licensed under GNU GPL-3.0-or-later
 #
@@ -31,112 +31,137 @@
 # along with Pandora.  If not, see <https://www.gnu.org/licenses/>.
 
 
-
 import os, sys
 import traceback, time, platform, shutil
 from functools import wraps
 
+
 class Pandora_Maya_externalAccess_Functions(object):
-	def __init__(self, core, plugin):
-		self.core = core
-		self.plugin = plugin
+    def __init__(self, core, plugin):
+        self.core = core
+        self.plugin = plugin
 
+    def err_decorator(func):
+        @wraps(func)
+        def func_wrapper(*args, **kwargs):
+            exc_info = sys.exc_info()
+            try:
+                return func(*args, **kwargs)
+            except Exception as e:
+                exc_type, exc_obj, exc_tb = sys.exc_info()
+                erStr = "%s ERROR - Pandora_Plugin_Maya_ext %s:\n%s\n\n%s" % (
+                    time.strftime("%d/%m/%y %X"),
+                    args[0].plugin.version,
+                    "".join(traceback.format_stack()),
+                    traceback.format_exc(),
+                )
+                args[0].core.writeErrorLog(erStr)
 
-	def err_decorator(func):
-		@wraps(func)
-		def func_wrapper(*args, **kwargs):
-			exc_info = sys.exc_info()
-			try:
-				return func(*args, **kwargs)
-			except Exception as e:
-				exc_type, exc_obj, exc_tb = sys.exc_info()
-				erStr = ("%s ERROR - Pandora_Plugin_Maya_ext %s:\n%s\n\n%s" % (time.strftime("%d/%m/%y %X"), args[0].plugin.version, ''.join(traceback.format_stack()), traceback.format_exc()))
-				args[0].core.writeErrorLog(erStr)
+        return func_wrapper
 
-		return func_wrapper
+    @err_decorator
+    def pandoraSettings_loadUI(self, origin, tab):
+        pass
 
+    @err_decorator
+    def pandoraSettings_saveSettings(self, origin):
+        pass
 
-	@err_decorator
-	def pandoraSettings_loadUI(self, origin, tab):
-		pass
+    @err_decorator
+    def pandoraSettings_loadSettings(self, origin):
+        pass
 
+    @err_decorator
+    def copySceneFile(self, origin, origFile, targetPath):
+        xgenfiles = [
+            x
+            for x in os.listdir(os.path.dirname(origFile))
+            if x.startswith(os.path.splitext(os.path.basename(origFile))[0])
+            and os.path.splitext(x)[1] in [".xgen", "abc"]
+        ]
+        for i in xgenfiles:
+            curFilePath = os.path.join(os.path.dirname(origFile), i).replace("\\", "/")
+            tFilePath = os.path.join(os.path.dirname(targetPath), i).replace("\\", "/")
+            if curFilePath != tFilePath:
+                shutil.copy2(curFilePath, tFilePath)
 
-	@err_decorator
-	def pandoraSettings_saveSettings(self, origin):
-		pass
+    # start a Maya render job
+    @err_decorator
+    def startJob(self, origin, sceneFile="", startFrame=0, endFrame=0, jobData={}):
+        origin.writeLog("starting maya job. " + origin.curjob["name"], 0)
 
-	
-	@err_decorator
-	def pandoraSettings_loadSettings(self, origin):
-		pass
+        mayaOverride = self.core.getConfig("dccoverrides", "Maya_override")
+        mayaOverridePath = self.core.getConfig("dccoverrides", "Maya_path")
 
+        if (
+            mayaOverride == True
+            and mayaOverridePath is not None
+            and os.path.exists(mayaOverridePath)
+        ):
+            mayaPath = mayaOverridePath
+        else:
+            if "programVersion" in jobData:
+                mayaPath = self.getInstallPath(jobData["programVersion"])
+            else:
+                mayaPath = self.getInstallPath()
 
-	@err_decorator
-	def copySceneFile(self, origin, origFile, targetPath):
-		xgenfiles = [x for x in os.listdir(os.path.dirname(origFile)) if x.startswith(os.path.splitext(os.path.basename(origFile))[0]) and os.path.splitext(x)[1] in [".xgen", "abc"]]
-		for i in xgenfiles:
-			curFilePath = os.path.join(os.path.dirname(origFile), i).replace("\\","/")
-			tFilePath = os.path.join(os.path.dirname(targetPath), i).replace("\\","/")
-			if curFilePath != tFilePath:
-				shutil.copy2(curFilePath, tFilePath)
+            mayaPath = os.path.join(mayaPath, "bin", "Render.exe")
 
+            if not os.path.exists(mayaPath):
+                origin.writeLog("no Maya installation found", 3)
+                origin.renderingFailed()
+                return "skipped"
 
-	# start a Maya render job
-	@err_decorator
-	def startJob(self, origin, sceneFile="", startFrame=0, endFrame=0, jobData={}):
-		origin.writeLog("starting maya job. " + origin.curjob["name"], 0)
+        if "outputPath" in jobData:
+            curOutput = jobData["outputPath"]
+            if origin.localMode:
+                newOutputDir = os.path.dirname(curOutput)
+            else:
+                newOutputDir = os.path.join(
+                    origin.localSlavePath,
+                    "RenderOutput",
+                    origin.curjob["code"],
+                    os.path.basename(os.path.dirname(curOutput)),
+                )
+            newOutputFile = os.path.splitext(os.path.basename(curOutput))[0]
+            try:
+                os.makedirs(newOutputDir)
+            except:
+                pass
+        else:
+            origin.writeLog("no outputpath specified", 2)
+            origin.renderingFailed()
+            return False
 
-		mayaOverride = self.core.getConfig("dccoverrides", "Maya_override")
-		mayaOverridePath = self.core.getConfig("dccoverrides", "Maya_path")
+        if not os.path.exists(sceneFile):
+            origin.writeLog("scenefile does not exist", 2)
+            origin.renderingFailed()
+            return False
 
-		if mayaOverride == True and mayaOverridePath is not None and os.path.exists(mayaOverridePath):
-			mayaPath = mayaOverridePath
-		else:
-			if "programVersion" in jobData:
-				mayaPath = self.getInstallPath(jobData["programVersion"])
-			else:
-				mayaPath = self.getInstallPath()
+        popenArgs = [
+            mayaPath,
+            "-r",
+            "file",
+            "-rd",
+            newOutputDir,
+            "-im",
+            newOutputFile,
+            "-s",
+            str(startFrame),
+            "-e",
+            str(endFrame),
+        ]
 
-			mayaPath = os.path.join(mayaPath, "bin", "Render.exe")
+        if "width" in jobData:
+            popenArgs += ["-x", str(jobData["width"])]
 
-			if not os.path.exists(mayaPath):
-				origin.writeLog("no Maya installation found", 3)
-				origin.renderingFailed()
-				return "skipped"
+        if "height" in jobData:
+            popenArgs += ["-y", str(jobData["height"])]
 
-		if "outputPath" in jobData:
-			curOutput = jobData["outputPath"]
-			if origin.localMode:
-				newOutputDir = os.path.dirname(curOutput)
-			else:
-				newOutputDir = os.path.join(origin.localSlavePath, "RenderOutput", origin.curjob["code"], os.path.basename(os.path.dirname(curOutput)))
-			newOutputFile = os.path.splitext(os.path.basename(curOutput))[0]
-			try:
-				os.makedirs(newOutputDir)
-			except:
-				pass
-		else:
-			origin.writeLog("no outputpath specified", 2)
-			origin.renderingFailed()
-			return False
+        if "camera" in jobData:
+            popenArgs += ["-cam", jobData["camera"]]
 
-		if not os.path.exists(sceneFile):
-			origin.writeLog("scenefile does not exist", 2)
-			origin.renderingFailed()
-			return False
+        popenArgs.append(sceneFile)
 
-		popenArgs = [mayaPath, "-r", "file", "-rd", newOutputDir, "-im", newOutputFile, "-s", str(startFrame), "-e", str(endFrame)]
-
-		if "width" in jobData:
-			popenArgs += ["-x", str(jobData["width"])]
-
-		if "height" in jobData:
-			popenArgs += ["-y", str(jobData["height"])]
-
-		if "camera" in jobData:
-			popenArgs += ["-cam", jobData["camera"]]
-
-		popenArgs.append(sceneFile)
-
-		thread = origin.startRenderThread(pOpenArgs=popenArgs, jData=jobData, prog="maya")
-		return thread
+        thread = origin.startRenderThread(pOpenArgs=popenArgs, jData=jobData, prog="maya")
+        return thread

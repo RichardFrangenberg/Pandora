@@ -11,7 +11,7 @@
 ####################################################
 #
 #
-# Copyright (C) 2016-2019 Richard Frangenberg
+# Copyright (C) 2016-2020 Richard Frangenberg
 #
 # Licensed under GNU GPL-3.0-or-later
 #
@@ -31,76 +31,73 @@
 # along with Pandora.  If not, see <https://www.gnu.org/licenses/>.
 
 
-
 import os, sys, traceback, time, subprocess
 from functools import wraps
 
 try:
-	from PySide2.QtCore import *
-	from PySide2.QtGui import *
-	from PySide2.QtWidgets import *
-	psVersion = 2
+    from PySide2.QtCore import *
+    from PySide2.QtGui import *
+    from PySide2.QtWidgets import *
+
+    psVersion = 2
 except:
-	from PySide.QtCore import *
-	from PySide.QtGui import *
-	psVersion = 1
+    from PySide.QtCore import *
+    from PySide.QtGui import *
+
+    psVersion = 1
 
 
 class Pandora_PluginPreset_Functions(object):
-	def __init__(self, core, plugin):
-		self.core = core
-		self.plugin = plugin
+    def __init__(self, core, plugin):
+        self.core = core
+        self.plugin = plugin
 
+    def err_decorator(func):
+        @wraps(func)
+        def func_wrapper(*args, **kwargs):
+            exc_info = sys.exc_info()
+            try:
+                return func(*args, **kwargs)
+            except Exception as e:
+                exc_type, exc_obj, exc_tb = sys.exc_info()
+                erStr = "%s ERROR - Pandora_Plugin_PluginPreset %s:\n%s\n\n%s" % (
+                    time.strftime("%d/%m/%y %X"),
+                    args[0].plugin.version,
+                    "".join(traceback.format_stack()),
+                    traceback.format_exc(),
+                )
+                args[0].core.writeErrorLog(erStr)
 
-	def err_decorator(func):
-		@wraps(func)
-		def func_wrapper(*args, **kwargs):
-			exc_info = sys.exc_info()
-			try:
-				return func(*args, **kwargs)
-			except Exception as e:
-				exc_type, exc_obj, exc_tb = sys.exc_info()
-				erStr = ("%s ERROR - Pandora_Plugin_PluginPreset %s:\n%s\n\n%s" % (time.strftime("%d/%m/%y %X"), args[0].plugin.version, ''.join(traceback.format_stack()), traceback.format_exc()))
-				args[0].core.writeErrorLog(erStr)
+        return func_wrapper
 
-		return func_wrapper
+    @err_decorator
+    def isActive(self):
+        return True
 
+    @err_decorator
+    def onSubmitterOpen(self, origin):
+        pass
 
-	@err_decorator
-	def isActive(self):
-		return True
+    @err_decorator
+    def onPreJobSubmitted(self, origin, jobpath):
+        pass
 
+    @err_decorator
+    def onPostJobSubmitted(self, origin, jobpath):
+        pass
 
-	@err_decorator
-	def onSubmitterOpen(self, origin):
-		pass
+    @err_decorator
+    def onPandoraSettingsOpen(self, origin):
+        pass
 
+    @err_decorator
+    def onPandoraSettingsSave(self, origin):
+        pass
 
-	@err_decorator
-	def onPreJobSubmitted(self, origin, jobpath):
-		pass
+    @err_decorator
+    def onRenderHandlerOpen(self, origin):
+        pass
 
-
-	@err_decorator
-	def onPostJobSubmitted(self, origin, jobpath):
-		pass
-
-
-	@err_decorator
-	def onPandoraSettingsOpen(self, origin):
-		pass
-
-
-	@err_decorator
-	def onPandoraSettingsSave(self, origin):
-		pass
-
-
-	@err_decorator
-	def onRenderHandlerOpen(self, origin):
-		pass
-
-
-	@err_decorator
-	def onRenderHandlerClose(self, origin):
-		pass
+    @err_decorator
+    def onRenderHandlerClose(self, origin):
+        pass

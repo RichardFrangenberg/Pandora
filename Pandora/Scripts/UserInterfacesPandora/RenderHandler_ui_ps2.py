@@ -10,6 +10,7 @@
 
 from PySide2 import QtCore, QtGui, QtWidgets
 
+
 class Ui_mw_RenderHandler(object):
     def setupUi(self, mw_RenderHandler):
         mw_RenderHandler.setObjectName("mw_RenderHandler")
@@ -33,7 +34,9 @@ class Ui_mw_RenderHandler(object):
         self.splitter_2.setOrientation(QtCore.Qt.Horizontal)
         self.splitter_2.setObjectName("splitter_2")
         self.tw_jobs = QtWidgets.QTableWidget(self.splitter_2)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        sizePolicy = QtWidgets.QSizePolicy(
+            QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding
+        )
         sizePolicy.setHorizontalStretch(10)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.tw_jobs.sizePolicy().hasHeightForWidth())
@@ -53,7 +56,9 @@ class Ui_mw_RenderHandler(object):
         self.tw_jobs.horizontalHeader().setHighlightSections(False)
         self.tw_jobs.horizontalHeader().setStretchLastSection(True)
         self.tb_jobs = QtWidgets.QTabWidget(self.splitter_2)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        sizePolicy = QtWidgets.QSizePolicy(
+            QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding
+        )
         sizePolicy.setHorizontalStretch(7)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.tb_jobs.sizePolicy().hasHeightForWidth())
@@ -83,7 +88,9 @@ class Ui_mw_RenderHandler(object):
         self.verticalLayout_6 = QtWidgets.QVBoxLayout(self.tab_7)
         self.verticalLayout_6.setObjectName("verticalLayout_6")
         self.tw_jobSettings = QtWidgets.QTableWidget(self.tab_7)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        sizePolicy = QtWidgets.QSizePolicy(
+            QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding
+        )
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.tw_jobSettings.sizePolicy().hasHeightForWidth())
@@ -91,8 +98,12 @@ class Ui_mw_RenderHandler(object):
         self.tw_jobSettings.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.tw_jobSettings.setEditTriggers(QtWidgets.QAbstractItemView.DoubleClicked)
         self.tw_jobSettings.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
-        self.tw_jobSettings.setVerticalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
-        self.tw_jobSettings.setHorizontalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
+        self.tw_jobSettings.setVerticalScrollMode(
+            QtWidgets.QAbstractItemView.ScrollPerPixel
+        )
+        self.tw_jobSettings.setHorizontalScrollMode(
+            QtWidgets.QAbstractItemView.ScrollPerPixel
+        )
         self.tw_jobSettings.setObjectName("tw_jobSettings")
         self.tw_jobSettings.setColumnCount(0)
         self.tw_jobSettings.setRowCount(0)
@@ -107,7 +118,9 @@ class Ui_mw_RenderHandler(object):
         self.verticalLayout_8 = QtWidgets.QVBoxLayout(self.t_coordSettings)
         self.verticalLayout_8.setObjectName("verticalLayout_8")
         self.tw_coordSettings = QtWidgets.QTableWidget(self.t_coordSettings)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        sizePolicy = QtWidgets.QSizePolicy(
+            QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding
+        )
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.tw_coordSettings.sizePolicy().hasHeightForWidth())
@@ -115,8 +128,12 @@ class Ui_mw_RenderHandler(object):
         self.tw_coordSettings.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.tw_coordSettings.setEditTriggers(QtWidgets.QAbstractItemView.DoubleClicked)
         self.tw_coordSettings.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
-        self.tw_coordSettings.setVerticalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
-        self.tw_coordSettings.setHorizontalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
+        self.tw_coordSettings.setVerticalScrollMode(
+            QtWidgets.QAbstractItemView.ScrollPerPixel
+        )
+        self.tw_coordSettings.setHorizontalScrollMode(
+            QtWidgets.QAbstractItemView.ScrollPerPixel
+        )
         self.tw_coordSettings.setObjectName("tw_coordSettings")
         self.tw_coordSettings.setColumnCount(0)
         self.tw_coordSettings.setRowCount(0)
@@ -145,7 +162,9 @@ class Ui_mw_RenderHandler(object):
         self.l_coordLogSize.setText("")
         self.l_coordLogSize.setObjectName("l_coordLogSize")
         self.horizontalLayout_2.addWidget(self.l_coordLogSize)
-        spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        spacerItem = QtWidgets.QSpacerItem(
+            40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum
+        )
         self.horizontalLayout_2.addItem(spacerItem)
         self.label_2 = QtWidgets.QLabel(self.widget_2)
         self.label_2.setObjectName("label_2")
@@ -164,8 +183,12 @@ class Ui_mw_RenderHandler(object):
         self.tw_coordWarnings.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.tw_coordWarnings.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         self.tw_coordWarnings.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
-        self.tw_coordWarnings.setVerticalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
-        self.tw_coordWarnings.setHorizontalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
+        self.tw_coordWarnings.setVerticalScrollMode(
+            QtWidgets.QAbstractItemView.ScrollPerPixel
+        )
+        self.tw_coordWarnings.setHorizontalScrollMode(
+            QtWidgets.QAbstractItemView.ScrollPerPixel
+        )
         self.tw_coordWarnings.setColumnCount(2)
         self.tw_coordWarnings.setObjectName("tw_coordWarnings")
         self.tw_coordWarnings.setColumnCount(2)
@@ -184,7 +207,9 @@ class Ui_mw_RenderHandler(object):
         self.splitter.setOrientation(QtCore.Qt.Horizontal)
         self.splitter.setObjectName("splitter")
         self.tw_slaves = QtWidgets.QTableWidget(self.splitter)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        sizePolicy = QtWidgets.QSizePolicy(
+            QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding
+        )
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.tw_slaves.sizePolicy().hasHeightForWidth())
@@ -212,8 +237,12 @@ class Ui_mw_RenderHandler(object):
         self.tw_slaveSettings.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.tw_slaveSettings.setEditTriggers(QtWidgets.QAbstractItemView.DoubleClicked)
         self.tw_slaveSettings.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
-        self.tw_slaveSettings.setVerticalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
-        self.tw_slaveSettings.setHorizontalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
+        self.tw_slaveSettings.setVerticalScrollMode(
+            QtWidgets.QAbstractItemView.ScrollPerPixel
+        )
+        self.tw_slaveSettings.setHorizontalScrollMode(
+            QtWidgets.QAbstractItemView.ScrollPerPixel
+        )
         self.tw_slaveSettings.setObjectName("tw_slaveSettings")
         self.tw_slaveSettings.setColumnCount(0)
         self.tw_slaveSettings.setRowCount(0)
@@ -242,7 +271,9 @@ class Ui_mw_RenderHandler(object):
         self.l_slaveLogSize.setText("")
         self.l_slaveLogSize.setObjectName("l_slaveLogSize")
         self.horizontalLayout.addWidget(self.l_slaveLogSize)
-        spacerItem1 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        spacerItem1 = QtWidgets.QSpacerItem(
+            40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum
+        )
         self.horizontalLayout.addItem(spacerItem1)
         self.label = QtWidgets.QLabel(self.widget)
         self.label.setObjectName("label")
@@ -261,8 +292,12 @@ class Ui_mw_RenderHandler(object):
         self.tw_slaveWarnings.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.tw_slaveWarnings.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         self.tw_slaveWarnings.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
-        self.tw_slaveWarnings.setVerticalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
-        self.tw_slaveWarnings.setHorizontalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
+        self.tw_slaveWarnings.setVerticalScrollMode(
+            QtWidgets.QAbstractItemView.ScrollPerPixel
+        )
+        self.tw_slaveWarnings.setHorizontalScrollMode(
+            QtWidgets.QAbstractItemView.ScrollPerPixel
+        )
         self.tw_slaveWarnings.setColumnCount(2)
         self.tw_slaveWarnings.setObjectName("tw_slaveWarnings")
         self.tw_slaveWarnings.setColumnCount(2)
@@ -295,22 +330,67 @@ class Ui_mw_RenderHandler(object):
         QtCore.QMetaObject.connectSlotsByName(mw_RenderHandler)
 
     def retranslateUi(self, mw_RenderHandler):
-        mw_RenderHandler.setWindowTitle(QtWidgets.QApplication.translate("mw_RenderHandler", "Render Handler", None, -1))
-        self.gb_jobs.setTitle(QtWidgets.QApplication.translate("mw_RenderHandler", "Jobs", None, -1))
+        mw_RenderHandler.setWindowTitle(
+            QtWidgets.QApplication.translate("mw_RenderHandler", "Render Handler", None, -1)
+        )
+        self.gb_jobs.setTitle(
+            QtWidgets.QApplication.translate("mw_RenderHandler", "Jobs", None, -1)
+        )
         self.tw_jobs.setSortingEnabled(True)
         self.tw_taskList.setSortingEnabled(True)
-        self.tb_jobs.setTabText(self.tb_jobs.indexOf(self.tab), QtWidgets.QApplication.translate("mw_RenderHandler", "Task List", None, -1))
-        self.tb_jobs.setTabText(self.tb_jobs.indexOf(self.tab_7), QtWidgets.QApplication.translate("mw_RenderHandler", "Settings", None, -1))
-        self.tb_jobs.setTabText(self.tb_jobs.indexOf(self.t_coordSettings), QtWidgets.QApplication.translate("mw_RenderHandler", "Coordinator Settings", None, -1))
-        self.label_2.setText(QtWidgets.QApplication.translate("mw_RenderHandler", "Filter Level:", None, -1))
-        self.tb_jobs.setTabText(self.tb_jobs.indexOf(self.t_coordLog), QtWidgets.QApplication.translate("mw_RenderHandler", "Coordinator Log", None, -1))
-        self.tb_jobs.setTabText(self.tb_jobs.indexOf(self.t_coordWarnings), QtWidgets.QApplication.translate("mw_RenderHandler", "Coordinator Warnings", None, -1))
-        self.gb_slaves.setTitle(QtWidgets.QApplication.translate("mw_RenderHandler", "Slaves", None, -1))
+        self.tb_jobs.setTabText(
+            self.tb_jobs.indexOf(self.tab),
+            QtWidgets.QApplication.translate("mw_RenderHandler", "Task List", None, -1),
+        )
+        self.tb_jobs.setTabText(
+            self.tb_jobs.indexOf(self.tab_7),
+            QtWidgets.QApplication.translate("mw_RenderHandler", "Settings", None, -1),
+        )
+        self.tb_jobs.setTabText(
+            self.tb_jobs.indexOf(self.t_coordSettings),
+            QtWidgets.QApplication.translate(
+                "mw_RenderHandler", "Coordinator Settings", None, -1
+            ),
+        )
+        self.label_2.setText(
+            QtWidgets.QApplication.translate("mw_RenderHandler", "Filter Level:", None, -1)
+        )
+        self.tb_jobs.setTabText(
+            self.tb_jobs.indexOf(self.t_coordLog),
+            QtWidgets.QApplication.translate(
+                "mw_RenderHandler", "Coordinator Log", None, -1
+            ),
+        )
+        self.tb_jobs.setTabText(
+            self.tb_jobs.indexOf(self.t_coordWarnings),
+            QtWidgets.QApplication.translate(
+                "mw_RenderHandler", "Coordinator Warnings", None, -1
+            ),
+        )
+        self.gb_slaves.setTitle(
+            QtWidgets.QApplication.translate("mw_RenderHandler", "Slaves", None, -1)
+        )
         self.tw_slaves.setSortingEnabled(True)
-        self.tb_slaves.setTabText(self.tb_slaves.indexOf(self.tab_5), QtWidgets.QApplication.translate("mw_RenderHandler", "Settings", None, -1))
-        self.label.setText(QtWidgets.QApplication.translate("mw_RenderHandler", "Filter Level:", None, -1))
-        self.tb_slaves.setTabText(self.tb_slaves.indexOf(self.tab_6), QtWidgets.QApplication.translate("mw_RenderHandler", "Log", None, -1))
-        self.tb_slaves.setTabText(self.tb_slaves.indexOf(self.tab_2), QtWidgets.QApplication.translate("mw_RenderHandler", "Warnings", None, -1))
-        self.menuOptions.setTitle(QtWidgets.QApplication.translate("mw_RenderHandler", "Options", None, -1))
-        self.actionShowCoord.setText(QtWidgets.QApplication.translate("mw_RenderHandler", "Show Coordinator", None, -1))
-
+        self.tb_slaves.setTabText(
+            self.tb_slaves.indexOf(self.tab_5),
+            QtWidgets.QApplication.translate("mw_RenderHandler", "Settings", None, -1),
+        )
+        self.label.setText(
+            QtWidgets.QApplication.translate("mw_RenderHandler", "Filter Level:", None, -1)
+        )
+        self.tb_slaves.setTabText(
+            self.tb_slaves.indexOf(self.tab_6),
+            QtWidgets.QApplication.translate("mw_RenderHandler", "Log", None, -1),
+        )
+        self.tb_slaves.setTabText(
+            self.tb_slaves.indexOf(self.tab_2),
+            QtWidgets.QApplication.translate("mw_RenderHandler", "Warnings", None, -1),
+        )
+        self.menuOptions.setTitle(
+            QtWidgets.QApplication.translate("mw_RenderHandler", "Options", None, -1)
+        )
+        self.actionShowCoord.setText(
+            QtWidgets.QApplication.translate(
+                "mw_RenderHandler", "Show Coordinator", None, -1
+            )
+        )

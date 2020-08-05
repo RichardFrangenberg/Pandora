@@ -11,7 +11,7 @@
 ####################################################
 #
 #
-# Copyright (C) 2016-2019 Richard Frangenberg
+# Copyright (C) 2016-2020 Richard Frangenberg
 #
 # Licensed under GNU GPL-3.0-or-later
 #
@@ -31,18 +31,17 @@
 # along with Pandora.  If not, see <https://www.gnu.org/licenses/>.
 
 
-
 class Pandora_Houdini_Variables(object):
-	def __init__(self, core, plugin):
-		self.version = "v1.0.3.0"
-		self.pluginName = "Houdini"
-		self.pluginType = "App"
-		self.appShortName = "Hou"
-		self.appType = "3d"
-		self.hasQtParent = True
-		self.sceneFormats = [".hip", ".hipnc", ".hiplc"]
-		self.appSpecificFormats = self.sceneFormats + [".bgeo"]
-		self.appColor = [242,103,34]
-		self.platforms = ["Windows"]
-		self.executableName = "hython.exe"
-		self.frameString = ".$F4"
+    def __init__(self, core, plugin):
+        self.version = "v1.0.3.0"
+        self.pluginName = "Houdini"
+        self.pluginType = "App"
+        self.appShortName = "Hou"
+        self.appType = "3d"
+        self.hasQtParent = True
+        self.sceneFormats = [".hip", ".hipnc", ".hiplc"]
+        self.appSpecificFormats = self.sceneFormats + [".bgeo"]
+        self.appColor = [242, 103, 34]
+        self.platforms = ["Windows"]
+        self.executableName = "hython.exe"
+        self.frameString = ".$F4"

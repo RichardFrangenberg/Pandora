@@ -11,7 +11,7 @@
 ####################################################
 #
 #
-# Copyright (C) 2016-2019 Richard Frangenberg
+# Copyright (C) 2016-2020 Richard Frangenberg
 #
 # Licensed under GNU GPL-3.0-or-later
 #
@@ -31,16 +31,20 @@
 # along with Pandora.  If not, see <https://www.gnu.org/licenses/>.
 
 
-
 from Pandora_Maya_Variables import Pandora_Maya_Variables
 from Pandora_Maya_externalAccess_Functions import Pandora_Maya_externalAccess_Functions
 from Pandora_Maya_Functions import Pandora_Maya_Functions
 from Pandora_Maya_Integration import Pandora_Maya_Integration
 
 
-class Pandora_Plugin_Maya(Pandora_Maya_Variables, Pandora_Maya_externalAccess_Functions, Pandora_Maya_Functions, Pandora_Maya_Integration):
-	def __init__(self, core):
-		Pandora_Maya_Variables.__init__(self, core, self)
-		Pandora_Maya_externalAccess_Functions.__init__(self, core, self)
-		Pandora_Maya_Functions.__init__(self, core, self)
-		Pandora_Maya_Integration.__init__(self, core, self)
+class Pandora_Plugin_Maya(
+    Pandora_Maya_Variables,
+    Pandora_Maya_externalAccess_Functions,
+    Pandora_Maya_Functions,
+    Pandora_Maya_Integration,
+):
+    def __init__(self, core):
+        Pandora_Maya_Variables.__init__(self, core, self)
+        Pandora_Maya_externalAccess_Functions.__init__(self, core, self)
+        Pandora_Maya_Functions.__init__(self, core, self)
+        Pandora_Maya_Integration.__init__(self, core, self)

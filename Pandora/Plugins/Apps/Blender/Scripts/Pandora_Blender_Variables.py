@@ -11,7 +11,7 @@
 ####################################################
 #
 #
-# Copyright (C) 2016-2019 Richard Frangenberg
+# Copyright (C) 2016-2020 Richard Frangenberg
 #
 # Licensed under GNU GPL-3.0-or-later
 #
@@ -31,18 +31,17 @@
 # along with Pandora.  If not, see <https://www.gnu.org/licenses/>.
 
 
-
 class Pandora_Blender_Variables(object):
-	def __init__(self, core, plugin):
-		self.version = "v1.0.2.0"
-		self.pluginName = "Blender"
-		self.pluginType = "App"
-		self.appShortName = "Bld"
-		self.appType = "3d"
-		self.hasQtParent = False
-		self.sceneFormats = [".blend"]
-		self.appSpecificFormats = self.sceneFormats
-		self.appColor = [200,180 ,0]
-		self.platforms = ["Windows"]
-		self.executableName = "blender.exe"
-		self.frameString = ".####"
+    def __init__(self, core, plugin):
+        self.version = "v1.0.2.0"
+        self.pluginName = "Blender"
+        self.pluginType = "App"
+        self.appShortName = "Bld"
+        self.appType = "3d"
+        self.hasQtParent = False
+        self.sceneFormats = [".blend"]
+        self.appSpecificFormats = self.sceneFormats
+        self.appColor = [200, 180, 0]
+        self.platforms = ["Windows"]
+        self.executableName = "blender.exe"
+        self.frameString = ".####"

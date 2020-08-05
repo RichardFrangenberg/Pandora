@@ -9,6 +9,7 @@
 
 from PySide import QtCore, QtGui
 
+
 class Ui_dlg_installer(object):
     def setupUi(self, dlg_installer):
         dlg_installer.setObjectName("dlg_installer")
@@ -25,22 +26,53 @@ class Ui_dlg_installer(object):
         self.tw_components.header().setVisible(False)
         self.tw_components.header().setDefaultSectionSize(200)
         self.verticalLayout.addWidget(self.tw_components)
-        spacerItem = QtGui.QSpacerItem(20, 10, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Fixed)
+        spacerItem = QtGui.QSpacerItem(
+            20, 10, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Fixed
+        )
         self.verticalLayout.addItem(spacerItem)
         self.buttonBox = QtGui.QDialogButtonBox(dlg_installer)
         self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
-        self.buttonBox.setStandardButtons(QtGui.QDialogButtonBox.Cancel|QtGui.QDialogButtonBox.Ok)
+        self.buttonBox.setStandardButtons(
+            QtGui.QDialogButtonBox.Cancel | QtGui.QDialogButtonBox.Ok
+        )
         self.buttonBox.setObjectName("buttonBox")
         self.verticalLayout.addWidget(self.buttonBox)
 
         self.retranslateUi(dlg_installer)
-        QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL("accepted()"), dlg_installer.accept)
-        QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL("rejected()"), dlg_installer.reject)
+        QtCore.QObject.connect(
+            self.buttonBox, QtCore.SIGNAL("accepted()"), dlg_installer.accept
+        )
+        QtCore.QObject.connect(
+            self.buttonBox, QtCore.SIGNAL("rejected()"), dlg_installer.reject
+        )
         QtCore.QMetaObject.connectSlotsByName(dlg_installer)
 
     def retranslateUi(self, dlg_installer):
-        dlg_installer.setWindowTitle(QtGui.QApplication.translate("dlg_installer", "Setup Pandora integrations", None, QtGui.QApplication.UnicodeUTF8))
-        self.label.setText(QtGui.QApplication.translate("dlg_installer", "Please select the integrations you want to install:", None, QtGui.QApplication.UnicodeUTF8))
-        self.tw_components.headerItem().setText(0, QtGui.QApplication.translate("dlg_installer", "programm", None, QtGui.QApplication.UnicodeUTF8))
-        self.tw_components.headerItem().setText(1, QtGui.QApplication.translate("dlg_installer", "paths", None, QtGui.QApplication.UnicodeUTF8))
-
+        dlg_installer.setWindowTitle(
+            QtGui.QApplication.translate(
+                "dlg_installer",
+                "Setup Pandora integrations",
+                None,
+                QtGui.QApplication.UnicodeUTF8,
+            )
+        )
+        self.label.setText(
+            QtGui.QApplication.translate(
+                "dlg_installer",
+                "Please select the integrations you want to install:",
+                None,
+                QtGui.QApplication.UnicodeUTF8,
+            )
+        )
+        self.tw_components.headerItem().setText(
+            0,
+            QtGui.QApplication.translate(
+                "dlg_installer", "programm", None, QtGui.QApplication.UnicodeUTF8
+            ),
+        )
+        self.tw_components.headerItem().setText(
+            1,
+            QtGui.QApplication.translate(
+                "dlg_installer", "paths", None, QtGui.QApplication.UnicodeUTF8
+            ),
+        )

@@ -11,7 +11,7 @@
 ####################################################
 #
 #
-# Copyright (C) 2016-2019 Richard Frangenberg
+# Copyright (C) 2016-2020 Richard Frangenberg
 #
 # Licensed under GNU GPL-3.0-or-later
 #
@@ -31,13 +31,19 @@
 # along with Pandora.  If not, see <https://www.gnu.org/licenses/>.
 
 
-
 from Pandora_Houdini_Variables import Pandora_Houdini_Variables
-from Pandora_Houdini_externalAccess_Functions import Pandora_Houdini_externalAccess_Functions
+from Pandora_Houdini_externalAccess_Functions import (
+    Pandora_Houdini_externalAccess_Functions,
+)
 from Pandora_Houdini_Integration import Pandora_Houdini_Integration
 
-class Pandora_Houdini_unloaded(Pandora_Houdini_Variables, Pandora_Houdini_externalAccess_Functions, Pandora_Houdini_Integration):
-	def __init__(self, core):
-		Pandora_Houdini_Variables.__init__(self, core, self)
-		Pandora_Houdini_externalAccess_Functions.__init__(self, core, self)
-		Pandora_Houdini_Integration.__init__(self, core, self)
+
+class Pandora_Houdini_unloaded(
+    Pandora_Houdini_Variables,
+    Pandora_Houdini_externalAccess_Functions,
+    Pandora_Houdini_Integration,
+):
+    def __init__(self, core):
+        Pandora_Houdini_Variables.__init__(self, core, self)
+        Pandora_Houdini_externalAccess_Functions.__init__(self, core, self)
+        Pandora_Houdini_Integration.__init__(self, core, self)
