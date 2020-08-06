@@ -558,25 +558,31 @@ class PandoraSettings(QDialog, PandoraSettings_ui.Ui_dlg_PandoraSettings):
         startupPath = (
             os.getenv("APPDATA") + "\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\"
         )
-        trayStartup = startupPath + "PandoraTray.lnk"
-        slaveStartup = startupPath + "PandoraSlave.lnk"
-        coordStartup = startupPath + "PandoraCoordinator.lnk"
+        trayStartup = startupPath + "Pandora Tray.lnk"
+        slaveStartup = startupPath + "Pandora Slave.lnk"
+        coordStartup = startupPath + "Pandora Coordinator.lnk"
 
         if os.path.exists(trayStartup):
             os.remove(trayStartup)
 
         if self.chb_pandoraTrayStartup.isChecked():
             if not os.path.exists(trayStartup):
-                trayPath = os.path.join(self.core.pandoraRoot, "Tools", "PandoraTray.lnk")
-                shutil.copy2(trayPath, startupPath)
+                trayPath = os.path.join(self.core.pandoraRoot, "Tools", "Pandora Tray.lnk")
+                if os.path.exists(trayPath):
+                    shutil.copy2(trayPath, startupPath)
+                else:
+                    self.core.popup("Couldn't setup Pandora autostart. Run Setup_Startmenu.bat from the Pandora installation folder and try again.")
         else:
             if os.path.exists(trayStartup):
                 os.remove(trayStartup)
 
         if self.gb_slave.isChecked() and self.chb_slaveStartup.isChecked():
             if not os.path.exists(slaveStartup):
-                sPath = os.path.join(self.core.pandoraRoot, "Tools", "PandoraSlave.lnk")
-                shutil.copy2(sPath, slaveStartup)
+                sPath = os.path.join(self.core.pandoraRoot, "Tools", "Pandora Slave.lnk")
+                if os.path.exists(sPath):
+                    shutil.copy2(sPath, slaveStartup)
+                else:
+                    self.core.popup("Couldn't setup Pandora Slave autostart. Run Setup_Startmenu.bat from the Pandora installation folder and try again.")
         else:
             if os.path.exists(slaveStartup):
                 os.remove(slaveStartup)
@@ -584,9 +590,12 @@ class PandoraSettings(QDialog, PandoraSettings_ui.Ui_dlg_PandoraSettings):
         if self.gb_coordinator.isChecked() and self.chb_coordinatorStartup.isChecked():
             if not os.path.exists(coordStartup):
                 cPath = os.path.join(
-                    self.core.pandoraRoot, "Tools", "PandoraCoordinator.lnk"
+                    self.core.pandoraRoot, "Tools", "Pandora Coordinator.lnk"
                 )
-                shutil.copy2(cPath, coordStartup)
+                if os.path.exists(cPath):
+                    shutil.copy2(cPath, coordStartup)
+                else:
+                    self.core.popup("Couldn't setup Pandora Coordinator autostart. Run Setup_Startmenu.bat from the Pandora installation folder and try again.")
         else:
             if os.path.exists(coordStartup):
                 os.remove(coordStartup)
@@ -760,13 +769,13 @@ class PandoraSettings(QDialog, PandoraSettings_ui.Ui_dlg_PandoraSettings):
             os.getenv("APPDATA") + "\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\"
         )
 
-        trayStartup = os.path.exists(startupPath + "PandoraTray.lnk")
+        trayStartup = os.path.exists(startupPath + "Pandora Tray.lnk")
         self.chb_pandoraTrayStartup.setChecked(trayStartup)
 
-        slaveStartup = os.path.exists(startupPath + "PandoraSlave.lnk")
+        slaveStartup = os.path.exists(startupPath + "Pandora Slave.lnk")
         self.chb_slaveStartup.setChecked(slaveStartup)
 
-        coordStartup = os.path.exists(startupPath + "PandoraCoordinator.lnk")
+        coordStartup = os.path.exists(startupPath + "Pandora Coordinator.lnk")
         self.chb_coordinatorStartup.setChecked(coordStartup)
 
         lmode = self.chb_localMode.isChecked()

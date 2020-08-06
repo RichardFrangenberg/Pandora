@@ -254,12 +254,12 @@ class PandoraInstaller(QDialog, PandoraInstaller_ui.Ui_dlg_installer):
             smPath = os.path.join(
                 os.environ["appdata"], "Microsoft", "Windows", "Start Menu", "Programs"
             )
-            smTray = os.path.join(smPath, "Pandora", "PandoraTray.lnk")
-            smHandler = os.path.join(smPath, "Pandora", "PandoraRenderHandler.lnk")
-            smSettings = os.path.join(smPath, "Pandora", "PandoraSettings.lnk")
-            smSlave = os.path.join(smPath, "Pandora", "PandoraSlave.lnk")
-            smCoordinator = os.path.join(smPath, "Pandora", "PandoraCoordinator.lnk")
-            suTray = os.path.join(smPath, "Startup", "PandoraTray.lnk")
+            smTray = os.path.join(smPath, "Pandora", "Pandora Tray.lnk")
+            smHandler = os.path.join(smPath, "Pandora", "Pandora RenderHandler.lnk")
+            smSettings = os.path.join(smPath, "Pandora", "Pandora Settings.lnk")
+            smSlave = os.path.join(smPath, "Pandora", "Pandora Slave.lnk")
+            smCoordinator = os.path.join(smPath, "Pandora", "Pandora Coordinator.lnk")
+            suTray = os.path.join(smPath, "Startup", "Pandora Tray.lnk")
 
             for i in [smTray, smHandler, smSettings, smSlave, smCoordinator, suTray]:
                 if os.path.exists(i):

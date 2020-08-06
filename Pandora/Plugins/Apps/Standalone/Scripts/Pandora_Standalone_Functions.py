@@ -98,9 +98,9 @@ class Pandora_Standalone_Functions(object):
         startMenuPath = os.path.join(
             os.environ["AppData"], "Microsoft", "Windows", "Start Menu", "Programs"
         )
-        trayStartup = os.path.join(startMenuPath, "Startup", "PandoraTray.lnk")
-        trayStartMenu = os.path.join(startMenuPath, "Pandora", "PandoraTray.lnk")
-        trayLnk = os.path.join(self.core.pandoraRoot, "Tools", "PandoraTray.lnk")
+        trayStartup = os.path.join(startMenuPath, "Startup", "Pandora Tray.lnk")
+        trayStartMenu = os.path.join(startMenuPath, "Pandora", "Pandora Tray.lnk")
+        trayLnk = os.path.join(self.core.pandoraRoot, "Tools", "Pandora Tray.lnk")
 
         toolList = [
             "Pandora Tray",
