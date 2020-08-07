@@ -103,7 +103,7 @@ class PandoraCore:
     def __init__(self, app="Standalone"):
         try:
             # set some general variables
-            self.version = "v1.1.0.1"
+            self.version = "v1.1.0.2"
             self.pandoraRoot = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 
             self.pluginPathApp = os.path.join(self.pandoraRoot, "Plugins", "Apps")
@@ -870,7 +870,7 @@ class PandoraCore:
                             "Could not delete file:\n\n%s\n\n%s" % (configPath, str(e)),
                         )
                 elif action == 1:
-                    os.startfile(configPath)
+                    self.openFile(configPath)
 
         if getConf:
             return userConfig
@@ -1737,7 +1737,15 @@ class PandoraCore:
                 if not os.path.exists(i[0].replace(updateRoot, self.pandoraRoot)):
                     os.makedirs(i[0].replace(updateRoot, self.pandoraRoot))
 
-                shutil.copy2(filepath, filepath.replace(updateRoot, self.pandoraRoot))
+                target = filepath.replace(updateRoot, self.pandoraRoot)
+
+                try:
+                    shutil.copy2(filepath, target)
+                except IOError:
+                    self.popup("Unable to copy file to:\n\n%s\n\nMake sure you have write access to this location. \
+If admin privileges are required for this location launch Prism as admin before you start the update process \
+or move Prism to a location where no admin privileges are required." % target)
+                    return
 
         if os.path.exists(targetdir):
             shutil.rmtree(targetdir, ignore_errors=False, onerror=self.handleRemoveReadonly)

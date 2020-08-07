@@ -247,8 +247,11 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
             )
             self.tw_jobs.setColumnHidden(9, True)
             self.tw_jobs.horizontalHeader().setDefaultAlignment(Qt.AlignLeft)
-            self.tw_jobs.verticalHeader().setSectionResizeMode(QHeaderView.Fixed)
-            self.tw_jobs.verticalHeader().setDefaultSectionSize(0)
+            if psVersion == 1:
+                self.tw_jobs.verticalHeader().setResizeMode(QHeaderView.Fixed)
+            else:
+                self.tw_jobs.verticalHeader().setSectionResizeMode(QHeaderView.Fixed)
+            #self.tw_jobs.verticalHeader().setDefaultSectionSize(0)
             font = self.tw_jobs.font()
             font.setPointSize(8)
             self.tw_jobs.setFont(font)
@@ -699,7 +702,7 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 
                 rc = self.tw_jobs.rowCount()
                 self.tw_jobs.insertRow(rc)
-                self.tw_jobs.setRowHeight(rc, 1)
+                self.tw_jobs.setRowHeight(rc, 15)
 
                 settingsPathItem = QTableWidgetItem(settingsPath)
                 self.tw_jobs.setItem(rc, 9, settingsPathItem)
