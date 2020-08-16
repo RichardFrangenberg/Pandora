@@ -103,7 +103,7 @@ class PandoraCore:
     def __init__(self, app="Standalone"):
         try:
             # set some general variables
-            self.version = "v1.1.0.2"
+            self.version = "v1.1.0.3"
             self.pandoraRoot = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 
             self.pluginPathApp = os.path.join(self.pandoraRoot, "Plugins", "Apps")
@@ -436,9 +436,14 @@ class PandoraCore:
             "dccoverrides": {},
             "lastUsedSettings": {},
         }
-
-        with open(self.configPath, "w") as confFile:
-            json.dump(uconfig, confFile, indent=4)
+        try:
+            with open(self.configPath, "w") as confFile:
+                json.dump(uconfig, confFile, indent=4)
+        except Exception as e:
+            if e.errno == 13:
+                self.popup("Permission denied to write to file:\n\n%s" % self.configPath)
+            else:
+                raise
 
     @err_decorator
     def parentWindow(self, win):
@@ -1811,6 +1816,21 @@ or move Prism to a location where no admin privileges are required." % target)
             raise
 
     @err_decorator
+    def getPythonPath(self):
+        if platform.system() == "Windows":
+            pythonPath = os.path.join(self.pandoraRoot, "Python37", "pythonw.exe")
+            if not os.path.exists(pythonPath):
+                pythonPath = os.path.join(self.pandoraRoot, "Python27", "pythonw.exe")
+                if not os.path.exists(pythonPath):
+                    pythonPath = os.path.join(os.path.dirname(sys.executable), "pythonw.exe")
+                    if not os.path.exists(pythonPath):
+                        pythonPath = sys.executable
+        else:
+            pythonPath = "python"
+
+        return pythonPath
+
+    @err_decorator
     def sendEmail(self, text, subject="Pandora Error", quiet=False):
         if not quiet:
             waitmsg = QMessageBox(
@@ -1949,7 +1969,7 @@ except Exception as e:
             self.pandoraRoot,
         )
 
-        pythonPath = os.path.join(self.pandoraRoot, "Python37", "pythonw.exe")
+        pythonPath = self.getPythonPath()
         result = subprocess.Popen(
             [pythonPath, "-c", pStr],
             stdin=subprocess.PIPE,

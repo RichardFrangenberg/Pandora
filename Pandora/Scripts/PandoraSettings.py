@@ -598,7 +598,13 @@ class PandoraSettings(QDialog, PandoraSettings_ui.Ui_dlg_PandoraSettings):
                     self.core.popup("Couldn't setup Pandora Coordinator autostart. Run Setup_Startmenu.bat from the Pandora installation folder and try again.")
         else:
             if os.path.exists(coordStartup):
-                os.remove(coordStartup)
+                try:
+                    os.remove(coordStartup)
+                except Exception as e:
+                    if e.errno == 32:
+                        self.core.popup("Cannot remove file because it is used by another process:\n\n%s" % coordStartup)
+                    else:
+                        raise
 
         if self.startSettings["localMode"] == self.chb_localMode.isChecked():
             if self.chb_localMode.isChecked():

@@ -1616,7 +1616,7 @@ class SlaveLogic(QDialog):
                             if line in ["", "\n"]:
                                 continue
 
-                            if "Error" in line or "ERROR" in line:
+                            if "Error" in line or "ERROR" in line or "error" in line:
                                 logLevel = 2
                             else:
                                 logLevel = 1

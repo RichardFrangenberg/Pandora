@@ -784,39 +784,40 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
             progressItem = QTableWidgetItem(str(progress) + " %")
             self.tw_jobs.setItem(rc, 2, progressItem)
 
-        if jcData["priority"] is not None:
-            jobPrio = jcData["priority"]
-            jobPrioItem = QTableWidgetItem(str(jobPrio))
-            self.tw_jobs.setItem(rc, 3, jobPrioItem)
+        if jcData == 345:
+            if jcData["priority"] is not None:
+                jobPrio = jcData["priority"]
+                jobPrioItem = QTableWidgetItem(str(jobPrio))
+                self.tw_jobs.setItem(rc, 3, jobPrioItem)
 
-        if jcData["frameRange"] is not None:
-            framerange = jcData["frameRange"]
-            framerangeItem = QTableWidgetItem(framerange)
-            self.tw_jobs.setItem(rc, 4, framerangeItem)
+            if jcData["frameRange"] is not None:
+                framerange = jcData["frameRange"]
+                framerangeItem = QTableWidgetItem(framerange)
+                self.tw_jobs.setItem(rc, 4, framerangeItem)
 
-        if jcData["submitDate"] is not None:
-            submitDate = jcData["submitDate"]
-            submitdateItem = QTableWidgetItem(submitDate)
-            submitdateItem.setData(
-                0, QDateTime.fromString(submitDate, "dd.MM.yy, hh:mm:ss").addYears(100)
-            )
-            submitdateItem.setToolTip(submitDate)
-            self.tw_jobs.setItem(rc, 5, submitdateItem)
+            if jcData["submitDate"] is not None:
+                submitDate = jcData["submitDate"]
+                submitdateItem = QTableWidgetItem(submitDate)
+                submitdateItem.setData(
+                    0, QDateTime.fromString(submitDate, "dd.MM.yy, hh:mm:ss").addYears(100)
+                )
+                submitdateItem.setToolTip(submitDate)
+                self.tw_jobs.setItem(rc, 5, submitdateItem)
 
-        if jcData["projectName"] is not None:
-            pName = jcData["projectName"]
-            pNameItem = QTableWidgetItem(pName)
-            self.tw_jobs.setItem(rc, 6, pNameItem)
+            if jcData["projectName"] is not None:
+                pName = jcData["projectName"]
+                pNameItem = QTableWidgetItem(pName)
+                self.tw_jobs.setItem(rc, 6, pNameItem)
 
-        if jcData["userName"] is not None:
-            uName = jcData["userName"]
-            uNameItem = QTableWidgetItem(uName)
-            self.tw_jobs.setItem(rc, 7, uNameItem)
+            if jcData["userName"] is not None:
+                uName = jcData["userName"]
+                uNameItem = QTableWidgetItem(uName)
+                self.tw_jobs.setItem(rc, 7, uNameItem)
 
-        if jcData["program"] is not None:
-            pName = jcData["program"]
-            pNameItem = QTableWidgetItem(pName)
-            self.tw_jobs.setItem(rc, 8, pNameItem)
+            if jcData["program"] is not None:
+                pName = jcData["program"]
+                pNameItem = QTableWidgetItem(pName)
+                self.tw_jobs.setItem(rc, 8, pNameItem)
 
         if rowColorStyle not in ["ready", "assigned"]:
             cc = self.tw_jobs.columnCount()
@@ -1742,8 +1743,14 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
             cmdDir, "handlerOut_%s_%s.txt" % (format(curNum, "04"), time.time())
         )
 
-        with open(cmdFile, "w") as cFile:
-            cFile.write(str(cmd))
+        try:
+            with open(cmdFile, "w") as cFile:
+                cFile.write(str(cmd))
+        except Exception as e:
+            if e.errno == 13:
+                self.core.popup("Permission denied to write to file:\n\n%s" % cmdFile)
+            else:
+                raise
 
     @err_decorator
     def mouseClickEvent(self, event, stype, widget, item):
@@ -1947,8 +1954,13 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
                     ):
                         logData += self.colorLogLine(i)
 
+            if os.path.exists(logPath):
+                size = float(os.stat(logPath).st_size / 1024.0 / 1024.0)
+            else:
+                size = 0
+
             self.l_coordLogSize.setText(
-                "Logsize: %.2fmb" % float(os.stat(logPath).st_size / 1024.0 / 1024.0)
+                "Logsize: %.2fmb" % size
             )
 
         self.te_coordLog.setText(logData)
