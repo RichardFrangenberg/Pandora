@@ -784,7 +784,7 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
             progressItem = QTableWidgetItem(str(progress) + " %")
             self.tw_jobs.setItem(rc, 2, progressItem)
 
-        if jcData == 345:
+        if jcData:
             if jcData["priority"] is not None:
                 jobPrio = jcData["priority"]
                 jobPrioItem = QTableWidgetItem(str(jobPrio))
