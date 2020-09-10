@@ -55,7 +55,7 @@ import psutil
 class PandoraCoordinator:
     def __init__(self):
         try:
-            self.version = "v1.1.0.0"
+            self.version = "v1.1.0.5"
 
             self.coordUpdateTime = 5  # seconds
             self.activeThres = 10  # time in min after a slave becomes inactive
@@ -1615,10 +1615,10 @@ class PandoraCoordinator:
 
         removed = []
         for i in self.renderingTasks:
-            jobName = i[0]
+            jobCode = i[0]
             taskName = i[1]
 
-            confPath = os.path.join(self.jobPath, jobName, "PandoraJob.json")
+            confPath = os.path.join(self.jobPath, jobCode, "PandoraJob.json")
 
             if not os.path.exists(confPath):
                 self.writeWarning("Job config does not exist: %s" % confPath, 2)
@@ -1643,16 +1643,13 @@ class PandoraCoordinator:
                 continue
 
             sStatus = self.getConfig("slaveinfo", "status", configPath=slaveSettings)
-            sJob = self.getConfig("slaveinfo", "curjob", configPath=slaveSettings)
+            sTasks = self.getConfig("slaveinfo", "curtasks", configPath=slaveSettings)
 
-            if sStatus is not None and sJob is not None:
-                curTask = sJob.split(" ")[-1]
-                if curTask.startswith("(") and curTask.endswith(")"):
-                    curTask = curTask[1:-1]
+            if sStatus != "idle" and sTasks is not None:
+                for task in sTasks:
+                    if task["jobcode"] == jobCode and task["taskname"] == taskName:
+                        break
                 else:
-                    curTask = ""
-
-                if sStatus != "idle" and curTask != taskName:
                     taskData[2] = "ready"
                     taskData[3] = "unassigned"
                     taskData[4] = ""
@@ -1661,7 +1658,7 @@ class PandoraCoordinator:
                     self.setConfig("jobtasks", taskName, taskData, configPath=confPath)
 
                     removed.append(i)
-                    self.writeLog("Reset task %s of job %s" % (taskName, jobName))
+                    self.writeLog("Reset task %s of job %s" % (taskName, jobCode), 1)
 
         for i in removed:
             self.renderingTasks.remove(i)
@@ -1671,7 +1668,7 @@ class PandoraCoordinator:
         self.writeLog("Getting available slaves.")
 
         jobBase = os.path.join(self.repPath, "Jobs")
-        unavailableSlaves = []
+        slaveAssignments = {}
 
         if os.path.exists(jobBase):
             for i in os.listdir(jobBase):
@@ -1736,7 +1733,12 @@ class PandoraCoordinator:
                                     )
                                     continue
 
-                            unavailableSlaves.append(taskData[3])
+                            slaveName = taskData[3]
+                            if slaveName not in slaveAssignments:
+                                slaveAssignments[slaveName] = {"concurrent": []}
+
+                            jobCon = jobConfig["jobglobals"].get("concurrentTasks", 1)
+                            slaveAssignments[slaveName]["concurrent"].append(jobCon)
                             # self.writeLog("DEBUG - unavailable slaves: %s - %s" % (taskData[3],i))
                 except Exception as e:
                     exc_type, exc_obj, exc_tb = sys.exc_info()
@@ -1748,33 +1750,26 @@ class PandoraCoordinator:
 
         # self.writeLog("DEBUG - unavailable slaves: %s" % unavailableSlaves)
 
-        for i in self.activeSlaves:
+        for slave in self.activeSlaves:
             try:
-                if i in unavailableSlaves:
-                    continue
+                slaveData = {"name": slave}
+                if slave in slaveAssignments:
+                    concList = slaveAssignments[slave]["concurrent"]
+                    if len(concList) >= min(concList):
+                        continue
 
-                slaveSettings = os.path.join(
-                    self.slPath, "Slaves", "S_%s" % i, "slaveSettings_%s.json" % i
-                )
-                slaveStatus = self.getConfig(
-                    "slaveinfo", "status", configPath=slaveSettings
-                )
+                    slaveData["maxTasks"] = min(concList)
+                    slaveData["curTaskNum"] = len(concList)
+                else:
+                    slaveData["maxTasks"] = 9999
+                    slaveData["curTaskNum"] = 0
 
-                if slaveStatus is None:
-                    self.writeLog(
-                        'Slavesettings from %s don\'t have an option "status" in "slaveinfo"'
-                        % i,
-                        2,
-                    )
-                    continue
-
-                if slaveStatus == "idle":
-                    self.availableSlaves.append(i)
+                self.availableSlaves.append(slaveData)
             except Exception as e:
                 exc_type, exc_obj, exc_tb = sys.exc_info()
                 self.writeLog(
                     "ERROR -- getAvailableSlaves -- %s -- %s\n%s\n%s"
-                    % (i, str(e), exc_type, exc_tb.tb_lineno),
+                    % (slave, str(e), exc_type, exc_tb.tb_lineno),
                     3,
                 )
 
@@ -1805,6 +1800,7 @@ class PandoraCoordinator:
             cData["jobDependecies"] = ["jobglobals", "jobDependecies"]
             cData["listSlaves"] = ["jobglobals", "listSlaves"]
             cData["projectName"] = ["information", "projectName"]
+            cData["concurrentTasks"] = ["jobglobals", "concurrentTasks"]
             cData = self.getConfig(data=cData, configPath=confPath)
 
             if cData["jobName"] is not None:
@@ -1906,19 +1902,24 @@ class PandoraCoordinator:
                 listSlaves = cData["listSlaves"]
                 if listSlaves.startswith("exclude "):
                     whiteList = False
-                    listSlaves = listSlaves[len("exclude ") :]
+                    listSlaves = listSlaves[len("exclude "):]
                 else:
                     whiteList = True
 
-                for i in self.availableSlaves:
-                    if len(dependentSlaves) > 0 and i not in dependentSlaves:
+                for slave in self.availableSlaves:
+                    slaveName = slave["name"]
+                    if len(dependentSlaves) > 0 and slaveName not in dependentSlaves:
+                        continue
+
+                    conc = cData["concurrentTasks"] or 1
+                    if slave["curTaskNum"] >= conc:
                         continue
 
                     if listSlaves.startswith("groups: "):
-                        jGroups = listSlaves[len("groups: ") :].split(", ")
+                        jGroups = listSlaves[len("groups: "):].split(", ")
 
                         slaveSettings = os.path.join(
-                            self.slPath, "Slaves", "S_%s" % i, "slaveSettings_%s.json" % i
+                            self.slPath, "Slaves", "S_%s" % slaveName, "slaveSettings_%s.json" % slaveName
                         )
                         slaveGroups = self.getConfig(
                             "settings", "slaveGroup", configPath=slaveSettings
@@ -1931,21 +1932,16 @@ class PandoraCoordinator:
                             if (k not in slaveGroups) == whiteList:
                                 break
                         else:
-                            jobSlaves.append(i)
+                            jobSlaves.append(slave)
                     else:
                         if (
                             listSlaves == "All"
-                            or (i in listSlaves.split(", ")) == whiteList
+                            or (slaveName in listSlaves.split(", ")) == whiteList
                         ):
-                            jobSlaves.append(i)
+                            jobSlaves.append(slave)
 
             for i in sorted(jobConfig["jobtasks"]):
                 taskData = jobConfig["jobtasks"][i]
-                if taskData[2] == "assigned" and taskData[3] in self.availableSlaves:
-                    self.availableSlaves.remove(taskData[3])
-                    if taskData[3] in jobSlaves:
-                        jobSlaves.remove(taskData[3])
-
                 if len(jobSlaves) == 0:
                     break
 
@@ -1957,19 +1953,19 @@ class PandoraCoordinator:
 
                 assignedSlave = jobSlaves[0]
 
-                slavePath = os.path.join(self.slPath, "Slaves", "S_%s" % assignedSlave)
+                slavePath = os.path.join(self.slPath, "Slaves", "S_%s" % assignedSlave["name"])
                 slaveSettings = os.path.join(
-                    slavePath, "slaveSettings_%s.json" % assignedSlave
+                    slavePath, "slaveSettings_%s.json" % assignedSlave["name"]
                 )
 
                 slaveJobPath = os.path.join(slavePath, "AssignedJobs", "%s" % jobDir)
 
-                self.writeLog("Assigning job %s to slave %s." % (jobName, assignedSlave))
+                self.writeLog("Assigning job %s to slave %s." % (jobName, assignedSlave["name"]))
 
                 if not os.path.exists(slaveJobPath):
                     self.writeLog(
                         "Copying job files for job %s to slave %s."
-                        % (jobName, assignedSlave)
+                        % (jobName, assignedSlave["name"])
                     )
                     shutil.copytree(os.path.join(self.jobPath, jobDir), slaveJobPath)
 
@@ -1997,23 +1993,30 @@ class PandoraCoordinator:
                             continue
 
                         self.writeLog(
-                            "Copying project asset %s to slave %s." % (k[0], assignedSlave)
+                            "Copying project asset %s to slave %s." % (k[0], assignedSlave["name"])
                         )
 
                         shutil.copy2(paPath, sPAsset)
 
                 cmd = str(["renderTask", jobDir, jobName, i])
-                self.sendCommand(assignedSlave, cmd)
+                self.sendCommand(assignedSlave["name"], cmd)
 
                 taskData[2] = "assigned"
-                taskData[3] = assignedSlave
+                taskData[3] = assignedSlave["name"]
                 taskData[5] = time.time()
-                jobSlaves.remove(assignedSlave)
-                self.availableSlaves.remove(assignedSlave)
+
+                assignedSlave["curTaskNum"] += 1
+                conc = cData["concurrentTasks"] or 1
+                if conc < assignedSlave["maxTasks"]:
+                    assignedSlave["maxTasks"] = conc
+
+                if assignedSlave["curTaskNum"] == assignedSlave["maxTasks"]:
+                    jobSlaves.remove(assignedSlave)
+                    self.availableSlaves = [x for x in self.availableSlaves if x["name"] != assignedSlave["name"]]
 
                 self.setConfig("jobtasks", i, taskData, configPath=confPath)
                 self.writeLog(
-                    "Assigned %s to %s in job %s" % (assignedSlave, i, jobName), 1
+                    "Assigned %s to %s in job %s" % (assignedSlave["name"], i, jobName), 1
                 )
 
     @err_decorator

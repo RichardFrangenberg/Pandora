@@ -1,1 +1,1 @@
-start Python37/pythonw.exe Scripts/PandoraInstaller.py
+start "" "%~dp0/Python37/pythonw.exe" "%~dp0/Scripts/PandoraInstaller.py"

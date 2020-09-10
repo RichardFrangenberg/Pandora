@@ -296,7 +296,7 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
                 [
                     "Name",
                     "Status",
-                    "Job",
+                    "Task",
                     "last Contact",
                     "Warnings",
                     "RAM",
@@ -878,7 +878,7 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
                         if os.path.exists(slaveSettingsPath):
                             scData = {}
                             scData["status"] = ["slaveinfo", "status"]
-                            scData["curjob"] = ["slaveinfo", "curjob"]
+                            scData["curtasks"] = ["slaveinfo", "curtasks"]
                             scData["cpucount"] = ["slaveinfo", "cpucount"]
                             scData["ram"] = ["slaveinfo", "ram"]
                             scData["slaveScriptVersion"] = [
@@ -895,9 +895,10 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
                                 slaveStatusItem = QTableWidgetItem(slaveStatus)
                                 self.tw_slaves.setItem(rc, 1, slaveStatusItem)
 
-                            if scData["curjob"] is not None:
-                                curJob = scData["curjob"]
-                                slaveJob = QTableWidgetItem(curJob)
+                            if scData["curtasks"] is not None:
+                                curtasks = scData["curtasks"]
+                                curTasksStr = self.getTasksStr(scData["curtasks"])
+                                slaveJob = QTableWidgetItem(curTasksStr)
                                 self.tw_slaves.setItem(rc, 2, slaveJob)
 
                             if scData["cpucount"] is not None:
@@ -999,6 +1000,21 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
         self.tw_slaves.setColumnWidth(2, 350)
         self.tw_slaves.setSortingEnabled(True)
         self.tw_slaves.sortByColumn(0, Qt.AscendingOrder)
+
+    @err_decorator
+    def getTasksStr(self, tasks):
+        if tasks:
+            if len(tasks) > 1:
+                curTasksStr = "%s tasks - " % len(tasks)
+            else:
+                curTasksStr = ""
+
+            for task in tasks:
+                curTasksStr += "%s (%s)" % (task["jobname"], task["taskname"])
+        else:
+            curTasksStr = ""
+
+        return curTasksStr
 
     @err_decorator
     def updateTaskList(self):
@@ -1144,10 +1160,10 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
                     settingVal.setCheckState(Qt.Checked)
                 else:
                     settingVal.setCheckState(Qt.Unchecked)
-            elif i[0] in ["priority", "width", "height", "taskTimeout"]:
+            elif i[0] in ["priority", "width", "height", "taskTimeout", "concurrentTasks"]:
                 settingVal = QTableWidgetItem()
                 spinner = QSpinBox()
-                if i[0] in ["width", "height", "taskTimeout"]:
+                if i[0] in ["width", "height", "taskTimeout", "concurrentTasks"]:
                     spinner.setMaximum(9999)
                     spinner.setMinimum(1)
                 try:
@@ -1542,7 +1558,7 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 
             if settingName in ["uploadOutput"]:
                 settingVal = item.checkState() == Qt.Checked
-            elif settingName in ["priority", "width", "height", "taskTimeout"]:
+            elif settingName in ["priority", "width", "height", "taskTimeout", "concurrentTasks"]:
                 settingVal = widget.value()
             elif settingName in ["listSlaves"]:
                 settingVal = widget.text()

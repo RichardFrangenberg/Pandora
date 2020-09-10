@@ -73,8 +73,8 @@ class Pandora_Houdini_externalAccess_Functions(object):
 
     # start a Houdini render job
     @err_decorator
-    def startJob(self, origin, sceneFile="", startFrame=0, endFrame=0, jobData={}):
-        origin.writeLog("starting houdini job. " + origin.curjob["name"], 0)
+    def startJob(self, origin, jobData={}):
+        origin.writeLog("starting houdini job. " + jobData["jobname"], 0)
 
         houOverride = self.core.getConfig("dccoverrides", "Houdini_override")
         houOverridePath = self.core.getConfig("dccoverrides", "Houdini_path")
@@ -95,12 +95,12 @@ class Pandora_Houdini_externalAccess_Functions(object):
 
             if not os.path.exists(houPath):
                 origin.writeLog("no Houdini installation found", 3)
-                origin.renderingFailed()
+                origin.renderingFailed(jobData)
                 return "skipped"
 
         if "renderNode" not in jobData:
             origin.writeLog("no renderNode specified", 2)
-            origin.renderingFailed()
+            origin.renderingFailed(jobData)
             return False
 
         if "outputPath" in jobData:
@@ -111,7 +111,7 @@ class Pandora_Houdini_externalAccess_Functions(object):
                 newOutput = os.path.join(
                     origin.localSlavePath,
                     "RenderOutput",
-                    origin.curjob["code"],
+                    jobData["jobcode"],
                     os.path.basename(os.path.dirname(curOutput)),
                     os.path.basename(curOutput),
                 )
@@ -122,12 +122,12 @@ class Pandora_Houdini_externalAccess_Functions(object):
                 pass
         else:
             origin.writeLog("no outputpath specified", 2)
-            origin.renderingFailed()
+            origin.renderingFailed(jobData)
             return False
 
-        if not os.path.exists(sceneFile):
+        if not os.path.exists(jobData["scenefile"]):
             origin.writeLog("scenefile does not exist", 2)
-            origin.renderingFailed()
+            origin.renderingFailed(jobData)
             return False
 
         jobData["localMode"] = origin.localMode
@@ -135,9 +135,7 @@ class Pandora_Houdini_externalAccess_Functions(object):
         popenArgs = [
             houPath,
             os.path.join(self.core.pandoraRoot, "Scripts", "PandoraStartHouJob.py"),
-            sceneFile.replace("\\", "/"),
-            str(startFrame),
-            str(endFrame),
+            jobData["scenefile"].replace("\\", "/"),
             str(jobData),
             str([origin.localSlavePath, origin.slavePath]),
         ]

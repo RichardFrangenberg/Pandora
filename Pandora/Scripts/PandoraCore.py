@@ -103,7 +103,7 @@ class PandoraCore:
     def __init__(self, app="Standalone"):
         try:
             # set some general variables
-            self.version = "v1.1.0.4"
+            self.version = "v1.1.0.5"
             self.pandoraRoot = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 
             self.pluginPathApp = os.path.join(self.pandoraRoot, "Plugins", "Apps")
@@ -1269,6 +1269,7 @@ class PandoraCore:
         jobData["submitDependendFiles"] = False
         jobData["uploadOutput"] = True
         jobData["timeout"] = 180
+        jobData["concurrentTasks"] = 1
         jobData["useProjectAssets"] = True
         jobData["listSlaves"] = "All"
         jobData["programName"] = self.appPlugin.pluginName
@@ -1559,6 +1560,7 @@ class PandoraCore:
         cData.append(["jobglobals", "uploadOutput", submitData["uploadOutput"]])
         cData.append(["jobglobals", "listSlaves", submitData["listSlaves"]])
         cData.append(["jobglobals", "taskTimeout", submitData["timeout"]])
+        cData.append(["jobglobals", "concurrentTasks", submitData["concurrentTasks"]])
         cData.append(["information", "jobName", submitData["jobName"]])
         cData.append(["information", "sceneName", os.path.basename(fileName)])
         cData.append(["information", "projectName", submitData["projectName"]])

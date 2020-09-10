@@ -34,7 +34,7 @@
 import sys, os, io, time, socket, json
 import hou
 
-slavePath = eval(sys.argv[5])[1]
+slavePath = eval(sys.argv[3])[1]
 
 
 def writeLog(text, level=0):
@@ -61,13 +61,11 @@ try:
 
     writeLog("load Scene")
     hou.hipFile.load(sys.argv[1], ignore_load_warnings=True)
+    jobData = eval(sys.argv[2])
+    localSlavePath = eval(sys.argv[3])[0]
 
-    frameStart = int(sys.argv[2])
-    frameEnd = int(sys.argv[3])
-
-    jobData = eval(sys.argv[4])
-
-    localSlavePath = eval(sys.argv[5])[0]
+    frameStart = jobData["taskStartframe"]
+    frameEnd = jobData["taskEndframe"]
 
     depFiles = os.listdir(os.path.dirname(sys.argv[1]))
     for i in hou.fileReferences():

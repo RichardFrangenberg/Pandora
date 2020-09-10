@@ -1,26 +1,26 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'PandoraSubmitter.ui'
+# Form implementation generated from reading ui file 'PandoraSubmitter.ui',
+# licensing of 'PandoraSubmitter.ui' applies.
 #
-# Created: Wed May 23 17:08:51 2018
-#      by: pyside2-uic @pyside_tools_VERSION@ running on PySide2 2.0.0~alpha0
+# Created: Mon Aug 31 01:31:37 2020
+#      by: pyside2-uic  running on PySide2 5.9.0a1.dev1528389443
 #
 # WARNING! All changes made in this file will be lost!
 
 from PySide2 import QtCore, QtGui, QtWidgets
 
-
 class Ui_dlg_pandoraSubmitter(object):
     def setupUi(self, dlg_pandoraSubmitter):
         dlg_pandoraSubmitter.setObjectName("dlg_pandoraSubmitter")
-        dlg_pandoraSubmitter.resize(431, 533)
+        dlg_pandoraSubmitter.resize(431, 561)
         self.verticalLayout = QtWidgets.QVBoxLayout(dlg_pandoraSubmitter)
         self.verticalLayout.setObjectName("verticalLayout")
         self.scrollArea = QtWidgets.QScrollArea(dlg_pandoraSubmitter)
         self.scrollArea.setWidgetResizable(True)
         self.scrollArea.setObjectName("scrollArea")
         self.scrollAreaWidgetContents = QtWidgets.QWidget()
-        self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 411, 513))
+        self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 411, 541))
         self.scrollAreaWidgetContents.setObjectName("scrollAreaWidgetContents")
         self.verticalLayout_3 = QtWidgets.QVBoxLayout(self.scrollAreaWidgetContents)
         self.verticalLayout_3.setObjectName("verticalLayout_3")
@@ -37,9 +37,7 @@ class Ui_dlg_pandoraSubmitter(object):
         self.l_framerange = QtWidgets.QLabel(self.f_range)
         self.l_framerange.setObjectName("l_framerange")
         self.horizontalLayout.addWidget(self.l_framerange)
-        spacerItem = QtWidgets.QSpacerItem(
-            40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum
-        )
+        spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout.addItem(spacerItem)
         self.l_rangeStart = QtWidgets.QLabel(self.f_range)
         self.l_rangeStart.setEnabled(True)
@@ -51,9 +49,7 @@ class Ui_dlg_pandoraSubmitter(object):
         self.sp_rangeStart.setMaximum(99999)
         self.sp_rangeStart.setObjectName("sp_rangeStart")
         self.horizontalLayout.addWidget(self.sp_rangeStart)
-        spacerItem1 = QtWidgets.QSpacerItem(
-            5, 20, QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Minimum
-        )
+        spacerItem1 = QtWidgets.QSpacerItem(5, 20, QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout.addItem(spacerItem1)
         self.l_rangeEnd = QtWidgets.QLabel(self.f_range)
         self.l_rangeEnd.setEnabled(True)
@@ -76,9 +72,7 @@ class Ui_dlg_pandoraSubmitter(object):
         self.l_camera = QtWidgets.QLabel(self.f_cam)
         self.l_camera.setObjectName("l_camera")
         self.horizontalLayout_2.addWidget(self.l_camera)
-        spacerItem2 = QtWidgets.QSpacerItem(
-            40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum
-        )
+        spacerItem2 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_2.addItem(spacerItem2)
         self.cb_cam = QtWidgets.QComboBox(self.f_cam)
         self.cb_cam.setMinimumSize(QtCore.QSize(150, 0))
@@ -95,9 +89,7 @@ class Ui_dlg_pandoraSubmitter(object):
         self.l_resOverride.setEnabled(True)
         self.l_resOverride.setObjectName("l_resOverride")
         self.horizontalLayout_9.addWidget(self.l_resOverride)
-        spacerItem3 = QtWidgets.QSpacerItem(
-            40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum
-        )
+        spacerItem3 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_9.addItem(spacerItem3)
         self.chb_resOverride = QtWidgets.QCheckBox(self.f_resolution)
         self.chb_resOverride.setText("")
@@ -190,9 +182,7 @@ class Ui_dlg_pandoraSubmitter(object):
         self.l_projectName = QtWidgets.QLabel(self.f_taskname)
         self.l_projectName.setObjectName("l_projectName")
         self.horizontalLayout_11.addWidget(self.l_projectName)
-        spacerItem4 = QtWidgets.QSpacerItem(
-            40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum
-        )
+        spacerItem4 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_11.addItem(spacerItem4)
         self.e_projectName = QtWidgets.QLineEdit(self.f_taskname)
         self.e_projectName.setMinimumSize(QtCore.QSize(200, 0))
@@ -208,9 +198,7 @@ class Ui_dlg_pandoraSubmitter(object):
         self.l_jobName = QtWidgets.QLabel(self.w_jobname)
         self.l_jobName.setObjectName("l_jobName")
         self.horizontalLayout_10.addWidget(self.l_jobName)
-        spacerItem5 = QtWidgets.QSpacerItem(
-            40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum
-        )
+        spacerItem5 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_10.addItem(spacerItem5)
         self.e_jobName = QtWidgets.QLineEdit(self.w_jobname)
         self.e_jobName.setMinimumSize(QtCore.QSize(200, 0))
@@ -226,9 +214,7 @@ class Ui_dlg_pandoraSubmitter(object):
         self.l_prio = QtWidgets.QLabel(self.f_rjPrio_2)
         self.l_prio.setObjectName("l_prio")
         self.horizontalLayout_25.addWidget(self.l_prio)
-        spacerItem6 = QtWidgets.QSpacerItem(
-            40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum
-        )
+        spacerItem6 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_25.addItem(spacerItem6)
         self.sp_priority = QtWidgets.QSpinBox(self.f_rjPrio_2)
         self.sp_priority.setMaximum(100)
@@ -244,9 +230,7 @@ class Ui_dlg_pandoraSubmitter(object):
         self.l_framesPerTask = QtWidgets.QLabel(self.f_rjWidgetsPerTask_2)
         self.l_framesPerTask.setObjectName("l_framesPerTask")
         self.horizontalLayout_30.addWidget(self.l_framesPerTask)
-        spacerItem7 = QtWidgets.QSpacerItem(
-            40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum
-        )
+        spacerItem7 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_30.addItem(spacerItem7)
         self.sp_framesPerTask = QtWidgets.QSpinBox(self.f_rjWidgetsPerTask_2)
         self.sp_framesPerTask.setMaximum(9999)
@@ -262,9 +246,7 @@ class Ui_dlg_pandoraSubmitter(object):
         self.l_rjTimeout = QtWidgets.QLabel(self.f_rjTimeout)
         self.l_rjTimeout.setObjectName("l_rjTimeout")
         self.horizontalLayout_31.addWidget(self.l_rjTimeout)
-        spacerItem8 = QtWidgets.QSpacerItem(
-            40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum
-        )
+        spacerItem8 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_31.addItem(spacerItem8)
         self.sp_rjTimeout = QtWidgets.QSpinBox(self.f_rjTimeout)
         self.sp_rjTimeout.setMinimum(1)
@@ -273,6 +255,23 @@ class Ui_dlg_pandoraSubmitter(object):
         self.sp_rjTimeout.setObjectName("sp_rjTimeout")
         self.horizontalLayout_31.addWidget(self.sp_rjTimeout)
         self.verticalLayout_2.addWidget(self.f_rjTimeout)
+        self.w_concurrent = QtWidgets.QWidget(self.groupBox)
+        self.w_concurrent.setObjectName("w_concurrent")
+        self.horizontalLayout_32 = QtWidgets.QHBoxLayout(self.w_concurrent)
+        self.horizontalLayout_32.setContentsMargins(9, 0, 9, 0)
+        self.horizontalLayout_32.setObjectName("horizontalLayout_32")
+        self.l_concurrent = QtWidgets.QLabel(self.w_concurrent)
+        self.l_concurrent.setObjectName("l_concurrent")
+        self.horizontalLayout_32.addWidget(self.l_concurrent)
+        spacerItem9 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout_32.addItem(spacerItem9)
+        self.sp_concurrent = QtWidgets.QSpinBox(self.w_concurrent)
+        self.sp_concurrent.setMinimum(1)
+        self.sp_concurrent.setMaximum(9999)
+        self.sp_concurrent.setProperty("value", 1)
+        self.sp_concurrent.setObjectName("sp_concurrent")
+        self.horizontalLayout_32.addWidget(self.sp_concurrent)
+        self.verticalLayout_2.addWidget(self.w_concurrent)
         self.f_suspended = QtWidgets.QWidget(self.groupBox)
         self.f_suspended.setObjectName("f_suspended")
         self.horizontalLayout_29 = QtWidgets.QHBoxLayout(self.f_suspended)
@@ -281,10 +280,8 @@ class Ui_dlg_pandoraSubmitter(object):
         self.l_submitSuspended = QtWidgets.QLabel(self.f_suspended)
         self.l_submitSuspended.setObjectName("l_submitSuspended")
         self.horizontalLayout_29.addWidget(self.l_submitSuspended)
-        spacerItem9 = QtWidgets.QSpacerItem(
-            40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum
-        )
-        self.horizontalLayout_29.addItem(spacerItem9)
+        spacerItem10 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout_29.addItem(spacerItem10)
         self.chb_suspended = QtWidgets.QCheckBox(self.f_suspended)
         self.chb_suspended.setText("")
         self.chb_suspended.setChecked(False)
@@ -299,10 +296,8 @@ class Ui_dlg_pandoraSubmitter(object):
         self.l_submitDependent = QtWidgets.QLabel(self.f_osDependencies)
         self.l_submitDependent.setObjectName("l_submitDependent")
         self.horizontalLayout_28.addWidget(self.l_submitDependent)
-        spacerItem10 = QtWidgets.QSpacerItem(
-            40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum
-        )
-        self.horizontalLayout_28.addItem(spacerItem10)
+        spacerItem11 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout_28.addItem(spacerItem11)
         self.chb_dependencies = QtWidgets.QCheckBox(self.f_osDependencies)
         self.chb_dependencies.setText("")
         self.chb_dependencies.setChecked(True)
@@ -317,10 +312,8 @@ class Ui_dlg_pandoraSubmitter(object):
         self.l_uploadOutput = QtWidgets.QLabel(self.f_osUpload)
         self.l_uploadOutput.setObjectName("l_uploadOutput")
         self.horizontalLayout_23.addWidget(self.l_uploadOutput)
-        spacerItem11 = QtWidgets.QSpacerItem(
-            40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum
-        )
-        self.horizontalLayout_23.addItem(spacerItem11)
+        spacerItem12 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout_23.addItem(spacerItem12)
         self.chb_uploadOutput = QtWidgets.QCheckBox(self.f_osUpload)
         self.chb_uploadOutput.setText("")
         self.chb_uploadOutput.setChecked(True)
@@ -328,10 +321,8 @@ class Ui_dlg_pandoraSubmitter(object):
         self.horizontalLayout_23.addWidget(self.chb_uploadOutput)
         self.verticalLayout_2.addWidget(self.f_osUpload)
         self.verticalLayout_3.addWidget(self.groupBox)
-        spacerItem12 = QtWidgets.QSpacerItem(
-            20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding
-        )
-        self.verticalLayout_3.addItem(spacerItem12)
+        spacerItem13 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.verticalLayout_3.addItem(spacerItem13)
         self.b_submit = QtWidgets.QPushButton(self.scrollAreaWidgetContents)
         self.b_submit.setObjectName("b_submit")
         self.verticalLayout_3.addWidget(self.b_submit)
@@ -342,103 +333,29 @@ class Ui_dlg_pandoraSubmitter(object):
         QtCore.QMetaObject.connectSlotsByName(dlg_pandoraSubmitter)
 
     def retranslateUi(self, dlg_pandoraSubmitter):
-        dlg_pandoraSubmitter.setWindowTitle(
-            QtWidgets.QApplication.translate(
-                "dlg_pandoraSubmitter", "Submit Pandora renderjob", None, -1
-            )
-        )
-        self.groupBox_2.setTitle(
-            QtWidgets.QApplication.translate(
-                "dlg_pandoraSubmitter", "Scene settings", None, -1
-            )
-        )
-        self.l_framerange.setText(
-            QtWidgets.QApplication.translate(
-                "dlg_pandoraSubmitter", "Framerange:", None, -1
-            )
-        )
-        self.l_rangeStart.setText(
-            QtWidgets.QApplication.translate("dlg_pandoraSubmitter", "from:", None, -1)
-        )
-        self.l_rangeEnd.setText(
-            QtWidgets.QApplication.translate("dlg_pandoraSubmitter", "to:", None, -1)
-        )
-        self.l_camera.setText(
-            QtWidgets.QApplication.translate("dlg_pandoraSubmitter", "Camera:", None, -1)
-        )
-        self.l_resOverride.setText(
-            QtWidgets.QApplication.translate(
-                "dlg_pandoraSubmitter", "Resolution override:", None, -1
-            )
-        )
-        self.b_resPresets.setText(
-            QtWidgets.QApplication.translate("dlg_pandoraSubmitter", "▼", None, -1)
-        )
-        self.label.setText(
-            QtWidgets.QApplication.translate(
-                "dlg_pandoraSubmitter", "Outputpath:", None, -1
-            )
-        )
-        self.b_browseOutputpath.setText(
-            QtWidgets.QApplication.translate("dlg_pandoraSubmitter", "...", None, -1)
-        )
-        self.l_nodeStatus.setText(
-            QtWidgets.QApplication.translate("dlg_pandoraSubmitter", "Status:", None, -1)
-        )
-        self.l_status.setText(
-            QtWidgets.QApplication.translate(
-                "dlg_pandoraSubmitter", "Not connected", None, -1
-            )
-        )
-        self.b_goTo.setText(
-            QtWidgets.QApplication.translate("dlg_pandoraSubmitter", "Go to Node", None, -1)
-        )
-        self.b_connect.setText(
-            QtWidgets.QApplication.translate(
-                "dlg_pandoraSubmitter", "Connect with selected render Node", None, -1
-            )
-        )
-        self.groupBox.setTitle(
-            QtWidgets.QApplication.translate(
-                "dlg_pandoraSubmitter", "Job settings", None, -1
-            )
-        )
-        self.l_projectName.setText(
-            QtWidgets.QApplication.translate(
-                "dlg_pandoraSubmitter", "Projectname:", None, -1
-            )
-        )
-        self.l_jobName.setText(
-            QtWidgets.QApplication.translate("dlg_pandoraSubmitter", "Jobname:", None, -1)
-        )
-        self.l_prio.setText(
-            QtWidgets.QApplication.translate("dlg_pandoraSubmitter", "Priority:", None, -1)
-        )
-        self.l_framesPerTask.setText(
-            QtWidgets.QApplication.translate(
-                "dlg_pandoraSubmitter", "Frames per Task:", None, -1
-            )
-        )
-        self.l_rjTimeout.setText(
-            QtWidgets.QApplication.translate(
-                "dlg_pandoraSubmitter", "Task Timeout (min)", None, -1
-            )
-        )
-        self.l_submitSuspended.setText(
-            QtWidgets.QApplication.translate(
-                "dlg_pandoraSubmitter", "Submit suspended:", None, -1
-            )
-        )
-        self.l_submitDependent.setText(
-            QtWidgets.QApplication.translate(
-                "dlg_pandoraSubmitter", "Submit dependent files:", None, -1
-            )
-        )
-        self.l_uploadOutput.setText(
-            QtWidgets.QApplication.translate(
-                "dlg_pandoraSubmitter", "Upload output:", None, -1
-            )
-        )
-        self.b_submit.setText(
-            QtWidgets.QApplication.translate("dlg_pandoraSubmitter", "Submit", None, -1)
-        )
+        dlg_pandoraSubmitter.setWindowTitle(QtWidgets.QApplication.translate("dlg_pandoraSubmitter", "Submit Pandora renderjob", None, -1))
+        self.groupBox_2.setTitle(QtWidgets.QApplication.translate("dlg_pandoraSubmitter", "Scene settings", None, -1))
+        self.l_framerange.setText(QtWidgets.QApplication.translate("dlg_pandoraSubmitter", "Framerange:", None, -1))
+        self.l_rangeStart.setText(QtWidgets.QApplication.translate("dlg_pandoraSubmitter", "from:", None, -1))
+        self.l_rangeEnd.setText(QtWidgets.QApplication.translate("dlg_pandoraSubmitter", "to:", None, -1))
+        self.l_camera.setText(QtWidgets.QApplication.translate("dlg_pandoraSubmitter", "Camera:", None, -1))
+        self.l_resOverride.setText(QtWidgets.QApplication.translate("dlg_pandoraSubmitter", "Resolution override:", None, -1))
+        self.b_resPresets.setText(QtWidgets.QApplication.translate("dlg_pandoraSubmitter", "▼", None, -1))
+        self.label.setText(QtWidgets.QApplication.translate("dlg_pandoraSubmitter", "Outputpath:", None, -1))
+        self.b_browseOutputpath.setText(QtWidgets.QApplication.translate("dlg_pandoraSubmitter", "...", None, -1))
+        self.l_nodeStatus.setText(QtWidgets.QApplication.translate("dlg_pandoraSubmitter", "Status:", None, -1))
+        self.l_status.setText(QtWidgets.QApplication.translate("dlg_pandoraSubmitter", "Not connected", None, -1))
+        self.b_goTo.setText(QtWidgets.QApplication.translate("dlg_pandoraSubmitter", "Go to Node", None, -1))
+        self.b_connect.setText(QtWidgets.QApplication.translate("dlg_pandoraSubmitter", "Connect with selected render Node", None, -1))
+        self.groupBox.setTitle(QtWidgets.QApplication.translate("dlg_pandoraSubmitter", "Job settings", None, -1))
+        self.l_projectName.setText(QtWidgets.QApplication.translate("dlg_pandoraSubmitter", "Projectname:", None, -1))
+        self.l_jobName.setText(QtWidgets.QApplication.translate("dlg_pandoraSubmitter", "Jobname:", None, -1))
+        self.l_prio.setText(QtWidgets.QApplication.translate("dlg_pandoraSubmitter", "Priority:", None, -1))
+        self.l_framesPerTask.setText(QtWidgets.QApplication.translate("dlg_pandoraSubmitter", "Frames per Task:", None, -1))
+        self.l_rjTimeout.setText(QtWidgets.QApplication.translate("dlg_pandoraSubmitter", "Task Timeout (min):", None, -1))
+        self.l_concurrent.setText(QtWidgets.QApplication.translate("dlg_pandoraSubmitter", "Concurrent tasks:", None, -1))
+        self.l_submitSuspended.setText(QtWidgets.QApplication.translate("dlg_pandoraSubmitter", "Submit suspended:", None, -1))
+        self.l_submitDependent.setText(QtWidgets.QApplication.translate("dlg_pandoraSubmitter", "Submit dependent files:", None, -1))
+        self.l_uploadOutput.setText(QtWidgets.QApplication.translate("dlg_pandoraSubmitter", "Upload output:", None, -1))
+        self.b_submit.setText(QtWidgets.QApplication.translate("dlg_pandoraSubmitter", "Submit", None, -1))
+

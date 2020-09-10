@@ -87,8 +87,8 @@ class Pandora_Maya_externalAccess_Functions(object):
 
     # start a Maya render job
     @err_decorator
-    def startJob(self, origin, sceneFile="", startFrame=0, endFrame=0, jobData={}):
-        origin.writeLog("starting maya job. " + origin.curjob["name"], 0)
+    def startJob(self, origin, jobData={}):
+        origin.writeLog("starting maya job. " + jobData["jobname"], 0)
 
         mayaOverride = self.core.getConfig("dccoverrides", "Maya_override")
         mayaOverridePath = self.core.getConfig("dccoverrides", "Maya_path")
@@ -109,7 +109,7 @@ class Pandora_Maya_externalAccess_Functions(object):
 
             if not os.path.exists(mayaPath):
                 origin.writeLog("no Maya installation found", 3)
-                origin.renderingFailed()
+                origin.renderingFailed(jobData)
                 return "skipped"
 
         if "outputPath" in jobData:
@@ -120,7 +120,7 @@ class Pandora_Maya_externalAccess_Functions(object):
                 newOutputDir = os.path.join(
                     origin.localSlavePath,
                     "RenderOutput",
-                    origin.curjob["code"],
+                    jobData["jobcode"],
                     os.path.basename(os.path.dirname(curOutput)),
                 )
             newOutputFile = os.path.splitext(os.path.basename(curOutput))[0]
@@ -130,12 +130,12 @@ class Pandora_Maya_externalAccess_Functions(object):
                 pass
         else:
             origin.writeLog("no outputpath specified", 2)
-            origin.renderingFailed()
+            origin.renderingFailed(jobData)
             return False
 
-        if not os.path.exists(sceneFile):
+        if not os.path.exists(jobData["scenefile"]):
             origin.writeLog("scenefile does not exist", 2)
-            origin.renderingFailed()
+            origin.renderingFailed(jobData)
             return False
 
         popenArgs = [
@@ -147,9 +147,9 @@ class Pandora_Maya_externalAccess_Functions(object):
             "-im",
             newOutputFile,
             "-s",
-            str(startFrame),
+            str(jobData["taskStartframe"]),
             "-e",
-            str(endFrame),
+            str(jobData["taskEndframe"]),
         ]
 
         if "width" in jobData:
@@ -161,7 +161,7 @@ class Pandora_Maya_externalAccess_Functions(object):
         if "camera" in jobData:
             popenArgs += ["-cam", jobData["camera"]]
 
-        popenArgs.append(sceneFile)
+        popenArgs.append(jobData["scenefile"])
 
         thread = origin.startRenderThread(pOpenArgs=popenArgs, jData=jobData, prog="maya")
         return thread

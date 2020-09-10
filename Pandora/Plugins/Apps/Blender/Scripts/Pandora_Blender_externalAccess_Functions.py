@@ -100,8 +100,8 @@ class Pandora_Blender_externalAccess_Functions(object):
 
     # start a Blender job
     @err_decorator
-    def startJob(self, origin, sceneFile="", startFrame=0, endFrame=0, jobData={}):
-        origin.writeLog("starting blender job. " + origin.curjob["name"], 0)
+    def startJob(self, origin, jobData={}):
+        origin.writeLog("starting blender job. " + jobData["jobname"], 0)
 
         bldOverride = self.core.getConfig("dccoverrides", "Blender_override")
         bldOverridePath = self.core.getConfig("dccoverrides", "Blender_path")
@@ -117,7 +117,7 @@ class Pandora_Blender_externalAccess_Functions(object):
 
             if not os.path.exists(blenderPath):
                 origin.writeLog("no Blender installation found", 3)
-                origin.renderingFailed()
+                origin.renderingFailed(jobData)
                 return "skipped"
 
         if "outputPath" in jobData:
@@ -128,7 +128,7 @@ class Pandora_Blender_externalAccess_Functions(object):
                 newOutput = os.path.join(
                     origin.localSlavePath,
                     "RenderOutput",
-                    origin.curjob["code"],
+                    jobData["jobcode"],
                     os.path.basename(os.path.dirname(curOutput)),
                     os.path.basename(curOutput),
                 )
@@ -138,12 +138,12 @@ class Pandora_Blender_externalAccess_Functions(object):
                 pass
         else:
             origin.writeLog("no outputpath specified", 2)
-            origin.renderingFailed()
+            origin.renderingFailed(jobData)
             return False
 
-        if not os.path.exists(sceneFile):
+        if not os.path.exists(jobData["scenefile"]):
             origin.writeLog("scenefile does not exist", 2)
-            origin.renderingFailed()
+            origin.renderingFailed(jobData)
             return False
 
         preRendScript = """
@@ -199,13 +199,13 @@ if usePasses:
 bpy.ops.wm.save_mainfile()
 
 """ % (
-            os.path.dirname(sceneFile),
+            os.path.dirname(jobData["scenefile"]),
             newOutput,
             newOutput,
         )
 
         preScriptPath = os.path.join(
-            os.path.dirname(os.path.dirname(sceneFile)), "preRenderScript.py"
+            os.path.dirname(os.path.dirname(jobData["scenefile"])), "preRenderScript.py"
         )
 
         open(preScriptPath, "a").close()
@@ -215,13 +215,13 @@ bpy.ops.wm.save_mainfile()
         popenArgs = [
             blenderPath,
             "--background",
-            sceneFile,
+            jobData["scenefile"],
             "--render-output",
             newOutput,
             "--frame-start",
-            str(startFrame),
+            str(jobData["taskStartframe"]),
             "--frame-end",
-            str(endFrame),
+            str(jobData["taskEndframe"]),
             "--python",
             preScriptPath,
         ]

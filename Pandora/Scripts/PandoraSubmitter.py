@@ -208,6 +208,7 @@ If set to False, the renderings can be found locally on the renderslave, which r
         cData["priority"] = ["lastUsedSettings", "priority"]
         cData["framesPerTask"] = ["lastUsedSettings", "framesPerTask"]
         cData["taskTimeout"] = ["lastUsedSettings", "taskTimeout"]
+        cData["concurrentTasks"] = ["lastUsedSettings", "concurrentTasks"]
         cData["suspended"] = ["lastUsedSettings", "suspended"]
         cData["dependentFiles"] = ["lastUsedSettings", "dependentFiles"]
         cData["localMode"] = ["globals", "localMode"]
@@ -277,6 +278,12 @@ If set to False, the renderings can be found locally on the renderslave, which r
             except:
                 pass
 
+        if cData["concurrentTasks"] is not None:
+            try:
+                self.sp_concurrent.setValue(cData["concurrentTasks"])
+            except:
+                pass
+
         if cData["suspended"] is not None:
             try:
                 self.chb_suspended.setChecked(cData["suspended"])
@@ -315,6 +322,7 @@ If set to False, the renderings can be found locally on the renderslave, which r
         cData.append(["lastUsedSettings", "priority", self.sp_priority.value()])
         cData.append(["lastUsedSettings", "framesPerTask", self.e_projectName.text()])
         cData.append(["lastUsedSettings", "taskTimeout", self.sp_rjTimeout.value()])
+        cData.append(["lastUsedSettings", "concurrentTasks", self.sp_concurrent.value()])
         cData.append(["lastUsedSettings", "suspended", self.chb_suspended.isChecked()])
         cData.append(
             ["lastUsedSettings", "dependentFiles", self.chb_dependencies.isChecked()]
@@ -372,6 +380,7 @@ If set to False, the renderings can be found locally on the renderslave, which r
         jobData["submitDependendFiles"] = self.chb_dependencies.isChecked()
         jobData["uploadOutput"] = self.chb_uploadOutput.isChecked()
         jobData["timeout"] = self.sp_rjTimeout.value()
+        jobData["concurrentTasks"] = self.sp_concurrent.value()
         jobData["outputFolder"] = outputFolder
         jobData["outputPath"] = rSettings["outputName"]
 

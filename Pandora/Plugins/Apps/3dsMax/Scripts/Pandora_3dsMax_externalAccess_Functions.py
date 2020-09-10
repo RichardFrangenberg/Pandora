@@ -73,8 +73,8 @@ class Pandora_3dsMax_externalAccess_Functions(object):
 
     # start a 3ds Max render job
     @err_decorator
-    def startJob(self, origin, sceneFile="", startFrame=0, endFrame=0, jobData={}):
-        origin.writeLog("starting max job. " + origin.curjob["name"], 0)
+    def startJob(self, origin, jobData={}):
+        origin.writeLog("starting max job. " + jobData["jobname"], 0)
 
         maxOverride = self.core.getConfig("dccoverrides", "3dsMax_override")
         maxOverridePath = self.core.getConfig("dccoverrides", "3dsMax_path")
@@ -92,7 +92,7 @@ class Pandora_3dsMax_externalAccess_Functions(object):
 
             if not os.path.exists(maxPath):
                 origin.writeLog("no 3ds Max installation found", 3)
-                origin.renderingFailed()
+                origin.renderingFailed(jobData)
                 return "skipped"
 
         if "outputPath" in jobData:
@@ -103,7 +103,7 @@ class Pandora_3dsMax_externalAccess_Functions(object):
                 newOutput = os.path.join(
                     origin.localSlavePath,
                     "RenderOutput",
-                    origin.curjob["code"],
+                    jobData["jobcode"],
                     os.path.basename(os.path.dirname(curOutput)),
                     os.path.basename(curOutput),
                 )
@@ -117,7 +117,7 @@ class Pandora_3dsMax_externalAccess_Functions(object):
             origin.renderingFailed()
             return False
 
-        if not os.path.exists(sceneFile):
+        if not os.path.exists(jobData["scenefile"]):
             origin.writeLog("scenefile does not exist", 2)
             origin.renderingFailed()
             return False
@@ -150,14 +150,14 @@ if separateAOVs then (
         )
 
         preScriptPath = os.path.join(
-            os.path.dirname(os.path.dirname(sceneFile)), "preRenderScript.ms"
+            os.path.dirname(os.path.dirname(jobData["scenefile"])), "preRenderScript.ms"
         )
 
         open(preScriptPath, "a").close()
         with open(preScriptPath, "w") as scriptfile:
             scriptfile.write(preRendScript)
 
-        popenArgs = [maxPath, outName, "-frames=%s-%s" % (str(startFrame), str(endFrame))]
+        popenArgs = [maxPath, outName, "-frames=%s-%s" % (str(jobData["taskStartframe"]), str(jobData["taskEndframe"]))]
 
         if "width" in jobData:
             popenArgs.append("-width=%s" % jobData["width"])
@@ -172,18 +172,18 @@ if separateAOVs then (
             "-showRFW=0",
             "-gammaCorrection=1",
             "-preRenderScript=%s" % preScriptPath,
-            sceneFile,
+            jobData["scenefile"],
         ]
 
         invalidChars = ["#", "&"]
         for i in invalidChars:
-            if i in sceneFile or i in maxPath or i in outName:
+            if i in jobData["scenefile"] or i in maxPath or i in outName:
                 origin.writeLog(
                     "invalid characters found in the scenepath or in the outputpath: %s"
                     % i,
                     2,
                 )
-                origin.renderingFailed()
+                origin.renderingFailed(jobData)
                 return False
 
         thread = origin.startRenderThread(

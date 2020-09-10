@@ -111,7 +111,7 @@ class SlaveLogic(QDialog):
     def __init__(self, core):
         QDialog.__init__(self)
         self.core = core
-        self.slaveLogicVersion = "v1.1.0.0"
+        self.slaveLogicVersion = "v1.1.0.5"
 
         # define some initial variables
         self.slaveState = "idle"  # slave render status
@@ -138,15 +138,8 @@ class SlaveLogic(QDialog):
             False
         )  # defines wether the user was already asked if it is ok to start rendering
         self.interrupted = False  # holds wether the current rendering was interrupted
-        self.renderTasks = []  # stores new job assigments from the coordinator
-        self.curjob = {
-            "code": "",
-            "name": "",
-        }  # render job, which is currently rendered by the slave
-        self.curTask = ""  # render task, which is currently rendered by the slave
-        self.curJobData = (
-            {}
-        )  # job information from the job, which is currently rendered by the slave
+        self.assignedTasks = []  # stores new job assigments from the coordinator
+        self.curTasks = []  # list of currently rendering tasks
         self.waitingForFiles = False
         #       self.lastConnectionTime = time.time()
         #       self.connectionTimeout = 15
@@ -549,12 +542,8 @@ class SlaveLogic(QDialog):
         self.getConfSetting(
             "status", section="slaveinfo", setval=True, value=self.slaveState
         )
-        if self.curjob["name"] != "" or self.curTask != "":
-            curJobStr = "%s (%s)" % (self.curjob["name"], self.curTask)
-        else:
-            curJobStr = ""
 
-        self.getConfSetting("curjob", section="slaveinfo", setval=True, value=curJobStr)
+        self.getConfSetting("curtasks", section="slaveinfo", setval=True, value=self.getCurTasksData())
         self.getConfSetting(
             "cpucount", section="slaveinfo", setval=True, value=multiprocessing.cpu_count()
         )
@@ -826,20 +815,7 @@ class SlaveLogic(QDialog):
             )
             self.updateTime = newUTime
 
-        if self.cursorCheckPos is None:
-            if not self.waitingForFiles:
-                for i in self.renderTasks:
-                    if not (i["name"] == self.curjob["name"] and i["task"] == self.curTask):
-                        self.writeLog(
-                            "giving back assignment of %s from job %s"
-                            % (i["task"], i["name"])
-                        )
-                        self.communicateOut(
-                            ["taskUpdate", i["code"], i["task"], "ready", "", "", ""]
-                        )
-                self.renderTasks = []
-            self.checkCmds()
-
+        self.checkCmds()
         self.checkCommandSetting()
 
         #       timeout = self.getConfSetting("connectionTimeout", stype="int")
@@ -871,7 +847,7 @@ class SlaveLogic(QDialog):
             self.writeLog("Pause ended. Changed slavestate to idle.")
             self.setState("idle")
 
-        if slaveEnabled and len(self.renderTasks) > 0:
+        if slaveEnabled and len(self.assignedTasks) > 0:
             rcheck = self.preRenderCheck()
             if not rcheck[0]:
                 self.writeLog("preRenderCheck not passed")
@@ -879,7 +855,22 @@ class SlaveLogic(QDialog):
                     self.logicTimer.start(rcheck[1] * 1000)
                 return
 
-            self.startRenderJob(self.renderTasks[0])
+            for task in self.assignedTasks:
+                self.startRenderJob(task)
+
+        if self.cursorCheckPos is None:
+            if not self.waitingForFiles:
+                for i in self.assignedTasks:
+                    for task in self.curTasks:
+                        if not (i["name"] == task["jobname"] and i["task"] == task["taskname"]):
+                            self.writeLog(
+                                "giving back assignment of %s from job %s"
+                                % (i["task"], i["name"])
+                            )
+                            self.communicateOut(
+                                ["taskUpdate", i["code"], i["task"], "ready", "", "", ""]
+                            )
+                self.assignedTasks = []
 
         if self.slaveState != "idle":
             self.logicTimer.start(self.updateTime * 1000)
@@ -947,9 +938,10 @@ class SlaveLogic(QDialog):
                 self.msg.closeEvent = self.msg.origCloseEvent
                 self.msg.close()
 
-            self.communicateOut(
-                ["taskUpdate", self.curjob["code"], self.curTask, "ready", "", "", ""]
-            )
+            for task in self.curTasks:
+                self.communicateOut(
+                    ["taskUpdate", task["jobcode"], task["taskname"], "ready", "", "", ""]
+                )
             self.pauseSlave(60)
 
         return result
@@ -1029,7 +1021,7 @@ class SlaveLogic(QDialog):
 
             elif command[0] == "renderTask":
                 if time.time() - os.path.getmtime(cmFile) < 60 * 15:
-                    self.renderTasks.append(
+                    self.assignedTasks.append(
                         {"code": command[1], "name": command[2], "task": command[3]}
                     )
                 else:
@@ -1044,17 +1036,18 @@ class SlaveLogic(QDialog):
                 cJobCode = command[1]
                 cTaskNum = command[2]
 
-                self.renderTasks = [
+                self.assignedTasks = [
                     x
-                    for x in self.renderTasks
+                    for x in self.assignedTasks
                     if not (x["code"] == cJobCode and x["task"] == cTaskNum)
                 ]
 
-                if self.curjob["code"] == cJobCode and self.curTask == cTaskNum:
-                    self.writeLog(
-                        "cancel task command recieved: %s - %s" % (cJobCode, cTaskNum), 1
-                    )
-                    self.stopRender()
+                for task in self.curTasks:
+                    if task["jobcode"] == cJobCode and task["taskname"] == cTaskNum:
+                        self.writeLog(
+                            "cancel task command recieved: %s - %s" % (cJobCode, cTaskNum), 1
+                        )
+                        self.stopRender(tasks=[task])
 
             elif command[0] == "deleteWarning":
                 warnText = command[1]
@@ -1144,8 +1137,13 @@ class SlaveLogic(QDialog):
 
         # still rendering
         if self.slaveState == "rendering":
-            self.writeLog("still rendering")
-            return [False, self.updateTime]
+            concurrent = []
+            for task in self.curTasks:
+                concurrent.append(task.get("concurrentTasks", 1))
+
+            if len(concurrent) >= min(concurrent):
+                self.writeLog("maximum concurrent tasks reached")
+                return [False, self.updateTime]
 
         # restperiod
         if self.checkRest():
@@ -1271,7 +1269,7 @@ class SlaveLogic(QDialog):
                 jobData[k] = jobConfig["information"][k]
 
         if taskName in jobConfig["jobtasks"]:
-            taskData = jobConfig["jobtasks"][taskName]
+            tData = jobConfig["jobtasks"][taskName]
         else:
             self.writeLog("could not find assigned task", 2)
             return
@@ -1383,9 +1381,16 @@ class SlaveLogic(QDialog):
                 self.waitingForFiles = True
                 return
 
-        self.curjob = {"code": jobCode, "name": jobName}
-        self.curTask = taskName
-        self.curJobData = jobData
+        taskData = {
+            "jobcode": jobCode,
+            "jobname": jobName,
+            "taskname": taskName,
+            "scenefile": sceneFile,
+            "taskStartframe": tData[0],
+            "taskEndframe": tData[1],
+        }
+        taskData.update(jobData)
+        self.curTasks.append(taskData)
 
         if not self.userAsked:
             result = self.openActiveQuestion()
@@ -1421,7 +1426,7 @@ class SlaveLogic(QDialog):
                 os.path.dirname(localPath),
             )
 
-        if "projectAssets" in jobData:
+        if "projectAssets" in taskData:
             for k in epAssets:
                 local_asset = os.path.join(localPath, os.path.basename(k))
                 if os.path.exists(local_asset) and os.path.getmtime(k) == os.path.getmtime(
@@ -1435,15 +1440,15 @@ class SlaveLogic(QDialog):
                 except:
                     self.writeLog(
                         "Could not copy file to Job folder: %s %s %s"
-                        % (jobData["projectName"], k, jobName),
+                        % (taskData["projectName"], k, jobName),
                         2,
                     )
 
         if self.localMode:
-            basePath = jobData["outputFolder"]
+            basePath = taskData["outputFolder"]
         else:
             basePath = os.path.join(
-                self.localSlavePath, "RenderOutput", self.curjob["code"]
+                self.localSlavePath, "RenderOutput", taskData["jobcode"]
             )
 
         fileNum = 0
@@ -1451,57 +1456,74 @@ class SlaveLogic(QDialog):
             for k in i[2]:
                 fileNum += 1
 
-        jobData["existingOutputFileNum"] = fileNum
+        taskData["existingOutputFileNum"] = fileNum
         self.taskStartTime = time.time()
 
         self.setState("rendering")
         self.getConfSetting(
-            "curjob",
+            "curtasks",
             section="slaveinfo",
             setval=True,
-            value="%s (%s)" % (jobName, taskName),
+            value=self.getCurTasksData(),
         )
 
         self.communicateOut(
             ["taskUpdate", jobCode, taskName, self.slaveState, "", self.taskStartTime, ""]
         )
 
+        self.assignedTasks = [
+            x
+            for x in self.assignedTasks
+            if not (x["code"] == jobCode and x["task"] == taskName)
+        ]
+
         self.userAsked = True
         self.taskFailed = False
 
         self.writeLog("starting %s from job %s" % (taskName, jobName), 1)
 
-        dccPlugin = self.core.getPlugin(jobData["program"])
+        dccPlugin = self.core.getPlugin(taskData["program"])
 
         if dccPlugin is not None:
-            result = dccPlugin.startJob(
-                self,
-                sceneFile=sceneFile,
-                startFrame=taskData[0],
-                endFrame=taskData[1],
-                jobData=jobData,
-            )
+            result = dccPlugin.startJob(self, jobData=taskData)
         else:
             self.writeLog("unknown scene type: %s" % os.path.splitext(sceneName)[1], 2)
-            self.renderingFailed()
+            self.renderingFailed(task=taskData)
             self.setState("idle")
 
         return True
 
+    @err_decorator
+    def getCurTasksData(self):
+        curTasksData = []
+        for task in self.curTasks:
+            data = {
+                "jobname": task["jobname"],
+                "jobcode": task["jobcode"],
+                "taskname": task["taskname"],
+            }
+            curTasksData.append(data)
+
+        return curTasksData
+
     # stops any renderjob if there is one active
     @err_decorator
-    def stopRender(self, msgPressed=False):
+    def stopRender(self, tasks=None, msgPressed=False):
         self.userAsked = False
         self.interrupted = True
         self.cursorCheckPos = None
 
-        try:
-            proc = psutil.Process(self.renderProc.pid)
-            for child in proc.children():
-                child.kill()
-            proc.kill()
-        except:
-            self.interrupted = False
+        if not tasks:
+            tasks = self.curTasks
+
+        for task in tasks:
+            try:
+                proc = psutil.Process(task["renderProc"].pid)
+                for child in proc.children():
+                    child.kill()
+                proc.kill()
+            except:
+                self.interrupted = False
 
         if hasattr(self, "msg") and self.msg.isVisible():
             self.msg.closeEvent = self.msg.origCloseEvent
@@ -1603,13 +1625,13 @@ class SlaveLogic(QDialog):
             try:
                 self.writeLog("call " + prog, 1)
                 self.writeLog(popenArgs, 0)
-                self.renderProc = subprocess.Popen(
+                jobData["renderProc"] = subprocess.Popen(
                     popenArgs, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, text=True
                 )
 
-                def readStdout(prog, decode):
+                def readStdout(jobData, prog, decode):
                     try:
-                        for line in iter(self.renderProc.stdout.readline, ""):
+                        for line in iter(jobData["renderProc"].stdout.readline, ""):
                             if decode:
                                 line = line.replace("\x00", "")
 
@@ -1639,9 +1661,9 @@ class SlaveLogic(QDialog):
                             3,
                         )
 
-                def readStderr(prog, decode):
+                def readStderr(jobData, prog, decode):
                     try:
-                        for line in iter(self.renderProc.stderr.readline, ""):
+                        for line in iter(jobData["renderProc"].stderr.readline, ""):
                             if decode:
                                 line = line.replace("\x00", "")
 
@@ -1699,13 +1721,13 @@ class SlaveLogic(QDialog):
                             3,
                         )
 
-                rothread = threading.Thread(target=readStdout, args=(prog, decode))
+                rothread = threading.Thread(target=readStdout, args=(jobData, prog, decode))
                 rothread.start()
-                rethread = threading.Thread(target=readStderr, args=(prog, decode))
+                rethread = threading.Thread(target=readStderr, args=(jobData, prog, decode))
                 rethread.start()
 
-                self.renderProc.wait()
-                #   self.writeLog(self.renderProc.communicate()[0].decode('utf-16'))
+                jobData["renderProc"].wait()
+                #   self.writeLog(jobData["renderProc"].communicate()[0].decode('utf-16'))
                 self.finishedJob(jobData)
                 return
 
@@ -1716,7 +1738,7 @@ class SlaveLogic(QDialog):
                     % (str(e), exc_type, exc_tb.tb_lineno),
                     3,
                 )
-                self.renderingFailed()
+                self.renderingFailed(task=jobData)
 
         thread = threading.Thread(target=runInThread, args=(pOpenArgs, jData, prog, decode))
         thread.start()
@@ -1725,15 +1747,15 @@ class SlaveLogic(QDialog):
 
     # called when a renderjob is finished. Evaluates the result.
     @err_decorator
-    def finishedJob(self, jobData):
+    def finishedJob(self, task):
         if self.localMode:
-            basePath = jobData["outputFolder"]
+            basePath = task["outputFolder"]
         else:
             basePath = os.path.join(
-                self.localSlavePath, "RenderOutput", self.curjob["code"]
+                self.localSlavePath, "RenderOutput", task["jobcode"]
             )
 
-        syncPath = os.path.join(self.slavePath, "Output", self.curjob["code"])
+        syncPath = os.path.join(self.slavePath, "Output", task["jobcode"])
 
         hasNewOutput = False
         fileNum = 0
@@ -1744,33 +1766,33 @@ class SlaveLogic(QDialog):
                     hasNewOutput = True
                 fileNum += 1
 
-        if fileNum > jobData["existingOutputFileNum"]:
+        if fileNum > task["existingOutputFileNum"]:
             hasNewOutput = True
 
         if self.interrupted:
             self.writeLog(
-                "rendering interrupted - %s - %s" % (self.curTask, self.curjob["name"]), 2
+                "rendering interrupted - %s - %s" % (task["taskname"], task["jobname"]), 2
             )
         elif self.taskFailed:
             self.writeLog(
-                "rendering failed - %s - %s" % (self.curTask, self.curjob["name"]), 3
+                "rendering failed - %s - %s" % (task["taskname"], task["jobname"]), 3
             )
         elif not hasNewOutput:
             self.writeLog(
                 "rendering didn't produce any output - %s - %s"
-                % (self.curTask, self.curjob["name"]),
+                % (task["taskname"], task["jobname"]),
                 3,
             )
         else:
             self.writeLog(
-                "rendering finished - %s - %s" % (self.curTask, self.curjob["name"]), 1
+                "rendering finished - %s - %s" % (task["taskname"], task["jobname"]), 1
             )
 
         if (
             hasNewOutput
             and not self.localMode
-            and "uploadOutput" in jobData
-            and jobData["uploadOutput"]
+            and "uploadOutput" in task
+            and task["uploadOutput"]
         ):
             for i in os.walk(basePath):
                 for k in i[2]:
@@ -1812,7 +1834,7 @@ class SlaveLogic(QDialog):
 
         if self.interrupted:
             self.communicateOut(
-                ["taskUpdate", self.curjob["code"], self.curTask, "ready", "", "", ""]
+                ["taskUpdate", task["jobcode"], task["taskname"], "ready", "", "", ""]
             )
             self.interrupted = False
         else:
@@ -1855,8 +1877,8 @@ class SlaveLogic(QDialog):
 
             cmd = [
                 "taskUpdate",
-                self.curjob["code"],
-                self.curTask,
+                task["jobcode"],
+                task["taskname"],
                 status,
                 taskTime,
                 self.taskStartTime,
@@ -1872,33 +1894,25 @@ class SlaveLogic(QDialog):
             if self.interrupted:
                 self.interrupted = False
 
-        self.renderTasks = [
-            x
-            for x in self.renderTasks
-            if not (x["code"] == self.curjob["code"] and x["task"] == self.curTask)
-        ]
-
         if self.prerenderwaittime == 0 and hasattr(self, "msg") and self.msg.isVisible():
             self.msg.closeEvent = self.msg.origCloseEvent
             self.msg.close()
 
-        self.curjob = {"code": "", "name": ""}
-        self.curTask = ""
-        self.curJobData = {}
-        self.getConfSetting("curjob", section="slaveinfo", setval=True)
+        self.curTasks = [x for x in self.curTasks if not (x["jobcode"] == task["jobcode"] and x["taskname"] == task["taskname"])]
+        self.getConfSetting("curtasks", section="slaveinfo", setval=True, value=self.getCurTasksData())
 
     # called by the user, if he wants to upload all renderings from the current job, before the job is finished
     @err_decorator
     def uploadCurJob(self):
-        uploadedFiles = 0
-        if self.curjob["code"] != "" and self.curJobData != {}:
-            syncPath = os.path.join(self.slavePath, "Output", self.curjob["code"])
+        for task in self.curTasks:
+            uploadedFiles = 0
+            syncPath = os.path.join(self.slavePath, "Output", task["jobcode"])
 
             basePath = os.path.join(
                 self.localSlavePath,
                 "RenderOutput",
-                self.curjob["code"],
-                self.curJobData["projectName"],
+                task["jobcode"],
+                task["projectName"],
             )
             for i in os.walk(basePath):
                 for k in i[2]:
@@ -1919,24 +1933,22 @@ class SlaveLogic(QDialog):
                             except:
                                 self.writeLog("ERROR occured while copying files", 3)
 
-        self.writeLog(
-            "uploaded files from current job (%s): %s"
-            % (self.curjob["name"], uploadedFiles),
-            1,
-        )
+            self.writeLog(
+                "uploaded files from current job (%s): %s"
+                % (task["jobname"], uploadedFiles),
+                1,
+            )
 
     # called when the rendering failed and writes out the error
     @err_decorator
-    def renderingFailed(self):
+    def renderingFailed(self, task):
         self.stopRender()
         self.communicateOut(
-            ["taskUpdate", self.curjob["code"], self.curTask, "ready", "", "", ""]
+            ["taskUpdate", task["jobcode"], task["taskname"], "ready", "", "", ""]
         )
         self.interrupted = False
-        self.curjob = {"code": "", "name": ""}
-        self.curTask = ""
-        self.curJobData = {}
-        self.getConfSetting("curjob", section="slaveinfo", setval=True)
+        self.curTasks = [x for x in self.curTasks if not (x["jobcode"] == task["jobcode"] and x["taskname"] == task["taskname"])]
+        self.getConfSetting("curtasks", section="slaveinfo", setval=True, value=self.getCurTasksData())
         self.checkAssignments()
 
 
