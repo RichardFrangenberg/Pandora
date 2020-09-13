@@ -34,6 +34,8 @@
 import os
 
 import sys, os, io, time, shutil, socket, traceback, subprocess, json
+import random
+import string
 from functools import wraps
 
 if sys.version[0] == "3":
@@ -55,7 +57,7 @@ import psutil
 class PandoraCoordinator:
     def __init__(self):
         try:
-            self.version = "v1.1.0.5"
+            self.version = "v1.1.0.6"
 
             self.coordUpdateTime = 5  # seconds
             self.activeThres = 10  # time in min after a slave becomes inactive
@@ -1753,15 +1755,24 @@ class PandoraCoordinator:
         for slave in self.activeSlaves:
             try:
                 slaveData = {"name": slave}
+                slaveSettings = os.path.join(
+                    self.slPath, "Slaves", "S_%s" % slave, "slaveSettings_%s.json" % slave
+                )
+                if not os.path.exists(slaveSettings):
+                    self.writeWarning("slave settings does not exist: %s" % slave)
+                    continue
+
+                maxSlaveTasks = self.getConfig("settings", "maxConcurrentTasks", configPath=slaveSettings)
+
                 if slave in slaveAssignments:
                     concList = slaveAssignments[slave]["concurrent"]
-                    if len(concList) >= min(concList):
+                    if len(concList) >= min(concList) or len(concList) >= maxSlaveTasks:
                         continue
 
-                    slaveData["maxTasks"] = min(concList)
+                    slaveData["maxTasks"] = min([min(concList), maxSlaveTasks])
                     slaveData["curTaskNum"] = len(concList)
                 else:
-                    slaveData["maxTasks"] = 9999
+                    slaveData["maxTasks"] = maxSlaveTasks
                     slaveData["curTaskNum"] = 0
 
                 self.availableSlaves.append(slaveData)

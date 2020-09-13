@@ -1259,7 +1259,7 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
                     settingVal.setCheckState(Qt.Checked)
                 else:
                     settingVal.setCheckState(Qt.Unchecked)
-            elif i[0] in ["updateTime", "maxCPU", "connectionTimeout", "preRenderWaitTime"]:
+            elif i[0] in ["updateTime", "maxCPU", "connectionTimeout", "preRenderWaitTime", "maxConcurrentTasks"]:
                 settingVal = QTableWidgetItem()
                 spinner = QSpinBox()
                 try:
@@ -1585,6 +1585,7 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
                 "maxCPU",
                 "connectionTimeout",
                 "preRenderWaitTime",
+                "maxConcurrentTasks",
             ]:
                 settingVal = widget.value()
             elif settingName in ["slaveGroup"]:

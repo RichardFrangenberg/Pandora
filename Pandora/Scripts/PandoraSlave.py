@@ -111,7 +111,7 @@ class SlaveLogic(QDialog):
     def __init__(self, core):
         QDialog.__init__(self)
         self.core = core
-        self.slaveLogicVersion = "v1.1.0.5"
+        self.slaveLogicVersion = "v1.1.0.6"
 
         # define some initial variables
         self.slaveState = "idle"  # slave render status
@@ -130,6 +130,7 @@ class SlaveLogic(QDialog):
             30
         )  # the CPU usage has to be lower than this value before the rendering starts. This prevents the slave from starting a render, when the PC is currently rendering locally.
         self.prerenderwaittime = 0
+        self.maxTasks = 2  # maximum concurrent tasks rendering at the same time
 
         self.cursorCheckPos = None  # cursor position  to check if the PC is currently used
         self.parentWidget = QWidget()  # used as a parent for UIs
@@ -743,6 +744,7 @@ class SlaveLogic(QDialog):
                 "preRenderWaitTime": 0,
                 "showSlaveWindow": False,
                 "showInterruptWindow": False,
+                "maxConcurrentTasks": 2,
             },
             "slaveinfo": {},
         }
@@ -848,14 +850,14 @@ class SlaveLogic(QDialog):
             self.setState("idle")
 
         if slaveEnabled and len(self.assignedTasks) > 0:
-            rcheck = self.preRenderCheck()
-            if not rcheck[0]:
-                self.writeLog("preRenderCheck not passed")
-                if rcheck[1] > 0:
-                    self.logicTimer.start(rcheck[1] * 1000)
-                return
-
             for task in self.assignedTasks:
+                rcheck = self.preRenderCheck()
+                if not rcheck[0]:
+                    self.writeLog("preRenderCheck not passed")
+                    if rcheck[1] > 0:
+                        self.logicTimer.start(rcheck[1] * 1000)
+                    return
+
                 self.startRenderJob(task)
 
         if self.cursorCheckPos is None:
@@ -1141,7 +1143,13 @@ class SlaveLogic(QDialog):
             for task in self.curTasks:
                 concurrent.append(task.get("concurrentTasks", 1))
 
-            if len(concurrent) >= min(concurrent):
+            self.maxTasks = self.getConfSetting("maxConcurrentTasks")
+            if not self.maxTasks:
+                self.getConfSetting("maxConcurrentTasks", setval=True, value=self.maxTasks)
+                self.maxTasks = self.getConfSetting("maxConcurrentTasks")
+            self.writeLog(self.maxTasks, 2)
+
+            if len(concurrent) >= min(concurrent) or len(concurrent) >= self.maxTasks:
                 self.writeLog("maximum concurrent tasks reached")
                 return [False, self.updateTime]
 
