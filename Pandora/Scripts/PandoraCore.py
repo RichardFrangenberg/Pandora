@@ -103,7 +103,7 @@ class PandoraCore:
     def __init__(self, app="Standalone"):
         try:
             # set some general variables
-            self.version = "v1.1.0.6"
+            self.version = "v1.1.0.7"
             self.pandoraRoot = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 
             self.pluginPathApp = os.path.join(self.pandoraRoot, "Plugins", "Apps")

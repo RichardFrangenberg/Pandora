@@ -677,6 +677,16 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
         self.updateTaskList()
         self.updateJobSettings()
 
+        selItems = self.tw_jobs.selectedItems()
+        if not selItems or [x.row() for x in selItems if x.row() != selItems[0].row()]:
+            selColor = Qt.white
+        else:
+            selColor = selItems[0].foreground().color()
+
+        p = QPalette()
+        p.setColor(QPalette.Active, QPalette.HighlightedText, selColor)
+        self.tw_jobs.setPalette(p)
+
     @err_decorator
     def slaveChanged(self):
         self.updateSlaveLog()
