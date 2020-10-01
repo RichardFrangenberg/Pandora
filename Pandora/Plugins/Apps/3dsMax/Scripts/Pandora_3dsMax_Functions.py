@@ -31,9 +31,10 @@
 # along with Pandora.  If not, see <https://www.gnu.org/licenses/>.
 
 
-import MaxPlus
-import os, sys
-import traceback, time
+import os
+import sys
+import traceback
+import time
 from functools import wraps
 
 try:
@@ -48,11 +49,20 @@ except:
 
     psVersion = 1
 
+try:
+    import MaxPlus
+except:
+    pass
+
 
 class Pandora_3dsMax_Functions(object):
     def __init__(self, core, plugin):
         self.core = core
         self.plugin = plugin
+
+        if "MaxPlus" not in globals() and sys.version[0] == "3":
+            self.enabled = False
+            self.core.popup("Pandora works in 3ds Max with Python 2.7 only.\nSet the environment variable ADSK_3DSMAX_PYTHON_VERSION to \"2\" to use Pandora in this version of 3ds Max")
 
     def err_decorator(func):
         @wraps(func)

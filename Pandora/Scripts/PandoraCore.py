@@ -80,16 +80,18 @@ except:
 
         from PySide.QtCore import *
         from PySide.QtGui import *
-        psVersion = 2
+        psVersion = 1
     except:
         sys.path.insert(0, os.path.join(pandoraRoot, "PythonLibs", pyLibs, "PySide"))
         try:
             from PySide2.QtCore import *
             from PySide2.QtGui import *
             from PySide2.QtWidgets import *
+            psVersion = 2
         except:
             from PySide.QtCore import *
             from PySide.QtGui import *
+            psVersion = 1
 
 
 logger = logging.getLogger(__name__)
@@ -103,7 +105,7 @@ class PandoraCore:
     def __init__(self, app="Standalone"):
         try:
             # set some general variables
-            self.version = "v1.1.0.7"
+            self.version = "v1.1.0.8"
             self.pandoraRoot = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 
             self.pluginPathApp = os.path.join(self.pandoraRoot, "Plugins", "Apps")
@@ -210,6 +212,10 @@ class PandoraCore:
                 "Pandora Error",
                 "Pandora could not initialize correctly and may not work correctly in this session.",
             )
+            return
+
+        if not getattr(self.appPlugin, "enabled", True):
+            logger.debug("appplugin disabled")
             return
 
         for i in customPlugins:
@@ -1750,8 +1756,8 @@ class PandoraCore:
                     shutil.copy2(filepath, target)
                 except IOError:
                     self.popup("Unable to copy file to:\n\n%s\n\nMake sure you have write access to this location. \
-If admin privileges are required for this location launch Prism as admin before you start the update process \
-or move Prism to a location where no admin privileges are required." % target)
+If admin privileges are required for this location launch Pandora as admin before you start the update process \
+or move Pandora to a location where no admin privileges are required." % target)
                     return
 
         if os.path.exists(targetdir):
@@ -2131,11 +2137,11 @@ except Exception as e:
     def popup(self, text, title=None, severity="warning"):
         if title is None:
             if severity == "warning":
-                title = "Prism - Warning"
+                title = "Pandora - Warning"
             elif severity == "info":
-                title = "Prism - Information"
+                title = "Pandora - Information"
             elif severity == "error":
-                title = "Prism - Error"
+                title = "Pandora - Error"
 
         if pVersion == 3:
             if not isinstance(text, str):
