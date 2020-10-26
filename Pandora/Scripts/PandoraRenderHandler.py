@@ -31,7 +31,7 @@
 # along with Pandora.  If not, see <https://www.gnu.org/licenses/>.
 
 
-import sys, os, io, subprocess, time, shutil, traceback, socket
+import sys, os, io, subprocess, time, shutil, traceback, socket, threading, logging
 from functools import wraps
 
 pandoraRoot = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
@@ -94,6 +94,9 @@ else:
 import qdarkstyle
 
 
+logger = logging.getLogger(__name__)
+
+
 class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
     def __init__(self, core):
         QMainWindow.__init__(self)
@@ -144,7 +147,7 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
                     "No Pandora submission folder specified in the Pandora config",
                 )
 
-            self.logDir = os.path.join(
+            self.remoteLogDir = os.path.join(
                 os.path.dirname(os.path.dirname(self.sourceDir)), "Logs"
             )
             self.cacheBase = os.path.join(
@@ -153,12 +156,22 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
                 "RenderHandler_cache",
             )
 
+            self.localLogDir = os.path.join(
+                os.path.dirname(self.core.configPath),
+                "temp",
+                "RenderHandler_logs",
+            )
+
+            self.logDir = self.localLogDir
+
             self.writeSettings = True
 
             self.getRVpath()
 
             self.loadLayout()
             self.connectEvents()
+            if self.actionLocalLogs.isChecked():
+                self.updateLogCache()
             self.updateJobs()
             self.updateSlaves()
             self.refreshLastContactTime()
@@ -402,6 +415,22 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 
             self.menuOptions.addAction(self.actionAutoUpdate)
 
+            self.actionLocalLogs = QAction("Use local logcache", self)
+            self.actionLocalLogs.setCheckable(True)
+
+            localLogs = self.core.getConfig("renderHandler", "localLogCache")
+            if localLogs is not None:
+                self.actionLocalLogs.setChecked(localLogs)
+            else:
+                self.actionLocalLogs.setChecked(False)
+
+            if self.actionLocalLogs.isChecked():
+                self.logDir = self.localLogDir
+            else:
+                self.logDir = self.remoteLogDir
+
+            self.menuOptions.addAction(self.actionLocalLogs)
+
             self.actionShowCoord = QAction("Show Coordinator", self)
             self.actionShowCoord.setCheckable(True)
 
@@ -461,6 +490,7 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
         cData.append(["renderHandler", "showCoordinator", self.actionShowCoord.isChecked()])
         cData.append(["renderHandler", "refreshTime", self.refreshPeriod])
         cData.append(["renderHandler", "autoUpdate", self.actionAutoUpdate.isChecked()])
+        cData.append(["renderHandler", "localLogCache", self.actionLocalLogs.isChecked()])
         self.core.setConfig(data=cData)
 
         self.refreshTimer.stop()
@@ -542,6 +572,7 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
         )
         self.actionShowCoord.toggled.connect(self.showCoord)
         self.actionAutoUpdate.toggled.connect(self.autoUpdate)
+        self.actionLocalLogs.toggled.connect(self.localLogs)
         self.actionRefresh.triggered.connect(self.refresh)
 
     @err_decorator
@@ -570,6 +601,13 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
             self.l_refreshCounter.setText("")
 
     @err_decorator
+    def localLogs(self, checked):
+        if checked:
+            self.logDir = self.localLogDir
+        else:
+            self.logDir = self.remoteLogDir
+
+    @err_decorator
     def updateRefInterval(self):
         self.seconds = self.refreshPeriod = self.sp_refInt.value()
 
@@ -577,6 +615,9 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
     def refresh(self):
         self.statusBar().showMessage("refreshing...")
         self.refreshTimer.stop()
+        if self.actionLocalLogs.isChecked():
+            self.updateLogCache()
+
         self.l_refreshCounter.setText("")
         if self.tw_jobs.rowCount() > 0:
             selJobs = []
@@ -685,6 +726,7 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
 
         p = QPalette()
         p.setColor(QPalette.Active, QPalette.HighlightedText, selColor)
+        p.setColor(QPalette.Inactive, QPalette.HighlightedText, selColor)
         self.tw_jobs.setPalette(p)
 
     @err_decorator
@@ -1778,6 +1820,51 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
                 self.core.popup("Permission denied to write to file:\n\n%s" % cmdFile)
             else:
                 raise
+
+    @err_decorator
+    def updateLogCache(self):
+        if hasattr(self, "updateLogThread") and self.updateLogThread.is_alive():
+            return
+
+        self.updateLogThread = threading.Thread(target=self.getExternalLogs)
+        self.updateLogThread.start()
+
+    def getExternalLogs(self):
+        logCache = os.path.join(self.remoteLogDir, "Coordinator", "LogCache.json")
+
+        remoteLogs = []
+        if os.path.exists(logCache):
+            cache = self.core.getConfig(configPath=logCache, getConf=True) or []
+            for log in cache:
+                localPath = os.path.join(self.logDir, log["path"].lstrip(os.path.sep))
+
+                if os.path.exists(localPath) and int(os.path.getmtime(localPath)) == log["mtime"]:
+                    continue
+
+                remotePath = os.path.join(self.remoteLogDir, log["path"].lstrip(os.path.sep))
+                remoteLogs.append(remotePath)
+        else:
+            if os.path.exists(self.remoteLogDir):
+                for root, folders, files in os.walk(self.remoteLogDir):
+                    for file in files:
+                        path = os.path.join(root, file)
+
+                        localLog = path.replace(self.remoteLogDir, self.logDir)
+                        if os.path.exists(localLog) and int(os.path.getmtime(localLog)) == int(os.path.getmtime(path)):
+                            continue
+
+                        remoteLogs.append(path)
+
+        for remoteLog in remoteLogs:
+            localLog = remoteLog.replace(self.remoteLogDir, self.logDir)
+            try:
+                if not os.path.exists(os.path.dirname(localLog)):
+                    os.makedirs(os.path.dirname(localLog))
+
+                shutil.copy2(remoteLog, localLog)
+                #print("copy log %s" % localLog)
+            except Exception:
+                logger.warning("failed to copy log %s to %s" % (remoteLog, localLog))
 
     @err_decorator
     def mouseClickEvent(self, event, stype, widget, item):

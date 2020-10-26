@@ -172,6 +172,7 @@ class PandoraCoordinator:
             self.coordWarningsConf = os.path.join(
                 self.coordBasePath, "Coordinator_Warnings_%s.json" % socket.gethostname()
             )
+            self.logCache = os.path.join(self.slPath, "Workstations", "Logs", "Coordinator", "LogCache.json")
 
             self.close = False
             self.tvRequests = []
@@ -528,10 +529,11 @@ class PandoraCoordinator:
             try:
                 with open(configPath, "r") as f:
                     testConfig = json.load(f)
-                for i in userConfig:
-                    for k in userConfig[i]:
-                        if k not in testConfig[i]:
-                            raise RuntimeError
+                if confData is None:
+                    for i in userConfig:
+                        for k in userConfig[i]:
+                            if k not in testConfig[i]:
+                                raise RuntimeError
             except:
                 backupPath = configPath + ".bak" + str(random.randint(1000000, 9999999))
                 with open(backupPath, "w") as inifile:
@@ -1472,7 +1474,7 @@ class PandoraCoordinator:
                         )
 
                 else:
-                    self.writeWarning("WARNING -- master Slave script does not exist", 2)
+                    self.writeLog("master Slave script does not exist")
 
                 shouJobPath = os.path.join(slavePath, "Scripts", "PandoraStartHouJob.py")
                 mhouJobPath = os.path.join(
@@ -1502,7 +1504,7 @@ class PandoraCoordinator:
                             3,
                         )
                 else:
-                    self.writeWarning("WARNING -- master houJob script does not exist", 2)
+                    self.writeLog("master houJob script does not exist")
 
                 sZipPath = os.path.join(slavePath, "Scripts", "Pandora-development.zip")
                 mZipPath = os.path.join(
@@ -2269,7 +2271,8 @@ class PandoraCoordinator:
                 )
                 return
 
-        self.copyLogs(
+        validLogs = []
+        validLogs += self.copyLogs(
             [self.coordLog, self.coordConf, self.actSlvPath, self.coordWarningsConf],
             os.path.join(logDir, "Coordinator"),
         )
@@ -2279,7 +2282,7 @@ class PandoraCoordinator:
             jobConf = os.path.join(self.jobPath, jobDir, "PandoraJob.json")
             filesToCopy.append(jobConf)
 
-        self.copyLogs(filesToCopy, os.path.join(logDir, "Jobs"))
+        validLogs += self.copyLogs(filesToCopy, os.path.join(logDir, "Jobs"))
 
         filesToCopy = []
         for i in os.listdir(os.path.join(self.slPath, "Slaves")):
@@ -2296,7 +2299,11 @@ class PandoraCoordinator:
                 )
                 filesToCopy += [slaveLog, slaveSettings, slaveWarnings]
 
-        self.copyLogs(filesToCopy, os.path.join(logDir, "Slaves"))
+        validLogs += self.copyLogs(filesToCopy, os.path.join(logDir, "Slaves"))
+        for log in validLogs:
+            log["path"] = log["path"].replace(logDir, "")
+
+        self.setConfig(configPath=self.logCache, confData=validLogs)
 
     @err_decorator
     def notifySlaves(self):
@@ -2335,6 +2342,7 @@ class PandoraCoordinator:
 
         jobNames = []
 
+        validLogs = []
         for i in files:
             # self.writeLog(i)
             if not os.path.exists(i):
@@ -2362,6 +2370,8 @@ class PandoraCoordinator:
             else:
                 targetPath = os.path.join(target, os.path.basename(i))
 
+            validLogs.append({"path": targetPath, "mtime": origTime})
+
             if (
                 not os.path.exists(targetPath)
                 or int(os.path.getmtime(targetPath)) != origTime
@@ -2377,11 +2387,15 @@ class PandoraCoordinator:
                     )
 
         baseNames = [os.path.basename(x) for x in files if os.path.exists(x)]
+        baseNames.append("LogCache.json")
+
         for i in os.listdir(target):
             if i not in baseNames and os.path.splitext(i)[0] not in jobNames:
                 lpath = os.path.join(target, i)
                 os.remove(lpath)
                 self.writeLog("removed log: %s" % lpath)
+
+        return validLogs
 
 
 if __name__ == "__main__":
