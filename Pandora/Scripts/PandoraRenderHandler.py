@@ -886,6 +886,8 @@ class RenderHandler(QMainWindow, RenderHandler_ui.Ui_mw_RenderHandler):
                     item.setForeground(QBrush(QColor(90, 90, 90)))
                 elif rowColorStyle == "error":
                     item.setForeground(QBrush(QColor(240, 50, 50)))
+                else:
+                    item.setForeground(QBrush(Qt.white))
 
         self.tw_jobs.setSortingEnabled(True)
 

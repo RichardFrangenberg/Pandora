@@ -272,39 +272,38 @@ class Pandora_Maya_Functions(object):
             rSettings["vr_imageFilePrefix"] = (
                 cmds.getAttr("vraySettings.fileNamePrefix") or ""
             )
-            rSettings["vr_fileformat"] = cmds.getAttr("vraySettings.imageFormatStr")
-            rSettings["vr_sepRGBA"] = cmds.getAttr("vraySettings.relements_separateRGBA")
+            # rSettings["vr_fileformat"] = cmds.getAttr("vraySettings.imageFormatStr")
+            # rSettings["vr_sepRGBA"] = cmds.getAttr("vraySettings.relements_separateRGBA")
             rSettings["vr_animation"] = cmds.getAttr("vraySettings.animType")
 
-            cmds.setAttr("vraySettings.imageFormatStr", "exr", type="string")
+            #cmds.setAttr("vraySettings.imageFormatStr", "exr", type="string")
             cmds.setAttr("vraySettings.animType", 1)
 
-            aovs = cmds.ls(type="VRayRenderElement")
-            aovs = [x for x in aovs if cmds.getAttr(x + ".enabled")]
+            # aovs = cmds.ls(type="VRayRenderElement")
+            # aovs = [x for x in aovs if cmds.getAttr(x + ".enabled")]
+            # if cmds.getAttr("vraySettings.relements_enableall") != 0 and len(aovs) > 0:
+            #     try:
+            #         shutil.rmtree(os.path.dirname(rSettings["outputName"]))
+            #     except:
+            #         pass
 
-            if cmds.getAttr("vraySettings.relements_enableall") != 0 and len(aovs) > 0:
-                try:
-                    shutil.rmtree(os.path.dirname(rSettings["outputName"]))
-                except:
-                    pass
+            #     rSettings["vr_sepFolders"] = cmds.getAttr(
+            #         "vraySettings.relements_separateFolders"
+            #     )
+            #     rSettings["vr_sepStr"] = cmds.getAttr(
+            #         "vraySettings.fileNameRenderElementSeparator"
+            #     )
 
-                rSettings["vr_sepFolders"] = cmds.getAttr(
-                    "vraySettings.relements_separateFolders"
-                )
-                rSettings["vr_sepStr"] = cmds.getAttr(
-                    "vraySettings.fileNameRenderElementSeparator"
-                )
-
-                cmds.setAttr("vraySettings.fileNamePrefix", outputPrefix, type="string")
-                cmds.setAttr("vraySettings.relements_separateFolders", 1)
-                cmds.setAttr("vraySettings.relements_separateRGBA", 1)
-                cmds.setAttr(
-                    "vraySettings.fileNameRenderElementSeparator", "_", type="string"
-                )
-            else:
-                cmds.setAttr("vraySettings.relements_separateRGBA", 0)
-                outputPrefix = outputPrefix[3:]
-                cmds.setAttr("vraySettings.fileNamePrefix", outputPrefix, type="string")
+            #     cmds.setAttr("vraySettings.fileNamePrefix", outputPrefix, type="string")
+            #     cmds.setAttr("vraySettings.relements_separateFolders", 1)
+            #     cmds.setAttr("vraySettings.relements_separateRGBA", 1)
+            #     cmds.setAttr(
+            #         "vraySettings.fileNameRenderElementSeparator", "_", type="string"
+            #     )
+            # else:
+            #     cmds.setAttr("vraySettings.relements_separateRGBA", 0)
+            #     outputPrefix = outputPrefix[3:]
+            #     cmds.setAttr("vraySettings.fileNamePrefix", outputPrefix, type="string")
         elif curRenderer == "redshift":
             driver = cmds.ls("redshiftOptions")
             if not driver:
