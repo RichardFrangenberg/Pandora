@@ -1673,12 +1673,11 @@ class SlaveLogic(QDialog):
                                 logLevel = 1
 
                                 # reduce blender logdata
-                                if (
-                                    prog == "blender"
-                                    and line.startswith("Fra:")
-                                    and " | Time:" in line in line
-                                ):
-                                    continue
+                            if (prog == "blender"):
+                                if (line.startswith("Fra:") or line.startswith("Read prefs:") or line.startswith("Info:") or line.startswith("No addon key")):
+                                    logLevel = 0
+                                else:
+                                    logLevel = 1
 
                             self.writeLog(line.strip(), logLevel)
 
