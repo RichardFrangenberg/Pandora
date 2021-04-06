@@ -387,7 +387,7 @@ class SlaveLogic(QDialog):
     @err_decorator
     def trayActivated(self, reason):
         if reason == QSystemTrayIcon.Context:
-            statusText = "Status:\n%s" % self.slaveState
+            statusText = "Status: %s" % self.slaveState
             if self.slaveState == "paused":
                 pauseMin = QDateTime.currentDateTime().secsTo(self.pauseEnd) // 60
                 hourPause = pauseMin // 60
@@ -402,7 +402,6 @@ class SlaveLogic(QDialog):
 
             self.enableAction.setChecked(self.slaveState != "disabled")
 
-            statusText += "\n"
             self.statusLabel.setText(statusText)
 
     # called from the tray icon. Forces the slave to emmediatly check for renderjobs/commands
