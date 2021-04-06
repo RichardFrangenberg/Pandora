@@ -367,7 +367,7 @@ class SlaveLogic(QDialog):
 
         self.trayIcon = QSystemTrayIcon()
         self.trayIcon.setContextMenu(self.trayIconMenu)
-        self.trayIcon.setToolTip(" Pandora RenderSlave")
+        self.trayIcon.setToolTip("RenderSlave - " + self.slaveState)
 
         self.trayIcon.activated.connect(self.trayActivated)
 
@@ -376,7 +376,7 @@ class SlaveLogic(QDialog):
             os.path.join(
                 os.path.dirname(os.path.abspath(__file__)),
                 "UserInterfacesPandora",
-                "pandora_slave.ico",
+                "pandora_slave_" + self.slaveState + ".ico",
             )
         )
 
@@ -396,6 +396,9 @@ class SlaveLogic(QDialog):
                     statusText += " (%sh %smin.)" % (hourPause, pauseMin)
                 else:
                     statusText += " (%s min.)" % pauseMin
+            elif self.slaveState == "rendering": 
+                for task in self.curTasks:
+                    statusText += "\n" + task["program"] + ": " + task["projectName"] + "-" + task["jobname"] +" (Frames " + str(task["taskStartframe"]) + "-" + str(task["taskEndframe"]) + ")" 
 
             self.enableAction.setChecked(self.slaveState != "disabled")
 
@@ -781,6 +784,25 @@ class SlaveLogic(QDialog):
                 "status", section="slaveinfo", setval=True, value=self.slaveState
             )
 
+            self.slaveIcon = QIcon(
+                os.path.join(
+                    os.path.dirname(os.path.abspath(__file__)),
+                    "UserInterfacesPandora",
+                    "pandora_slave_" + self.slaveState + ".ico",
+                )
+            )
+
+            self.trayIcon.setIcon(self.slaveIcon)
+            self.setWindowIcon(self.slaveIcon)
+            tooltip = ""
+            if self.slaveState == "rendering":
+                for task in self.curTasks:
+                    tooltip += "Rendering " + task["program"] + ": " + task["projectName"] + "-" + task["jobname"] +" (Frames " + str(task["taskStartframe"]) + "-" + str(task["taskEndframe"]) + ")\n" 
+            else:
+                tooltip = "RenderSlave - " + self.slaveState
+            
+            self.trayIcon.setToolTip(tooltip)
+               
     # checks if the slave can start rendering
     @err_decorator
     def checkAssignments(self):
