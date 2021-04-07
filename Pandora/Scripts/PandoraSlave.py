@@ -1168,7 +1168,7 @@ class SlaveLogic(QDialog):
             if not self.maxTasks:
                 self.getConfSetting("maxConcurrentTasks", setval=True, value=self.maxTasks)
                 self.maxTasks = self.getConfSetting("maxConcurrentTasks")
-            self.writeLog(self.maxTasks, 2)
+            # self.writeLog(self.maxTasks, 2)
 
             if len(concurrent) >= min(concurrent) or len(concurrent) >= self.maxTasks:
                 self.writeLog("maximum concurrent tasks reached")
@@ -1652,7 +1652,7 @@ class SlaveLogic(QDialog):
     def startRenderThread(self, pOpenArgs, jData, prog, decode=False):
         def runInThread(popenArgs, jobData, prog, decode):
             try:
-                self.writeLog("call " + prog, 1)
+                self.writeLog("call " + prog, 0)
                 self.writeLog(popenArgs, 0)
                 jobData["renderProc"] = subprocess.Popen(
                     popenArgs, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, text=True
@@ -1674,7 +1674,7 @@ class SlaveLogic(QDialog):
 
                                 # make blender logdata debug only
                             if (prog == "blender"):
-                                if (line.startswith("Fra:") or line.startswith("Read blend:") or  line.startswith("Read prefs:") or line.startswith("Info:") or line.startswith("No addon key") and ("Waiting for render" not in line)):
+                                if (line.startswith("Fra:") or line.startswith("Read blend:") or  line.startswith("Read prefs:") or line.startswith("Info:") or line.startswith("No addon key")  or line.startswith("Blender quit")):
                                     if (", Sample " in line):
                                         continue
                                     else:
@@ -1810,12 +1810,11 @@ class SlaveLogic(QDialog):
             )
         elif not hasNewOutput:
             self.writeLog(
-                "rendering didn't produce any output: %s - %s"
-                % (task["taskname"], task["jobname"]), 2
+                "rendering didn't produce any output: %s - %s" % (task["taskname"], task["jobname"]), 2
             )
         else:
             self.writeLog(
-                "rendering finished: %s - %s" % (task["taskname"], task["jobname"]), 1
+                "rendering finished: %s - %s" % (task["taskname"], task["jobname"]), 0
             )
 
         if (
