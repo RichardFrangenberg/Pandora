@@ -1564,7 +1564,7 @@ class SlaveLogic(QDialog):
         if self.slaveState == "rendering":
             self.setState("idle")
 
-        self.writeLog("stopRender - msgPressed = %s" % msgPressed, 1)
+        self.writeLog("stopRender - msgPressed = %s" % msgPressed, 0)
 
         if msgPressed:
             self.pauseSlave(60, stop=False)
@@ -1672,14 +1672,17 @@ class SlaveLogic(QDialog):
                             else:
                                 logLevel = 1
 
-                                # reduce blender logdata
+                                # make blender logdata debug only
                             if (prog == "blender"):
-                                if (line.startswith("Fra:") or line.startswith("Read prefs:") or line.startswith("Info:") or line.startswith("No addon key")):
-                                    logLevel = 0
+                                if (line.startswith("Fra:") or line.startswith("Read blend:") or  line.startswith("Read prefs:") or line.startswith("Info:") or line.startswith("No addon key") and ("Waiting for render" not in line)):
+                                    if (", Sample " in line):
+                                        continue
+                                    else:
+                                        logLevel = 0
                                 else:
                                     logLevel = 1
 
-                            self.writeLog(line.strip(), logLevel)
+                            self.writeLog(prog.upper() + ": " + line.strip(), logLevel)
 
                     except Exception as e:
                         exc_type, exc_obj, exc_tb = sys.exc_info()
@@ -1707,20 +1710,20 @@ class SlaveLogic(QDialog):
                             line = "stderr - " + line
 
                             if prog == "max":
-                                self.writeLog(line, 2)
+                                self.writeLog(prog.upper() + ": " + line, 2)
                             elif prog == "maya":
                                 if (
                                     " (kInvalidParameter): No element at given index"
                                     in line
                                 ):
-                                    self.writeLog(line, 1)
+                                    self.writeLog(prog.upper() + ": " + line, 1)
                                 else:
-                                    self.writeLog(line, 2)
+                                    self.writeLog(prog.upper() + ": " + line, 2)
                             elif prog == "houdini":
                                 if "Unable to load HFS OpenCL platform." in line:
-                                    self.writeLog(line, 1)
+                                    self.writeLog(prog.upper() + ": " + line, 1)
                                 else:
-                                    self.writeLog(line, 2)
+                                    self.writeLog(prog.upper() + ": " + line, 2)
                             elif prog == "blender":
                                 if (
                                     (
@@ -1734,13 +1737,13 @@ class SlaveLogic(QDialog):
                                         and "appears twice, correcting" in line
                                     )
                                 ):
-                                    self.writeLog(line, 1)
+                                    self.writeLog(prog.upper() + ": " + line, 1)
                                 else:
-                                    self.writeLog(line, 2)
+                                    self.writeLog(prog.upper() + ": " + line, 2)
                             else:
-                                self.writeLog(line, 3)
+                                self.writeLog(prog.upper() + ": " + line, 3)
                                 self.taskFailed = True
-
+                            
                     except Exception as e:
                         exc_type, exc_obj, exc_tb = sys.exc_info()
                         self.writeLog(
@@ -1799,21 +1802,20 @@ class SlaveLogic(QDialog):
 
         if self.interrupted:
             self.writeLog(
-                "rendering interrupted - %s - %s" % (task["taskname"], task["jobname"]), 2
+                "rendering interrupted: %s - %s" % (task["taskname"], task["jobname"]), 2
             )
         elif self.taskFailed:
             self.writeLog(
-                "rendering failed - %s - %s" % (task["taskname"], task["jobname"]), 3
+                "rendering failed: %s - %s" % (task["taskname"], task["jobname"]), 3
             )
         elif not hasNewOutput:
             self.writeLog(
-                "rendering didn't produce any output - %s - %s"
-                % (task["taskname"], task["jobname"]),
-                3,
+                "rendering didn't produce any output: %s - %s"
+                % (task["taskname"], task["jobname"]), 2
             )
         else:
             self.writeLog(
-                "rendering finished - %s - %s" % (task["taskname"], task["jobname"]), 1
+                "rendering finished: %s - %s" % (task["taskname"], task["jobname"]), 1
             )
 
         if (
@@ -1879,7 +1881,7 @@ class SlaveLogic(QDialog):
             )
 
             outputNum = -1
-            if self.taskFailed or not hasNewOutput:
+            if self.taskFailed:
                 status = "error"
                 taskResult = "failed"
             else:
@@ -1917,7 +1919,7 @@ class SlaveLogic(QDialog):
 
             self.setState("idle")
 
-            self.writeLog("task " + taskResult, 1)
+            self.writeLog("task " + taskResult + ": %s - %s" % (task["taskname"], task["jobname"]), 1)
 
             if self.interrupted:
                 self.interrupted = False
