@@ -1674,7 +1674,7 @@ class SlaveLogic(QDialog):
 
                                 # make blender logdata debug only
                             if (prog == "blender"):
-                                if (line.startswith("Fra:") or line.startswith("Read blend:") or  line.startswith("Read prefs:") or line.startswith("Info:") or line.startswith("No addon key")  or line.startswith("Blender quit")):
+                                if (line.startswith("Fra:") or line.startswith("| Time:") or line.startswith("Compositing") or line.startswith("Read blend:") or  line.startswith("Read prefs:") or line.startswith("Info:") or line.startswith("No addon key")  or line.startswith("Blender quit")):
                                     if (", Sample " in line):
                                         continue
                                     else:
