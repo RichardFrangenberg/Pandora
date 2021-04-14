@@ -348,14 +348,15 @@ If set to False, the renderings can be found locally on the renderslave, which r
             )
             return
 
-        outputName = os.path.join(
-            os.path.dirname(self.e_outputpath.text()),
-            "%s%s.exr"
-            % (
-                os.path.splitext(os.path.basename(self.e_outputpath.text()))[0],
-                self.core.appPlugin.frameString,
-            ),
-        )
+        outputName = self.e_outputpath.text()
+        # outputName = os.path.join(
+        #     os.path.dirname(self.e_outputpath.text()),
+        #     "%s%s.exr"
+        #     % (
+        #         os.path.splitext(os.path.basename(self.e_outputpath.text()))[0],
+        #         self.core.appPlugin.frameString,
+        #     ),
+        # )
 
         rSettings = {"outputName": outputName}
 

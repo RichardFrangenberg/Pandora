@@ -855,33 +855,34 @@ class PandoraCore:
                 self.createUserPrefs()
                 with open(configPath, "r") as f:
                     userConfig = json.load(f)
-            else:
-                warnStr = (
-                    "Cannot read the following file:\n\n%s\n\nDo you want to delete the corrupt file?"
-                    % configPath
-                )
-                msg = QMessageBox(
-                    QMessageBox.Warning,
-                    "Warning",
-                    warnStr,
-                    QMessageBox.Cancel,
-                    parent=self.messageParent,
-                )
-                msg.addButton("Delete", QMessageBox.YesRole)
-                msg.addButton("Open file", QMessageBox.YesRole)
-                action = msg.exec_()
+            # else:
+            #     warnStr = (
+            #         "Cannot read the following file:\n\n%s\n\nDo you want to delete the corrupt file?"
+            #         % configPath
+            #     )
+            #     self.PandoraTray.trayIcon.showMessage(warnStr)
+            #     msg = QMessageBox(
+            #         QMessageBox.Warning,
+            #         "Warning",
+            #         warnStr,
+            #         QMessageBox.Cancel,
+            #         parent=self.messageParent,
+            #     )
+            #     msg.addButton("Delete", QMessageBox.YesRole)
+            #     msg.addButton("Open file", QMessageBox.YesRole)
+            #     action = msg.exec_()
 
-                if action == 0:
-                    try:
-                        os.remove(configPath)
-                    except Exception as e:
-                        QMessageBox.warning(
-                            self.messageParent,
-                            "Pandora",
-                            "Could not delete file:\n\n%s\n\n%s" % (configPath, str(e)),
-                        )
-                elif action == 1:
-                    self.openFile(configPath)
+            #     if action == 0:
+            #         try:
+            #             os.remove(configPath)
+            #         except Exception as e:
+            #             QMessageBox.warning(
+            #                 self.messageParent,
+            #                 "Pandora",
+            #                 "Could not delete file:\n\n%s\n\n%s" % (configPath, str(e)),
+            #             )
+            #     elif action == 1:
+            #         self.openFile(configPath)
 
         if getConf:
             return userConfig

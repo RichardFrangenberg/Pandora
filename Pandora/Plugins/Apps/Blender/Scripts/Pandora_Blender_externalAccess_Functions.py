@@ -152,49 +152,49 @@ import os, bpy
 bpy.ops.file.unpack_all(method='USE_LOCAL')
 bpy.ops.file.find_missing_files(\'EXEC_DEFAULT\', directory=\'%s\')
 
-usePasses = False
-if bpy.context.scene.node_tree is not None and bpy.context.scene.use_nodes:
-	outNodes = [x for x in bpy.context.scene.node_tree.nodes if x.type == 'OUTPUT_FILE']
-	rlayerNodes = [x for x in bpy.context.scene.node_tree.nodes if x.type == 'R_LAYERS']
+# usePasses = False
+# if bpy.context.scene.node_tree is not None and bpy.context.scene.use_nodes:
+# 	outNodes = [x for x in bpy.context.scene.node_tree.nodes if x.type == 'OUTPUT_FILE']
+# 	rlayerNodes = [x for x in bpy.context.scene.node_tree.nodes if x.type == 'R_LAYERS']
 
-	for m in outNodes:
-		connections = []
-		for idx, i in enumerate(m.inputs):
-			if len(list(i.links)) > 0:
-				connections.append([i.links[0], idx])
+# 	for m in outNodes:
+# 		connections = []
+# 		for idx, i in enumerate(m.inputs):
+# 			if len(list(i.links)) > 0:
+# 				connections.append([i.links[0], idx])
 
-		m.base_path = os.path.dirname("%s")
+# 		m.base_path = os.path.dirname("%s")
 
-		for i, idx in connections:
-			passName = i.from_socket.name
+# 		for i, idx in connections:
+# 			passName = i.from_socket.name
 
-			if passName == "Image":
-				passName = "beauty"
+# 			if passName == "Image":
+# 				passName = "beauty"
 	
-			if i.from_node.type == "R_LAYERS":
-				if len(rlayerNodes) > 1:
-					passName = "%%s_%%s" %% (i.from_node.layer, passName)
+# 			if i.from_node.type == "R_LAYERS":
+# 				if len(rlayerNodes) > 1:
+# 					passName = "%%s_%%s" %% (i.from_node.layer, passName)
 
-			else:
-				if hasattr(i.from_node, "label") and i.from_node.label != "":
-					passName = i.from_node.label
+# 			else:
+# 				if hasattr(i.from_node, "label") and i.from_node.label != "":
+# 					passName = i.from_node.label
 
-			extensions = {"PNG": ".png", "JPEG": ".jpg", "JPEG2000": "jpg", "TARGA": ".tga", "TARGA_RAW": ".tga", "OPEN_EXR_MULTILAYER": ".exr", "OPEN_EXR": ".exr", "TIFF": ".tif" }
-			nodeExt = extensions[m.format.file_format]
-			curSlot = m.file_slots[idx]
-			if curSlot.use_node_format:
-				ext = nodeExt
-			else:
-				ext = extensions[curSlot.format.file_format]
+# 			extensions = {"PNG": ".png", "JPEG": ".jpg", "JPEG2000": "jpg", "TARGA": ".tga", "TARGA_RAW": ".tga", "OPEN_EXR_MULTILAYER": ".exr", "OPEN_EXR": ".exr", "TIFF": ".tif" }
+# 			nodeExt = extensions[m.format.file_format]
+# 			curSlot = m.file_slots[idx]
+# 			if curSlot.use_node_format:
+# 				ext = nodeExt
+# 			else:
+# 				ext = extensions[curSlot.format.file_format]
 			
-#			curSlot.path = "../%%s/%%s" %% (passName, os.path.splitext(os.path.basename("%s"))[0].replace("beauty", passName) + ext)
-			usePasses = True
+# # #		curSlot.path = "../%%s/%%s" %% (passName, os.path.splitext(os.path.basename("%s"))[0].replace("beauty", passName) + ext)
+# 			usePasses = True
 
-if usePasses:
-	tmpOutput = os.path.join(os.environ["temp"], "PrismRender", "tmp.####.exr")
-	bpy.context.scene.render.filepath = tmpOutput
-	if not os.path.exists(os.path.dirname(tmpOutput)):
-		os.makedirs(os.path.dirname(tmpOutput))
+# if usePasses:
+# 	tmpOutput = os.path.join(os.environ["temp"], "PrismRender", "tmp.####.exr")
+# 	bpy.context.scene.render.filepath = tmpOutput
+# 	if not os.path.exists(os.path.dirname(tmpOutput)):
+# 		os.makedirs(os.path.dirname(tmpOutput))
 
 bpy.ops.wm.save_mainfile()
 
