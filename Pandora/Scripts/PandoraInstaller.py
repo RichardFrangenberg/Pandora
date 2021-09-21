@@ -35,7 +35,7 @@ import os, shutil, sys, platform
 
 if sys.version[0] == "3":
     pVersion = 3
-    pyLibs = "Python37"
+    pyLibs = "Python39"
 else:
     pVersion = 2
     pyLibs = "Python27"

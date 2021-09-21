@@ -38,7 +38,7 @@ import subprocess
 
 # check if python 2 or python 3 is used
 if sys.version[0] == "3":
-    pyLibs = "Python37"
+    pyLibs = "Python39"
     pVersion = 3
 else:
     pyLibs = "Python27"
@@ -1826,7 +1826,7 @@ or move Pandora to a location where no admin privileges are required." % target)
     @err_decorator
     def getPythonPath(self):
         if platform.system() == "Windows":
-            pythonPath = os.path.join(self.pandoraRoot, "Python37", "pythonw.exe")
+            pythonPath = os.path.join(self.pandoraRoot, "Python39", "pythonw.exe")
             if not os.path.exists(pythonPath):
                 pythonPath = os.path.join(self.pandoraRoot, "Python27", "pythonw.exe")
                 if not os.path.exists(pythonPath):
@@ -1854,7 +1854,7 @@ or move Pandora to a location where no admin privileges are required." % target)
 
         try:
             if platform.system() == "Windows":
-                pythonPath = os.path.join(self.pandoraRoot, "Python37", "pythonw.exe")
+                pythonPath = os.path.join(self.pandoraRoot, "Python39", "pythonw.exe")
                 if not os.path.exists(pythonPath):
                     pythonPath = os.path.join(os.path.dirname(sys.executable), "pythonw.exe")
                     if not os.path.exists(pythonPath):
@@ -1949,7 +1949,7 @@ or move Pandora to a location where no admin privileges are required." % target)
 try:
 	import os, sys
 
-	pyLibs = os.path.join('%s', 'PythonLibs', 'Python37')
+	pyLibs = os.path.join('%s', 'PythonLibs', 'Python39')
 	if pyLibs not in sys.path:
 		sys.path.insert(0, pyLibs)
 
