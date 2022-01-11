@@ -91,8 +91,38 @@ class Pandora_Blender_Functions(object):
         return currentFileName
 
     @err_decorator
+    def getOverrideContext(self, origin=None, context=None):
+        ctx = {}
+
+        for window in bpy.context.window_manager.windows:
+            ctx["window"] = window
+            screen = window.screen
+            ctx["screen"] = screen
+
+            if context:
+                for area in screen.areas:
+                    if area.type == context:
+                        ctx["area"] = area
+                        for region in area.regions:
+                            if region.type == "WINDOW":
+                                ctx["region"] = region
+                                return ctx
+
+            for area in screen.areas:
+                if area.type == "VIEW_3D":
+                    ctx["area"] = area
+                    return ctx
+
+            for area in screen.areas:
+                if area.type == "IMAGE_EDITOR":
+                    ctx["area"] = area
+                    return ctx
+
+        return ctx
+
+    @err_decorator
     def saveScene(self, origin, filepath):
-        return bpy.ops.wm.save_as_mainfile(filepath=filepath)
+        return bpy.ops.wm.save_as_mainfile(self.getOverrideContext(origin), filepath=filepath)
 
     @err_decorator
     def getFrameRange(self, origin):

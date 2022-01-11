@@ -105,7 +105,7 @@ class PandoraCore:
     def __init__(self, app="Standalone"):
         try:
             # set some general variables
-            self.version = "v1.1.0.10"
+            self.version = "v1.1.0.11"
             self.pandoraRoot = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 
             self.pluginPathApp = os.path.join(self.pandoraRoot, "Plugins", "Apps")
@@ -351,6 +351,9 @@ class PandoraCore:
 
             if not os.path.exists(coordStartup):
                 cPath = os.path.join(self.pandoraRoot, "Tools", "Pandora Coordinator.lnk")
+                if not os.path.exists(cPath):
+                    return
+
                 shutil.copy2(cPath, coordStartup)
 
     @err_decorator
@@ -371,6 +374,9 @@ class PandoraCore:
 
             if not os.path.exists(slaveStartup):
                 cPath = os.path.join(self.pandoraRoot, "Tools", "Pandora Slave.lnk")
+                if not os.path.exists(cPath):
+                    return
+
                 shutil.copy2(cPath, slaveStartup)
 
     @err_decorator
