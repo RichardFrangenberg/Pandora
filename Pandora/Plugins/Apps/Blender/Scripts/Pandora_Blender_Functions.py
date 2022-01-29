@@ -170,8 +170,10 @@ class Pandora_Blender_Functions(object):
     @err_decorator
     def preSubmit(self, origin, rSettings):
         if origin.chb_resOverride.isChecked():
+            rSettings["resolutionpercent"] = bpy.context.scene.render.resolution_percentage
             rSettings["width"] = bpy.context.scene.render.resolution_x
             rSettings["height"] = bpy.context.scene.render.resolution_y
+            bpy.context.scene.render.resolution_percentage = 100
             bpy.context.scene.render.resolution_x = origin.sp_resWidth.value()
             bpy.context.scene.render.resolution_y = origin.sp_resHeight.value()
 
@@ -179,112 +181,128 @@ class Pandora_Blender_Functions(object):
 
         rSettings["start"] = bpy.context.scene.frame_start
         rSettings["end"] = bpy.context.scene.frame_end
-        rSettings["fileformat"] = bpy.context.scene.render.image_settings.file_format
         rSettings["overwrite"] = bpy.context.scene.render.use_overwrite
+        rSettings["placeholder"] = bpy.context.scene.render.use_placeholder
         rSettings["fileextension"] = bpy.context.scene.render.use_file_extension
-        rSettings["resolutionpercent"] = bpy.context.scene.render.resolution_percentage
-        rSettings["origOutputName"] = rSettings["outputName"]
+        rSettings["camera"] = bpy.context.scene.camera.name
+        rSettings["origOutputName"] = bpy.context.scene.render.filepath
+        
+        #rSettings["fileformat"] = bpy.context.scene.render.image_settings.file_format
+        #rSettings["resolutionpercent"] = bpy.context.scene.render.resolution_percentage
+        #rSettings["origOutputName"] = rSettings["outputName"]
+        # bpy.context.scene.render.image_settings.file_format = "OPEN_EXR"
+        # bpy.context.scene.render.image_settings.color_depth = "16"
+        # bpy.context.scene.render.resolution_percentage = 100
+
         bpy.context.scene["PrismIsRendering"] = True
-        bpy.context.scene.render.filepath = rSettings["outputName"]
-        bpy.context.scene.render.image_settings.file_format = "OPEN_EXR"
-        bpy.context.scene.render.image_settings.color_depth = "16"
+        bpy.context.scene.render.use_file_extension = True
+        bpy.context.scene.render.use_overwrite = False
+        bpy.context.scene.render.use_placeholder = False
         bpy.context.scene.frame_start = jobFrames[0]
         bpy.context.scene.frame_end = jobFrames[1]
-        bpy.context.scene.render.use_overwrite = True
-        bpy.context.scene.render.use_file_extension = False
-        bpy.context.scene.render.resolution_percentage = 100
         if origin.cb_cam.currentText() in bpy.context.scene.objects:
-            bpy.context.scene.camera = bpy.context.scene.objects[
-                origin.cb_cam.currentText()
-            ]
+            bpy.context.scene.camera = bpy.context.scene.objects[origin.cb_cam.currentText()]
 
-        usePasses = False
-        if bpy.context.scene.node_tree is not None and bpy.context.scene.use_nodes:
-            outNodes = [
-                x for x in bpy.context.scene.node_tree.nodes if x.type == "OUTPUT_FILE"
-            ]
-            rlayerNodes = [
-                x for x in bpy.context.scene.node_tree.nodes if x.type == "R_LAYERS"
-            ]
+        # Output Path
+        bName = os.path.splitext(rSettings["outputName"])[0]
 
-            bName = os.path.splitext(os.path.basename(rSettings["outputName"]))
-            if bName[0].endswith(self.plugin.frameString):
-                bName = "%s.beauty%s%s" % (bName[0][:-5], bName[0][-5:], bName[1])
-            else:
-                bName = "%s.beauty%s" % (bName[0], bName[1])
-            rSettings["outputName"] = os.path.join(
-                os.path.dirname(rSettings["outputName"]), "beauty", bName
-            )
+        if not bName.endswith(self.plugin.frameString):
+            bName += self.plugin.frameString
 
-            for m in outNodes:
-                connections = []
-                for idx, i in enumerate(m.inputs):
-                    if len(list(i.links)) > 0:
-                        connections.append([i.links[0], idx])
+        bName += bpy.context.scene.render.file_extension
+        rSettings["outputName"] = bName
+        bpy.context.scene.render.filepath = rSettings["outputName"]
 
-                m.base_path = os.path.dirname(rSettings["outputName"])
+        if not os.path.exists(os.path.dirname(rSettings["outputName"])):
+            os.makedirs(os.path.dirname(rSettings["outputName"]))
+        
+        # usePasses = False
+        # if bpy.context.scene.node_tree is not None and bpy.context.scene.use_nodes:
+        #     outNodes = [
+        #         x for x in bpy.context.scene.node_tree.nodes if x.type == "OUTPUT_FILE"
+        #     ]
+        #     rlayerNodes = [
+        #         x for x in bpy.context.scene.node_tree.nodes if x.type == "R_LAYERS"
+        #     ]
 
-                for i, idx in connections:
-                    passName = i.from_socket.name
+        #     bName = os.path.splitext(os.path.basename(rSettings["outputName"]))
+        #     if bName[0].endswith(self.plugin.frameString):
+        #         bName = "%s.beauty%s%s" % (bName[0][:-5], bName[0][-5:], bName[1])
+        #     else:
+        #         bName = "%s.beauty%s" % (bName[0], bName[1])
+        #     rSettings["outputName"] = os.path.join(
+        #         os.path.dirname(rSettings["outputName"]), "beauty", bName
+        #     )
 
-                    if passName == "Image":
-                        passName = "beauty"
+        #     for m in outNodes:
+        #         connections = []
+        #         for idx, i in enumerate(m.inputs):
+        #             if len(list(i.links)) > 0:
+        #                 connections.append([i.links[0], idx])
 
-                    if i.from_node.type == "R_LAYERS":
-                        if len(rlayerNodes) > 1:
-                            passName = "%s_%s" % (i.from_node.layer, passName)
+        #         m.base_path = os.path.dirname(rSettings["outputName"])
 
-                    else:
-                        if hasattr(i.from_node, "label") and i.from_node.label != "":
-                            passName = i.from_node.label
+        #         for i, idx in connections:
+        #             passName = i.from_socket.name
 
-                    extensions = {
-                        "PNG": ".png",
-                        "JPEG": ".jpg",
-                        "JPEG2000": "jpg",
-                        "TARGA": ".tga",
-                        "TARGA_RAW": ".tga",
-                        "OPEN_EXR_MULTILAYER": ".exr",
-                        "OPEN_EXR": ".exr",
-                        "TIFF": ".tif",
-                    }
-                    nodeExt = extensions[m.format.file_format]
-                    curSlot = m.file_slots[idx]
-                    if curSlot.use_node_format:
-                        ext = nodeExt
-                    else:
-                        ext = extensions[curSlot.format.file_format]
+        #             if passName == "Image":
+        #                 passName = "beauty"
 
-                    curSlot.path = "../%s/%s" % (
-                        passName,
-                        os.path.splitext(os.path.basename(rSettings["outputName"]))[
-                            0
-                        ].replace("beauty", passName)
-                        + ext,
-                    )
-                    newOutputPath = os.path.abspath(
-                        os.path.join(
-                            rSettings["outputName"],
-                            "../..",
-                            passName,
-                            os.path.splitext(os.path.basename(rSettings["outputName"]))[
-                                0
-                            ].replace("beauty", passName)
-                            + ext,
-                        )
-                    )
-                    if passName == "beauty":
-                        rSettings["outputName"] = newOutputPath
-                    usePasses = True
+        #             if i.from_node.type == "R_LAYERS":
+        #                 if len(rlayerNodes) > 1:
+        #                     passName = "%s_%s" % (i.from_node.layer, passName)
 
-        if usePasses:
-            import platform
+        #             else:
+        #                 if hasattr(i.from_node, "label") and i.from_node.label != "":
+        #                     passName = i.from_node.label
 
-            if platform.system() == "Windows":
-                tmpOutput = os.path.join(os.environ["temp"], "PrismRender", "tmp.####.exr")
-                bpy.context.scene.render.filepath = tmpOutput
-                if not os.path.exists(os.path.dirname(tmpOutput)):
-                    os.makedirs(os.path.dirname(tmpOutput))
+        #             extensions = {
+        #                 "PNG": ".png",
+        #                 "JPEG": ".jpg",
+        #                 "JPEG2000": "jpg",
+        #                 "TARGA": ".tga",
+        #                 "TARGA_RAW": ".tga",
+        #                 "OPEN_EXR_MULTILAYER": ".exr",
+        #                 "OPEN_EXR": ".exr",
+        #                 "TIFF": ".tif",
+        #             }
+        #             nodeExt = extensions[m.format.file_format]
+        #             curSlot = m.file_slots[idx]
+        #             if curSlot.use_node_format:
+        #                 ext = nodeExt
+        #             else:
+        #                 ext = extensions[curSlot.format.file_format]
+
+        #             curSlot.path = "../%s/%s" % (
+        #                 passName,
+        #                 os.path.splitext(os.path.basename(rSettings["outputName"]))[
+        #                     0
+        #                 ].replace("beauty", passName)
+        #                 + ext,
+        #             )
+        #             newOutputPath = os.path.abspath(
+        #                 os.path.join(
+        #                     rSettings["outputName"],
+        #                     "../..",
+        #                     passName,
+        #                     os.path.splitext(os.path.basename(rSettings["outputName"]))[
+        #                         0
+        #                     ].replace("beauty", passName)
+        #                     + ext,
+        #                 )
+        #             )
+        #             if passName == "beauty":
+        #                 rSettings["outputName"] = newOutputPath
+        #             usePasses = True
+
+        # if usePasses:
+        #     import platform
+
+        #     if platform.system() == "Windows":
+        #         tmpOutput = os.path.join(os.environ["temp"], "PrismRender", "tmp.####.png")
+        #         bpy.context.scene.render.filepath = tmpOutput
+        #         if not os.path.exists(os.path.dirname(tmpOutput)):
+        #             os.makedirs(os.path.dirname(tmpOutput))
 
     @err_decorator
     def undoRenderSettings(self, origin, rSettings):
@@ -296,14 +314,18 @@ class Pandora_Blender_Functions(object):
             bpy.context.scene.frame_start = rSettings["start"]
         if "end" in rSettings:
             bpy.context.scene.frame_end = rSettings["end"]
-        if "fileformat" in rSettings:
-            bpy.context.scene.render.image_settings.file_format = rSettings["fileformat"]
-        if "overwrite" in rSettings:
-            bpy.context.scene.render.use_overwrite = rSettings["overwrite"]
         if "fileextension" in rSettings:
             bpy.context.scene.render.use_file_extension = rSettings["fileextension"]
         if "resolutionpercent" in rSettings:
             bpy.context.scene.render.resolution_percentage = rSettings["resolutionpercent"]
+        if "overwrite" in rSettings:
+            bpy.context.scene.render.use_overwrite = rSettings["overwrite"]
+        if "placeholder" in rSettings:
+            bpy.context.scene.render.use_placeholder = rSettings["placeholder"]
+        if "camera" in rSettings:
+            bpy.context.scene.camera = bpy.context.scene.objects[rSettings["camera"]]
+        if "origOutputName" in rSettings:
+             bpy.context.scene.render.filepath = rSettings["origOutputName"]
 
     @err_decorator
     def preSubmitChecks(self, origin, jobData):
