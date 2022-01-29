@@ -36,12 +36,12 @@ import sys, os, bpy
 pandoraRoot = PANDORAROOT
 
 
-if sys.version_info[0] != 3 and sys.version_info[1] != 7:
-    print("Pandora supports Python37 only in Blender")
+if sys.version_info[0] != 3 and sys.version_info[1] != 9:
+    print("Pandora supports Python39 only in Blender")
 
 sys.path.insert(0, os.path.join(pandoraRoot, "PythonLibs", "CrossPlatform"))
-sys.path.insert(0, os.path.join(pandoraRoot, "PythonLibs", "Python37"))
-sys.path.insert(0, os.path.join(pandoraRoot, "PythonLibs", "Python37", "PySide"))
+sys.path.insert(0, os.path.join(pandoraRoot, "PythonLibs", "Python39"))
+sys.path.insert(0, os.path.join(pandoraRoot, "PythonLibs", "Python39", "PySide"))
 sys.path.insert(0, os.path.join(pandoraRoot, "Scripts"))
 
 from PySide2.QtCore import *

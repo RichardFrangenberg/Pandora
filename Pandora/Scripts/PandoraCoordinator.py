@@ -39,7 +39,7 @@ import string
 from functools import wraps
 
 if sys.version[0] == "3":
-    pyLibs = "Python37"
+    pyLibs = "Python39"
     pVersion = 3
 else:
     pyLibs = "Python27"

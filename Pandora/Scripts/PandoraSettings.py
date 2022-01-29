@@ -42,7 +42,7 @@ if scriptPath not in sys.path:
     sys.path.append(scriptPath)
 
 if sys.version[0] == "3":
-    pyLibs = "Python37"
+    pyLibs = "Python39"
     pVersion = 3
 else:
     pyLibs = "Python27"
