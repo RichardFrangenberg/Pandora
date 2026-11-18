@@ -51,6 +51,21 @@ COORDINATOR_COMMANDS = (
     "restartGDrive",
 )
 
+# methods of the slave, which can be called through its "command" setting
+SLAVE_COMMANDS = (
+    "shutdownPC",
+    "stopRender",
+    "restartLogic",
+    "exitLogic",
+    "uploadCurJob",
+    "startTeamviewer",
+    "writeScreenshot",
+    "clearLog",
+    "pauseSlave",
+    "activateSlave",
+    "setSlave",
+)
+
 
 def parseCommand(text):
     """Returns the command list of a command file or None if it is invalid.
