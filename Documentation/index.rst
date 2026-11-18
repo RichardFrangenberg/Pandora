@@ -13,6 +13,7 @@ Welcome to Pandora's documentation!
    index/overview
    index/getting_started
    index/feature_reference
+   index/cross_platform
 
 
 Support and License

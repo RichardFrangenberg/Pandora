@@ -31,217 +31,317 @@
 # along with Pandora.  If not, see <https://www.gnu.org/licenses/>.
 
 
-import os
-
 import sys, os, io, time, shutil, socket, traceback, subprocess, json
 import random
 import string
 from functools import wraps
 
-if sys.version[0] == "3":
-    pyLibs = "Python37"
-    pVersion = 3
-else:
-    pyLibs = "Python27"
-    pVersion = 2
+import signal
 
-pndPath = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-    "PythonLibs",
-    pyLibs,
-)
-sys.path.append(pndPath)
-import psutil
+import PandoraPaths
+import PandoraPathMap
+import PandoraProtocol
+import PandoraTransport
 
 
 class PandoraCoordinator:
-    def __init__(self):
+    def __init__(self, start=True):
+        self.version = "v1.2.0.0"
+
+        self.coordUpdateTime = 5  # seconds
+        self.activeThres = 10  # time in min after a slave becomes inactive
+        self.notifySlaveInterval = (
+            10
+        )  # time in min in which interval a connection check is send to the slaves
+        self.connectionCheckInterval = (
+            20
+        )  # time in min in which interval a to check if a connection to the slave exists
+        self.lastConnectionCheckTime = time.time()
+        self.lastNotifyTime = time.time()
+
+        self.repPath = ""
+        self.localMode = True
+        self.restartGDriveEnabled = False
+        self.coordConf = ""
+        self.gdrive = ""
+        self.close = False
+        self.pathMappings = []
+        self.envOverrides = {}
+        self.incompleteCmdAge = 60  # seconds in which an unreadable command is retried
+        self.logToStdout = os.environ.get("PANDORA_LOG_STDOUT", "").lower() in [
+            "1",
+            "true",
+            "yes",
+            "on",
+        ]
+
+        ready = False
         try:
-            self.version = "v1.1.0.6"
-
-            self.coordUpdateTime = 5  # seconds
-            self.activeThres = 10  # time in min after a slave becomes inactive
-            self.notifySlaveInterval = (
-                10
-            )  # time in min in which interval a connection check is send to the slaves
-            self.connectionCheckInterval = (
-                20
-            )  # time in min in which interval a to check if a connection to the slave exists
-            self.lastConnectionCheckTime = time.time()
-            self.lastNotifyTime = time.time()
-
-            pandoraConfig = os.path.join(
-                os.environ["userprofile"], "Documents", "Pandora", "Pandora.json"
-            )
-            self.repPath = ""
-            self.localMode = True
-            self.restartGDriveEnabled = False
-            self.coordConf = ""
-
-            curPath = os.path.dirname(os.path.abspath(__file__))
-            if not curPath.replace("\\", "/").endswith("/Scripts/PandoraCoordinator"):
-                cData = {}
-                cData["coordEnabled"] = ["coordinator", "enabled"]
-                cData["localMode"] = ["globals", "localMode"]
-                cData["globalRootpath"] = ["globals", "rootPath"]
-                cData["coordRootpath"] = ["coordinator", "rootPath"]
-                cData["repositoryPath"] = ["globals", "repositoryPath"]
-                cData = self.getConfig(data=cData, configPath=pandoraConfig)
-
-                if cData["coordEnabled"] is not None and cData["coordEnabled"] == False:
-                    self.writeLog("Coordinator is disabled. Closing Coordinator")
-                    return
-
-                if cData["localMode"] is not None:
-                    self.localMode = cData["localMode"] == True
-
-                if self.localMode:
-                    rootPath = cData["globalRootpath"]
-                else:
-                    rootPath = cData["coordRootpath"]
-
-                if rootPath is None:
-                    self.writeLog("Sync directory is not defined. Closing Coordinator")
-                    return
-
-                if not os.path.exists(rootPath):
-                    try:
-                        os.makedirs(rootPath)
-                    except:
-                        self.writeLog("Sync directory doesn't exist. Closing Coordinator")
-                        return
-
-                self.coordBasePath = os.path.join(rootPath, "Scripts", "PandoraCoordinator")
-
-                if cData["repositoryPath"] is None or cData["repositoryPath"] == "":
-                    self.writeLog(
-                        "Repository is invalid. Fallback to default repository location."
-                    )
-                else:
-                    repoDir = os.path.join(cData["repositoryPath"], "Coordinator")
-                    if not os.path.exists(repoDir):
-                        try:
-                            os.makedirs(repoDir)
-                        except:
-                            pass
-
-                    if os.path.exists(repoDir):
-                        self.repPath = repoDir
-                        self.writeLog("Set repository: %s" % self.repPath)
-                    else:
-                        self.writeLog(
-                            "Repository doesn't exist. Fallback to default repository location."
-                        )
-
-                slScript = os.path.join(os.path.dirname(__file__), "PandoraSlave.py")
-                hScript = os.path.join(os.path.dirname(__file__), "PandoraStartHouJob.py")
-
-                tslScript = os.path.join(
-                    os.path.dirname(self.coordBasePath), "PandoraSlaves", "PandoraSlave.py"
-                )
-                thScript = os.path.join(
-                    os.path.dirname(self.coordBasePath),
-                    "PandoraSlaves",
-                    "PandoraStartHouJob.py",
-                )
-
-                if not os.path.exists(os.path.dirname(tslScript)):
-                    try:
-                        os.makedirs(os.path.dirname(tslScript))
-                    except:
-                        pass
-
-            # 	if not os.path.exists(tslScript):
-            # 		shutil.copy2(slScript, tslScript)
-            # 	if not os.path.exists(thScript):
-            # 		shutil.copy2(hScript, thScript)
-            else:
-                self.coordBasePath = os.path.dirname(os.path.abspath(__file__))
-
-            self.writeLog("Coordinator path: %s" % self.coordBasePath)
-
-            self.slPath = os.path.abspath(
-                os.path.join(self.coordBasePath, os.pardir, os.pardir)
-            )
-
-            self.coordLog = os.path.join(
-                self.coordBasePath, "Coordinator_Log_%s.txt" % socket.gethostname()
-            )
-            self.coordConf = os.path.join(self.coordBasePath, "Coordinator_Settings.json")
-            self.actSlvPath = os.path.join(self.coordBasePath, "ActiveSlaves.json")
-            self.coordWarningsConf = os.path.join(
-                self.coordBasePath, "Coordinator_Warnings_%s.json" % socket.gethostname()
-            )
-            self.logCache = os.path.join(self.slPath, "Workstations", "Logs", "Coordinator", "LogCache.json")
-
-            self.close = False
-            self.tvRequests = []
-            self.slaveContactTimes = {}
-            self.renderingTasks = []
-            self.collectTasks = {}
-            self.jobDirs = []
-
-            self.writeLog(
-                "Starting Coordinator - %s - %s" % (self.version, socket.gethostname()), 1
-            )
-
-            repConf = self.getConfig("settings", "repository")
-
-            if repConf is not None and os.path.exists(repConf):
-                self.repPath = repConf
-                self.writeLog("Set repository: %s" % self.repPath)
-
-            if self.repPath == "":
-                self.repPath = os.path.join(self.slPath, "JobRepository")
-                self.writeLog("set repository: %s" % self.repPath)
-
-            lmodeConf = self.getConfig("settings", "localMode")
-
-            if lmodeConf is not None:
-                self.localMode = lmodeConf == True
-                self.writeLog("Set localMode: %s" % self.localMode)
-
-            self.writeLog("Repository: %s" % self.repPath, 1)
-            self.writeLog("Coordinatorbase: %s" % self.coordBasePath, 1)
-            self.writeLog("localMode: %s" % self.localMode, 1)
-
-            self.pAssetPath = os.path.join(self.repPath, "ProjectAssets")
-            self.jobPath = os.path.join(self.repPath, "Jobs")
-
-            self.prioList = os.path.join(self.repPath, "PriorityList.json")
-
-            self.getGDrivePath()
-
-            cmdPath = os.path.join(self.coordBasePath, "command.txt")
-
-            while not self.close:
-                if os.path.exists(cmdPath):
-                    with open(cmdPath, "r") as cmdFile:
-                        cmd = cmdFile.read()
-
-                    if cmd == "exit":
-                        closeCoord = time.time() - os.path.getmtime(cmdPath) < 30
-                        try:
-                            os.remove(cmdPath)
-                        except:
-                            pass
-
-                        if closeCoord:
-                            break
-
-                self.startCoordination()
-                time.sleep(self.coordUpdateTime)
-
-            self.writeLog("Coordinator closed", 1)
-            self.notifyWorkstations()
-
+            ready = self.setup()
         except Exception as e:
             exc_type, exc_obj, exc_tb = sys.exc_info()
             self.writeLog(
                 "ERROR - init - %s - %s - %s" % (str(e), exc_type, exc_tb.tb_lineno), 3
             )
+            if start:
+                sys.exit(1)
+
+        if not start:
+            return
+
+        if ready:
+            try:
+                self.run()
+            except Exception as e:
+                exc_type, exc_obj, exc_tb = sys.exc_info()
+                self.writeLog(
+                    "ERROR - run - %s - %s - %s" % (str(e), exc_type, exc_tb.tb_lineno), 3
+                )
+                sys.exit(1)
 
         sys.exit()
+
+    # the coordinator cannot work at all, e.g. because the root folder is not accessible
+    def fatal(self, text):
+        sys.stderr.write("Pandora Coordinator: %s\n" % text)
+        sys.stderr.flush()
+        sys.exit(1)
+
+    # reads the settings and sets all paths. Returns False if the coordinator should not run.
+    def setup(self):
+        pandoraConfig = PandoraPaths.getUserConfigPath()
+        try:
+            self.envOverrides = PandoraPaths.getEnvOverrides()
+        except ValueError as e:
+            self.fatal(str(e))
+
+        envData = self.envOverrides
+        repositoryPath = None
+
+        curPath = os.path.dirname(os.path.abspath(__file__))
+        if "rootPath" in envData or not curPath.replace("\\", "/").endswith(
+            "/Scripts/PandoraCoordinator"
+        ):
+            cData = {}
+            cData["coordEnabled"] = ["coordinator", "enabled"]
+            cData["localMode"] = ["globals", "localMode"]
+            cData["globalRootpath"] = ["globals", "rootPath"]
+            cData["coordRootpath"] = ["coordinator", "rootPath"]
+            cData["repositoryPath"] = ["globals", "repositoryPath"]
+            confData = self.getConfig(data=cData, configPath=pandoraConfig)
+            if confData is None:
+                # the user preferences don't exist, e.g. in a container
+                confData = dict([(x, None) for x in cData])
+
+            cData = confData
+
+            if (
+                "rootPath" not in envData
+                and cData["coordEnabled"] is not None
+                and cData["coordEnabled"] == False
+            ):
+                self.writeLog("Coordinator is disabled. Closing Coordinator")
+                return False
+
+            if cData["localMode"] is not None:
+                self.localMode = cData["localMode"] == True
+
+            if "localMode" in envData:
+                self.localMode = envData["localMode"]
+
+            if "rootPath" in envData:
+                rootPath = envData["rootPath"]
+            elif self.localMode:
+                rootPath = cData["globalRootpath"]
+            else:
+                rootPath = cData["coordRootpath"]
+
+            if rootPath is None:
+                self.writeLog("Sync directory is not defined. Closing Coordinator")
+                return False
+
+            if not os.path.exists(rootPath):
+                try:
+                    os.makedirs(rootPath)
+                except Exception as e:
+                    self.fatal("Pandora root cannot be created: %s (%s)" % (rootPath, e))
+
+            self.coordBasePath = os.path.join(rootPath, "Scripts", "PandoraCoordinator")
+            repositoryPath = envData.get("repositoryPath", cData["repositoryPath"])
+
+            tslScript = os.path.join(
+                os.path.dirname(self.coordBasePath), "PandoraSlaves", "PandoraSlave.py"
+            )
+
+            if not os.path.exists(os.path.dirname(tslScript)):
+                try:
+                    os.makedirs(os.path.dirname(tslScript))
+                except:
+                    pass
+        else:
+            self.coordBasePath = curPath
+            if "localMode" in envData:
+                self.localMode = envData["localMode"]
+
+        self.heartbeatPath = os.path.join(self.coordBasePath, "heartbeat")
+        try:
+            if not os.path.exists(self.coordBasePath):
+                os.makedirs(self.coordBasePath)
+
+            self.writeHeartbeat(silent=False)
+        except Exception as e:
+            self.fatal(
+                "Pandora root is not writable: %s (%s)" % (self.coordBasePath, e)
+            )
+
+        self.writeLog("Coordinator path: %s" % self.coordBasePath)
+
+        self.slPath = os.path.abspath(
+            os.path.join(self.coordBasePath, os.pardir, os.pardir)
+        )
+
+        self.coordLog = os.path.join(
+            self.coordBasePath, "Coordinator_Log_%s.txt" % socket.gethostname()
+        )
+        self.coordConf = os.path.join(self.coordBasePath, "Coordinator_Settings.json")
+        self.actSlvPath = os.path.join(self.coordBasePath, "ActiveSlaves.json")
+        self.coordWarningsConf = os.path.join(
+            self.coordBasePath, "Coordinator_Warnings_%s.json" % socket.gethostname()
+        )
+        self.logCache = os.path.join(
+            self.slPath, "Workstations", "Logs", "Coordinator", "LogCache.json"
+        )
+
+        self.transport = PandoraTransport.FileTransport(self.slPath)
+
+        self.tvRequests = []
+        self.slaveContactTimes = {}
+        self.renderingTasks = []
+        self.collectTasks = {}
+        self.jobDirs = []
+
+        self.writeLog(
+            "Starting Coordinator - %s - %s" % (self.version, socket.gethostname()), 1
+        )
+
+        self.pathMappings = PandoraPathMap.loadMappings(
+            PandoraPathMap.getMappingFiles(
+                self.coordBasePath, PandoraPaths.getUserConfigDir()
+            )
+        )
+        for error in PandoraPathMap.getLoadErrors():
+            self.writeWarning(error, 2)
+
+        self.setRepository(repositoryPath)
+
+        if "repositoryPath" not in envData:
+            repConf = self.mapPath(self.getConfig("settings", "repository"))
+
+            if repConf is not None and os.path.exists(repConf):
+                self.repPath = repConf
+                self.writeLog("Set repository: %s" % self.repPath)
+
+        if self.repPath == "":
+            self.repPath = os.path.join(self.slPath, "JobRepository")
+            self.writeLog("set repository: %s" % self.repPath)
+
+        lmodeConf = self.getConfig("settings", "localMode")
+
+        if "localMode" in envData:
+            self.localMode = envData["localMode"]
+        elif lmodeConf is not None:
+            self.localMode = lmodeConf == True
+            self.writeLog("Set localMode: %s" % self.localMode)
+
+        self.writeLog("Repository: %s" % self.repPath, 1)
+        self.writeLog("Coordinatorbase: %s" % self.coordBasePath, 1)
+        self.writeLog("localMode: %s" % self.localMode, 1)
+
+        self.pAssetPath = os.path.join(self.repPath, "ProjectAssets")
+        self.jobPath = os.path.join(self.repPath, "Jobs")
+
+        self.prioList = os.path.join(self.repPath, "PriorityList.json")
+
+        self.getGDrivePath()
+        return True
+
+    # converts a path, which was saved on a different OS, to a path on this machine
+    def mapPath(self, path):
+        if not path:
+            return path
+
+        return PandoraPathMap.mapPath(path, self.pathMappings)
+
+    # sets the repository from the repository path of the user preferences/environment
+    def setRepository(self, repositoryPath):
+        repositoryPath = self.mapPath(repositoryPath)
+        if repositoryPath is None or repositoryPath == "":
+            self.writeLog("Repository is invalid. Fallback to default repository location.")
+            return
+
+        repoDir = os.path.join(repositoryPath, "Coordinator")
+        if not os.path.exists(repoDir):
+            try:
+                os.makedirs(repoDir)
+            except:
+                pass
+
+        if os.path.exists(repoDir):
+            self.repPath = repoDir
+            self.writeLog("Set repository: %s" % self.repPath)
+        else:
+            self.writeLog(
+                "Repository doesn't exist. Fallback to default repository location."
+            )
+
+    # the heartbeat shows external tools (e.g. the container healthcheck), that the coordinator is alive
+    def writeHeartbeat(self, silent=True):
+        try:
+            with open(self.heartbeatPath, "w") as hbFile:
+                hbFile.write(str(time.time()))
+        except Exception:
+            if not silent:
+                raise
+
+    # SIGTERM is sent when the service/container gets stopped
+    def stop(self, *args):
+        self.close = True
+
+    def run(self):
+        for sigName in ["SIGTERM", "SIGINT"]:
+            try:
+                signal.signal(getattr(signal, sigName), self.stop)
+            except Exception:
+                # not available on this platform or not in the main thread
+                pass
+
+        cmdPath = os.path.join(self.coordBasePath, "command.txt")
+
+        while not self.close:
+            if os.path.exists(cmdPath):
+                with open(cmdPath, "r") as cmdFile:
+                    cmd = cmdFile.read()
+
+                if cmd == "exit":
+                    closeCoord = time.time() - os.path.getmtime(cmdPath) < 30
+                    try:
+                        os.remove(cmdPath)
+                    except:
+                        pass
+
+                    if closeCoord:
+                        break
+
+            self.startCoordination()
+            self.writeHeartbeat()
+
+            # sleep in short intervals to react quickly when the coordinator gets stopped
+            sleepEnd = time.time() + self.coordUpdateTime
+            while not self.close and time.time() < sleepEnd:
+                time.sleep(min(1, max(0, sleepEnd - time.time())))
+
+        self.writeLog("Coordinator closed", 1)
+        self.notifyWorkstations()
 
     def err_decorator(func):
         @wraps(func)
@@ -287,11 +387,22 @@ class PandoraCoordinator:
         elif level > 1 and writeWarning:
             self.writeWarning(text, level)
 
-        with io.open(logPath, "a", encoding="utf-16") as log:
-            log.write(
-                    "[%s] %s - %s : %s\n"
-                    % (level, os.getpid(), time.strftime("%d/%m/%y %X"), text)
-            )
+        logLine = "[%s] %s - %s : %s\n" % (
+            level,
+            os.getpid(),
+            time.strftime("%d/%m/%y %X"),
+            text,
+        )
+
+        if getattr(self, "logToStdout", False):
+            sys.stdout.write(logLine)
+            sys.stdout.flush()
+
+        try:
+            with io.open(logPath, "a", encoding="utf-16") as log:
+                log.write(logLine)
+        except Exception as e:
+            sys.stderr.write("Cannot write to log %s (%s): %s" % (logPath, e, logLine))
 
         # print "[%s] %s : %s\n" % (level, time.strftime("%d/%m/%y %X"), text)
 
@@ -336,7 +447,10 @@ class PandoraCoordinator:
         if val is not None and val != "":
             self.writeLog("CheckCommands - execute: %s" % val, 1)
             try:
-                exec(val)
+                if not PandoraProtocol.runCall(
+                    self, val, PandoraProtocol.COORDINATOR_COMMANDS
+                ):
+                    self.writeWarning("Coordinator command rejected: %s" % val, 2)
             except Exception as e:
                 exc_type, exc_obj, exc_tb = sys.exc_info()
                 self.writeLog(
@@ -710,18 +824,20 @@ class PandoraCoordinator:
     def handleCmd(self, cmFile, origin=""):
         self.writeLog("Handle cmd file: %s" % cmFile)
 
-        with open(cmFile, "r") as comFile:
-            cmdText = comFile.read()
-            command = None
-            try:
-                command = eval(cmdText)
-            except Exception as e:
-                exc_type, exc_obj, exc_tb = sys.exc_info()
+        cmdText = self.transport.readCommand(cmFile)
+        command = PandoraProtocol.parseCommand(cmdText)
+        if command is None:
+            if self.transport.getCommandAge(cmFile) < self.incompleteCmdAge:
+                # the file may not be written/synced completely yet
                 self.writeLog(
-                    "ERROR -- handleCmd evalCmd -- %s\n%s\n%s\n%s\n%s"
-                    % (str(e), exc_type, exc_tb.tb_lineno, origin, cmdText),
-                    3,
+                    "Command is not valid yet, retrying later: %s (%s)" % (cmFile, origin),
+                    1,
                 )
+                return
+
+            self.writeLog(
+                "ERROR -- handleCmd invalid command -- %s\n%s" % (origin, cmdText), 3
+            )
 
         if command is not None and type(command) == list:
             for i in range(1):
@@ -1178,7 +1294,7 @@ class PandoraCoordinator:
                     self.writeLog(collectStr + " (%s)" % (origin), errorLvl)
 
         try:
-            os.remove(cmFile)
+            self.transport.removeCommand(cmFile)
         except:
             self.writeLog("ERROR - cannot remove file: %s (%s)" % (cmFile, origin), 3)
 
@@ -1243,26 +1359,20 @@ class PandoraCoordinator:
                 cmdDir = os.path.join(self.slPath, "Workstations", i, "Commands")
                 wsName = i[len("WS_") :]
 
-                if os.path.exists(cmdDir):
-                    for k in sorted(os.listdir(cmdDir)):
-                        cmFile = os.path.join(cmdDir, k)
+                updateZip = os.path.join(cmdDir, "Pandora_update.zip")
+                if os.path.exists(updateZip):
+                    shutil.move(
+                        updateZip,
+                        os.path.join(
+                            self.slPath,
+                            "Scripts",
+                            "PandoraSlaves",
+                            "Pandora-development.zip",
+                        ),
+                    )
 
-                        if k == "Pandora_update.zip":
-                            shutil.move(
-                                cmFile,
-                                os.path.join(
-                                    self.slPath,
-                                    "Scripts",
-                                    "PandoraSlaves",
-                                    "Pandora-development.zip",
-                                ),
-                            )
-                            continue
-
-                        if not k.startswith("handlerOut_"):
-                            continue
-
-                        self.handleCmd(cmFile, origin=wsName)
+                for cmFile in self.transport.listWorkstationCommands(wsName):
+                    self.handleCmd(cmFile, origin=wsName)
 
                 jobDir = os.path.join(self.slPath, "Workstations", i, "JobSubmissions")
 
@@ -1549,11 +1659,7 @@ class PandoraCoordinator:
                         )
                         continue
 
-                for k in sorted(os.listdir(slaveComPath)):
-                    if not k.startswith("slaveOut_"):
-                        continue
-
-                    cmFile = os.path.join(slaveComPath, k)
+                for cmFile in self.transport.listSlaveCommands(slaveName):
                     self.handleCmd(cmFile, origin=slaveName)
 
             except Exception as e:
@@ -1578,7 +1684,14 @@ class PandoraCoordinator:
     # restarts "backup and sync" from google
     @err_decorator
     def restartGDrive(self):
-        if "psutil" not in locals():
+        if PandoraPaths.getPlatform() != "windows":
+            self.writeLog("Restarting gdrive is only available on Windows.", 1)
+            return
+
+        try:
+            import psutil
+        except ImportError:
+            self.writeLog("Cannot restart gdrive, because psutil is not available.", 2)
             return
 
         self.writeLog("Restart gdrive")
@@ -1596,11 +1709,19 @@ class PandoraCoordinator:
     # searches for the installation path of "backup and sync" from google in the registry
     @err_decorator
     def getGDrivePath(self):
+        self.gdrive = ""
+        if PandoraPaths.getPlatform() != "windows":
+            return
+
         try:
-            import _winreg
+            try:
+                import winreg as _winreg
+            except ImportError:
+                import _winreg
+
             key = _winreg.OpenKey(
                 _winreg.HKEY_LOCAL_MACHINE,
-                "SOFTWARE\Google\Drive",
+                "SOFTWARE\\Google\\Drive",
                 0,
                 _winreg.KEY_READ | _winreg.KEY_WOW64_64KEY,
             )
@@ -2034,33 +2155,8 @@ class PandoraCoordinator:
 
     @err_decorator
     def sendCommand(self, slave, cmd):
-        cmdDir = os.path.join(self.slPath, "Slaves", "S_%s" % slave, "Communication")
-        curNum = 1
-
-        for i in os.listdir(cmdDir):
-            if not i.startswith("slaveIn_"):
-                continue
-
-            num = i.split("_")[1]
-            if sys.version[0] == "2":
-                unum = unicode(num)
-            else:
-                unum = num
-
-            if not unum.isnumeric():
-                continue
-
-            if int(num) >= curNum:
-                curNum = int(num) + 1
-
-        cmdFile = os.path.join(
-            cmdDir, "slaveIn_%s_%s.txt" % (format(curNum, "04"), time.time())
-        )
-
         self.writeLog("Sending command: %s" % cmd)
-
-        with open(cmdFile, "w") as cFile:
-            cFile.write(str(cmd))
+        self.transport.sendToSlave(slave, cmd)
 
     @err_decorator
     def checkTvRequests(self):

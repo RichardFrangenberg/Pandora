@@ -100,12 +100,19 @@ class Pandora_Maya_externalAccess_Functions(object):
         ):
             mayaPath = mayaOverridePath
         else:
-            if "programVersion" in jobData:
-                mayaPath = self.getInstallPath(jobData["programVersion"])
-            else:
-                mayaPath = self.getInstallPath()
+            if platform.system() == "Windows":
+                if "programVersion" in jobData:
+                    mayaPath = self.getInstallPath(jobData["programVersion"])
+                else:
+                    mayaPath = self.getInstallPath()
 
-            mayaPath = os.path.join(mayaPath, "bin", "Render.exe")
+                mayaPath = os.path.join(mayaPath or "", "bin", "Render.exe")
+            else:
+                import PandoraSystem
+
+                mayaPath = PandoraSystem.findExecutable(
+                    "Maya", jobData.get("programVersion")
+                )
 
             if not os.path.exists(mayaPath):
                 origin.writeLog("no Maya installation found", 3)

@@ -38,10 +38,14 @@ try:
 
     psVersion = 2
 except:
-    from PySide.QtCore import *
-    from PySide.QtGui import *
+    try:
+        from PySide.QtCore import *
+        from PySide.QtGui import *
 
-    psVersion = 1
+        psVersion = 1
+    except:
+        # no Qt available, e.g. on a renderslave without user interface
+        psVersion = 0
 
 import os, sys
 import traceback, time, platform, shutil, socket

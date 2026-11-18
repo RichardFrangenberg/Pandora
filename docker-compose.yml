@@ -1,0 +1,25 @@
+# Pandora Coordinator
+#
+# 1. copy .env.example to .env and set PANDORA_ROOT_HOST
+# 2. docker compose up -d
+#
+# See Documentation/index/cross_platform.rst for details.
+
+services:
+  coordinator:
+    image: ghcr.io/aiacos/pandora-coordinator:latest
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: pandora-coordinator
+    # the hostname is part of the log file names
+    hostname: pandora-coordinator
+    restart: unless-stopped
+    stop_grace_period: 30s
+    environment:
+      PUID: ${PUID:-1000}
+      PGID: ${PGID:-1000}
+      TZ: ${TZ:-UTC}
+      PANDORA_LOCAL_MODE: ${PANDORA_LOCAL_MODE:-true}
+    volumes:
+      - ${PANDORA_ROOT_HOST:?set PANDORA_ROOT_HOST in the .env file}:/pandora

@@ -41,12 +41,9 @@ scriptPath = os.path.abspath(os.path.dirname(__file__))
 if scriptPath not in sys.path:
     sys.path.append(scriptPath)
 
-if sys.version[0] == "3":
-    pyLibs = "Python37"
-    pVersion = 3
-else:
-    pyLibs = "Python27"
-    pVersion = 2
+import signal, tempfile
+
+pyLibs = "Python37"
 
 pyLibPath = os.path.join(pandoraRoot, "PythonLibs", pyLibs)
 cpLibs = os.path.join(pandoraRoot, "PythonLibs", "CrossPlatform")
@@ -57,61 +54,90 @@ if cpLibs not in sys.path:
 if pyLibPath not in sys.path:
     sys.path.append(pyLibPath)
 
-sys.path.insert(0, os.path.join(pandoraRoot, "PythonLibs", pyLibs, "PySide"))
-from PySide2.QtCore import *
-from PySide2.QtGui import *
-from PySide2.QtWidgets import *
+import PandoraPaths
+import PandoraPathMap
+import PandoraProtocol
+import PandoraSystem
 
+# Without user interface the slave has no tray icon and doesn't ask the user
+# before it starts rendering. This is the mode for render nodes without desktop.
+headless = "--headless" in sys.argv or os.environ.get("PANDORA_HEADLESS", "").lower() in [
+    "1",
+    "true",
+    "yes",
+    "on",
+]
 
-import qdarkstyle
+if not headless:
+    try:
+        sys.path.insert(0, os.path.join(pandoraRoot, "PythonLibs", pyLibs, "PySide"))
+        from PySide2.QtCore import *
+        from PySide2.QtGui import *
+        from PySide2.QtWidgets import *
+
+        import qdarkstyle
+    except ImportError:
+        if PandoraPaths.getPlatform() == "windows":
+            raise
+
+        headless = True
+
 import psutil
-from PIL import ImageGrab
 
 
-# custom messagebox, which closes after some seconds. It is used to ask wether this PC is currently used by a person.
-class counterMessageBox(QMessageBox):
-    def __init__(self, prerenderwaittime):
-        QMessageBox.__init__(self)
+if not headless:
+    # custom messagebox, which closes after some seconds. It is used to ask wether this PC is currently used by a person.
+    class counterMessageBox(QMessageBox):
+        def __init__(self, prerenderwaittime):
+            QMessageBox.__init__(self)
 
-        # definde the amount of seconds after which the messagebox closes
-        self.seconds = prerenderwaittime
+            # definde the amount of seconds after which the messagebox closes
+            self.seconds = prerenderwaittime
 
-        # set up text and buttons of the messagebox
-        QMessageBox.setText(
-            self,
-            "Do you want to use this PC now? Otherwise this PC will start rendering.\n\nRendering starts in %s seconds"
-            % self.seconds,
-        )
-        QMessageBox.setWindowTitle(self, "Pandora RenderSlave")
+            # set up text and buttons of the messagebox
+            QMessageBox.setText(
+                self,
+                "Do you want to use this PC now? Otherwise this PC will start rendering.\n\nRendering starts in %s seconds"
+                % self.seconds,
+            )
+            QMessageBox.setWindowTitle(self, "Pandora RenderSlave")
 
-        self.addButton("Yes, I want to use this PC", QMessageBox.YesRole)
-        self.addButton("No, this PC can start rendering", QMessageBox.NoRole)
+            self.addButton("Yes, I want to use this PC", QMessageBox.YesRole)
+            self.addButton("No, this PC can start rendering", QMessageBox.NoRole)
 
-        # starts a timer, which updates the remaining seconds on the messagebox
-        self.t = QTimer()
-        self.t.timeout.connect(self.timeoutSlot)
-        self.t.start(1000)  # amount of milliseconds after which the timer is executed
+            # starts a timer, which updates the remaining seconds on the messagebox
+            self.t = QTimer()
+            self.t.timeout.connect(self.timeoutSlot)
+            self.t.start(1000)  # amount of milliseconds after which the timer is executed
 
-    # called every second. updates the remaining time and closes if the time is 0.
-    def timeoutSlot(self):
-        self.seconds -= 1
-        QMessageBox.setText(
-            self,
-            "Do you want to use this PC now? Otherwise this PC will start rendering.\n\nRendering starts in %s seconds"
-            % self.seconds,
-        )
+        # called every second. updates the remaining time and closes if the time is 0.
+        def timeoutSlot(self):
+            self.seconds -= 1
+            QMessageBox.setText(
+                self,
+                "Do you want to use this PC now? Otherwise this PC will start rendering.\n\nRendering starts in %s seconds"
+                % self.seconds,
+            )
 
-        if self.seconds == 0:
-            self.t.stop()
-            QMessageBox.close(self)
+            if self.seconds == 0:
+                self.t.stop()
+                QMessageBox.close(self)
 
 
 # main class for handling rendering
-class SlaveLogic(QDialog):
+class SlaveLogic(object if headless else QDialog):
     def __init__(self, core):
-        QDialog.__init__(self)
+        self.headless = headless
+        if not self.headless:
+            QDialog.__init__(self)
+
         self.core = core
-        self.slaveLogicVersion = "v1.1.0.6"
+        self.slaveLogicVersion = "v1.2.0.0"
+        self.close = False  # the slave stops, when this is set
+        self.nextCheck = 0  # seconds until the next check for jobs (without user interface)
+        self.wakeEvent = threading.Event()
+        self.pathMappings = []
+        self.incompleteCmdAge = 60  # seconds in which an unreadable command is retried
 
         # define some initial variables
         self.slaveState = "idle"  # slave render status
@@ -133,7 +159,7 @@ class SlaveLogic(QDialog):
         self.maxTasks = 2  # maximum concurrent tasks rendering at the same time
 
         self.cursorCheckPos = None  # cursor position  to check if the PC is currently used
-        self.parentWidget = QWidget()  # used as a parent for UIs
+        self.parentWidget = None if self.headless else QWidget()  # used as a parent for UIs
 
         self.userAsked = (
             False
@@ -158,55 +184,33 @@ class SlaveLogic(QDialog):
             self.localMode = True
 
         if cData["repositoryPath"] is None:
-            QMessageBox.warning(self, "Warning", "Pandora repository path is not defined.")
-            sys.exit()
-            return
+            self.fatal("Pandora repository path is not defined.")
 
         repoDir = os.path.join(cData["repositoryPath"], "Slave")
         if not os.path.exists(repoDir):
             try:
                 os.makedirs(repoDir)
-            except:
-                pass
-
-        if not os.path.exists(repoDir):
-            try:
-                os.makedirs(repoDir)
-            except:
-                QMessageBox.warning(
-                    self,
-                    "Warning",
-                    "Pandora repository path doesn't exist.\n\n%s" % repoDir,
-                )
-                sys.exit()
-                return
+            except Exception:
+                self.fatal("Pandora repository path doesn't exist.\n\n%s" % repoDir)
 
         self.localSlavePath = repoDir
 
         if self.localMode:
             if cData["rootPath"] is None:
-                QMessageBox.warning(self, "Warning", "Pandora root path is not defined.")
-                sys.exit()
-                return
+                self.fatal("Pandora root path is not defined.")
 
             if not os.path.exists(cData["rootPath"]):
                 try:
                     os.makedirs(cData["rootPath"])
-                except:
-                    QMessageBox.warning(self, "Warning", "Pandora root path doesn't exist.")
-                    sys.exit()
-                    return
+                except Exception:
+                    self.fatal("Pandora root path doesn't exist.")
 
             self.slavePath = os.path.join(
                 cData["rootPath"], "Slaves", "S_" + socket.gethostname()
             )
         else:
             if cData["slavePath"] is None:
-                QMessageBox.warning(
-                    self, "Warning", "No slave root folder specified in the Pandora config"
-                )
-                sys.exit()
-                return
+                self.fatal("No slave root folder specified in the Pandora config")
             else:
                 self.slavePath = cData["slavePath"]
 
@@ -251,10 +255,13 @@ class SlaveLogic(QDialog):
         elif not slaveEnabled:
             self.setState("disabled")
 
-        self.createTrayIcon()
-        self.trayIcon.show()
+        self.loadPathMappings()
 
-        showslavewindow = self.getConfSetting("showSlaveWindow")
+        if not self.headless:
+            self.createTrayIcon()
+            self.trayIcon.show()
+
+        showslavewindow = not self.headless and self.getConfSetting("showSlaveWindow")
 
         # display a messagebox, which informs the user, that this PC is a RenderSlave
         if showslavewindow:
@@ -273,11 +280,91 @@ class SlaveLogic(QDialog):
 
         self.writeLog("Slave started - %s" % self.slaveLogicVersion, 1)
 
+        if self.headless:
+            return
+
         self.logicTimer = QTimer()
         self.logicTimer.setSingleShot(True)
         self.logicTimer.timeout.connect(self.checkAssignments)
 
         self.checkAssignments()
+
+    # the slave cannot work at all, e.g. because of missing settings
+    def fatal(self, text):
+        if self.headless:
+            sys.stderr.write("Pandora RenderSlave: %s\n" % text)
+            sys.stderr.flush()
+            sys.exit(1)
+
+        QMessageBox.warning(self, "Warning", text)
+        sys.exit()
+
+    # schedules the next check for jobs and commands
+    def scheduleCheck(self, seconds):
+        if self.headless:
+            self.nextCheck = seconds
+        else:
+            self.logicTimer.start(int(seconds * 1000))
+
+    # interrupts the waiting for the next check
+    def wake(self):
+        self.nextCheck = 0
+        self.wakeEvent.set()
+
+    def stop(self, *args):
+        self.close = True
+        self.wakeEvent.set()
+
+    # main loop of the slave without user interface
+    def run(self):
+        for sigName in ["SIGTERM", "SIGINT"]:
+            try:
+                signal.signal(getattr(signal, sigName), self.stop)
+            except Exception:
+                # not available on this platform or not in the main thread
+                pass
+
+        while not self.close:
+            self.nextCheck = self.updateTime
+            self.wakeEvent.clear()
+            self.checkAssignments()
+            self.wakeEvent.wait(max(1, self.nextCheck))
+
+        self.writeLog("exit slave", 1)
+        self.stopRender()
+        self.setState("shut down")
+
+    # The path mapping converts paths of jobs, which were submitted from a different OS.
+    # The farm-wide mapping is stored next to the coordinator settings in the Pandora root.
+    def loadPathMappings(self):
+        coordBasePath = os.path.join(
+            os.path.dirname(os.path.dirname(self.slavePath)), "Scripts", "PandoraCoordinator"
+        )
+        self.pathMappings = PandoraPathMap.loadMappings(
+            PandoraPathMap.getMappingFiles(coordBasePath, PandoraPaths.getUserConfigDir())
+        )
+        for error in PandoraPathMap.getLoadErrors():
+            self.writeLog(error, 2)
+
+    def mapPath(self, path):
+        return PandoraPathMap.mapPath(path, self.pathMappings)
+
+    # converts all paths in the data of a job to paths on this machine
+    def mapJobData(self, jobData):
+        if not self.pathMappings:
+            return jobData
+
+        for key in jobData:
+            val = jobData[key]
+            try:
+                isText = isinstance(val, basestring)
+            except NameError:
+                isText = isinstance(val, str)
+
+            if isText and ("/" in val or "\\" in val):
+                jobData[key] = self.mapPath(val)
+
+        return jobData
 
     def err_decorator(func):
         @wraps(func)
@@ -296,7 +383,7 @@ class SlaveLogic(QDialog):
                 )
                 args[0].writeLog(erStr, 3)
                 if func == args[0].checkAssignments:
-                    args[0].logicTimer.start(args[0].updateTime * 1000)
+                    args[0].scheduleCheck(args[0].updateTime)
 
         return func_wrapper
 
@@ -389,7 +476,7 @@ class SlaveLogic(QDialog):
         if reason == QSystemTrayIcon.Context:
             statusText = "Status:\n%s" % self.slaveState
             if self.slaveState == "paused":
-                pauseMin = QDateTime.currentDateTime().secsTo(self.pauseEnd) // 60
+                pauseMin = int(self.pauseEnd - time.time()) // 60
                 hourPause = pauseMin // 60
                 pauseMin = pauseMin - hourPause * 60
                 if hourPause > 0:
@@ -406,7 +493,9 @@ class SlaveLogic(QDialog):
     @err_decorator
     def activateSlave(self):
         self.setState("idle")
-        self.enableAction.setChecked(True)
+        if not self.headless:
+            self.enableAction.setChecked(True)
+
         self.checkAssignments()
 
     # called from the tray icon. Enables/Disables the slave
@@ -431,9 +520,9 @@ class SlaveLogic(QDialog):
 
         self.setState("paused")
 
-        self.pauseEnd = QDateTime.currentDateTime().addSecs(duration * 60)
-
-        self.enableAction.setChecked(True)
+        self.pauseEnd = time.time() + duration * 60
+        if not self.headless:
+            self.enableAction.setChecked(True)
         # self.logicTimer.start(duration*60*1000)
         self.writeLog("slave paused for %s minutes" % duration, 1)
 
@@ -447,6 +536,10 @@ class SlaveLogic(QDialog):
         if restart:
             self.setState("restarting")
             self.writeLog("slave restarting", 1)
+            if self.headless:
+                # replace this process with a new slave process
+                os.execv(sys.executable, [sys.executable] + sys.argv)
+
             pwExe = os.path.join(pandoraRoot, pyLibs, "Pandora Slave.exe")
             cmd = 'start "" "%s" "%s" %s' % (pwExe, os.path.abspath(__file__), "forcestart")
             self.writeLog(cmd)
@@ -454,7 +547,11 @@ class SlaveLogic(QDialog):
         else:
             self.setState("shut down")
 
-        QApplication.quit()
+        if self.headless:
+            self.stop()
+        else:
+            QApplication.quit()
+
         sys.exit()
 
     # closes the slave
@@ -489,10 +586,13 @@ class SlaveLogic(QDialog):
 
             #   print text
 
+            logLine = "[%s] %s : %s\n" % (level, time.strftime("%d.%m.%y %X"), text)
+            if self.headless:
+                sys.stdout.write(logLine)
+                sys.stdout.flush()
+
             with io.open(self.slaveLog, "a", encoding="utf-16") as log:
-                log.write(
-                    "[%s] %s : %s\n" % (level, time.strftime("%d.%m.%y %X"), text)
-                )
+                log.write(logLine)
         except:
             pass
 
@@ -555,16 +655,24 @@ class SlaveLogic(QDialog):
             value=self.slaveLogicVersion,
         )
 
-        process = os.popen("wmic memorychip get capacity")
-        result = process.read()
-        process.close()
         totalMem = 0
-        for m in result.split("  \r\n")[1:-1]:
-            totalMem += int(m)
+        if PandoraPaths.getPlatform() == "windows":
+            try:
+                process = os.popen("wmic memorychip get capacity")
+                result = process.read()
+                process.close()
+                for m in result.split("  \r\n")[1:-1]:
+                    totalMem += int(m)
 
-        self.getConfSetting(
-            "ram", section="slaveinfo", setval=True, value=(totalMem // (1024 ** 3))
-        )
+                totalMem = totalMem // (1024 ** 3)
+            except Exception:
+                # wmic is not available on recent Windows versions
+                totalMem = 0
+
+        if not totalMem:
+            totalMem = PandoraSystem.getTotalMemory()
+
+        self.getConfSetting("ram", section="slaveinfo", setval=True, value=totalMem)
 
     # reads a slave setting from file and returns the value
     @err_decorator
@@ -636,17 +744,12 @@ class SlaveLogic(QDialog):
 
     # shutdown this PC
     @err_decorator
-    def shutdownPC(self, restart):
+    def shutdownPC(self, restart=False):
         self.stopRender()
         self.writeLog("restarting PC", 1)
         self.setState("restarting")
 
-        cmd = "shutdown -t 0 -f"
-
-        if restart:
-            cmd = "shutdown -t 0 -r -f"
-
-        os.system(cmd)
+        subprocess.call(PandoraSystem.getShutdownCommand(restart))
 
     # clears the log file
     @err_decorator
@@ -675,7 +778,14 @@ class SlaveLogic(QDialog):
     @err_decorator
     def writeScreenshot(self):
         filename = "ScreenShot_%s.jpg" % socket.gethostname()
-        img = ImageGrab.grab()
+        try:
+            from PIL import ImageGrab
+
+            img = ImageGrab.grab()
+        except Exception as e:
+            self.writeLog("Cannot create a screenshot on this machine: %s" % e, 2)
+            return
+
         saveas = os.path.join(self.slavePath, filename)
         img.save(saveas)
 
@@ -805,7 +915,7 @@ class SlaveLogic(QDialog):
 
         if not (os.path.exists(self.slavePath)):
             self.writeWarning("paths don't exist", 3)
-            self.logicTimer.start(self.updateTime * 1000)
+            self.scheduleCheck(self.updateTime)
             return False
 
         newUTime = self.getConfSetting("updateTime")
@@ -836,7 +946,7 @@ class SlaveLogic(QDialog):
         if self.slaveState == "userActive":
             cresult = self.checkCursor()
             if cresult > 0:
-                self.logicTimer.start(cresult * 1000)
+                self.scheduleCheck(cresult)
                 return False
 
         if self.checkRest():
@@ -845,7 +955,7 @@ class SlaveLogic(QDialog):
         elif self.slaveState == "rest":
             self.setState("idle")
 
-        if self.slaveState == "paused" and QDateTime.currentDateTime() > self.pauseEnd:
+        if self.slaveState == "paused" and time.time() > self.pauseEnd:
             self.writeLog("Pause ended. Changed slavestate to idle.")
             self.setState("idle")
 
@@ -855,7 +965,7 @@ class SlaveLogic(QDialog):
                 if not rcheck[0]:
                     self.writeLog("preRenderCheck not passed")
                     if rcheck[1] > 0:
-                        self.logicTimer.start(rcheck[1] * 1000)
+                        self.scheduleCheck(rcheck[1])
                     return
 
                 self.startRenderJob(task)
@@ -875,12 +985,12 @@ class SlaveLogic(QDialog):
                 self.assignedTasks = []
 
         if self.slaveState != "idle":
-            self.logicTimer.start(self.updateTime * 1000)
+            self.scheduleCheck(self.updateTime)
             return
 
         if self.waitingForFiles:
             #           self.writeLog("DEBUG - waiting for files")
-            self.logicTimer.start(30 * 1000)
+            self.scheduleCheck(30)
             return
 
         self.writeLog("no task assigned")
@@ -890,13 +1000,13 @@ class SlaveLogic(QDialog):
 
         self.userAsked = False
 
-        self.logicTimer.start(self.updateTime * 1000)
+        self.scheduleCheck(self.updateTime)
 
     # tells the server that this slave is currently running
     @err_decorator
     def writeActive(self):
-        slaveActive = (
-            self.slavePath + "\\slaveActive_%s" % socket.gethostname()
+        slaveActive = os.path.join(
+            self.slavePath, "slaveActive_%s" % socket.gethostname()
         )  # path for the RenderSlave active file. The modifing date is used to tell wether the slave is running
 
         if (
@@ -911,6 +1021,9 @@ class SlaveLogic(QDialog):
     # open a questionbox, which asks the user if this PC should start rendering.
     @err_decorator
     def openActiveQuestion(self):
+        if self.headless:
+            return 1
+
         if hasattr(self, "questionMsg") and self.questionMsg.isVisible():
             self.writeLog("Question window is already open")
             return 0
@@ -956,7 +1069,8 @@ class SlaveLogic(QDialog):
         if val is not None and val != "":
             self.writeLog("checkCommands - execute: %s" % val, 1)
             try:
-                exec(val)
+                if not PandoraProtocol.runCall(self, val, PandoraProtocol.SLAVE_COMMANDS):
+                    self.writeLog("Slave command rejected: %s" % val, 2)
             except Exception as e:
                 exc_type, exc_obj, exc_tb = sys.exc_info()
                 self.writeLog(
@@ -970,7 +1084,7 @@ class SlaveLogic(QDialog):
     def checkCmds(self):
         if not os.path.exists(self.slaveComPath):
             self.writeWarning("Communication path does not exist", 2)
-            self.logicTimer.start(self.updateTime * 1000)
+            self.scheduleCheck(self.updateTime)
             return False
 
         for i in sorted(os.listdir(self.slaveComPath)):
@@ -981,16 +1095,14 @@ class SlaveLogic(QDialog):
             with open(cmFile, "r") as comFile:
                 cmdText = comFile.read()
 
-            command = None
-            try:
-                command = eval(cmdText)
-            except Exception as e:
-                exc_type, exc_obj, exc_tb = sys.exc_info()
-                self.writeLog(
-                    "ERROR - checkCmds - %s - %s - %s"
-                    % (str(e), exc_type, exc_tb.tb_lineno),
-                    3,
-                )
+            command = PandoraProtocol.parseCommand(cmdText)
+            if command is None:
+                if time.time() - os.path.getmtime(cmFile) < self.incompleteCmdAge:
+                    # the file may not be written/synced completely yet
+                    self.writeLog("Command is not valid yet, retrying later: %s" % i, 1)
+                    continue
+
+                self.writeLog("ERROR - checkCmds - invalid command: %s" % cmdText, 3)
 
             self.handleCmd(command, cmFile)
 
@@ -1134,7 +1246,7 @@ class SlaveLogic(QDialog):
             self.writeLog("slave is disabled", 1)
             return [False, 0]
         elif self.slaveState == "paused":
-            if QDateTime.currentDateTime() < self.pauseEnd:
+            if time.time() < self.pauseEnd:
                 return [False, self.updateTime]
 
         # still rendering
@@ -1206,6 +1318,9 @@ class SlaveLogic(QDialog):
     # checks if the pc is beeing used by comparing the cursor position over time
     @err_decorator
     def checkCursor(self):
+        if self.headless:
+            return 0
+
         if self.getConfSetting("cursorCheck"):
             self.writeLog("startCursorCheck")
             if self.cursorCheckPos is None:
@@ -1398,6 +1513,7 @@ class SlaveLogic(QDialog):
             "taskEndframe": tData[1],
         }
         taskData.update(jobData)
+        self.mapJobData(taskData)
         self.curTasks.append(taskData)
 
         if not self.userAsked:
@@ -1411,7 +1527,11 @@ class SlaveLogic(QDialog):
         else:
             showinterruptwindow = self.getConfSetting("showInterruptWindow")
 
-        if showinterruptwindow and not (hasattr(self, "msg") and self.msg.isVisible()):
+        if (
+            showinterruptwindow
+            and not self.headless
+            and not (hasattr(self, "msg") and self.msg.isVisible())
+        ):
             self.msg = QMessageBox(
                 QMessageBox.Information,
                 "Pandora RenderSlave",
@@ -1553,7 +1673,7 @@ class SlaveLogic(QDialog):
     def checkForUpdates(self):
         # logic update
         latestFile = (
-            self.slavePath + "\\Scripts\\%s\\PandoraSlave.py" % socket.gethostname()
+            os.path.join(self.slavePath, "Scripts", socket.gethostname(), "PandoraSlave.py")
         )
         if not os.path.exists(latestFile):
             latestFile = os.path.join(
@@ -1573,14 +1693,14 @@ class SlaveLogic(QDialog):
 
         # startHouJob update
         latestFile = (
-            self.slavePath + "\\Scripts\\%s\\PandoraStartHouJob.py" % socket.gethostname()
+            os.path.join(self.slavePath, "Scripts", socket.gethostname(), "PandoraStartHouJob.py")
         )
         if not os.path.exists(latestFile):
             latestFile = os.path.join(
                 os.path.dirname(os.path.dirname(latestFile)), os.path.basename(latestFile)
             )
 
-        curFile = os.path.dirname(os.path.abspath(__file__)) + "\\PandoraStartHouJob.py"
+        curFile = os.path.join(os.path.dirname(os.path.abspath(__file__)), "PandoraStartHouJob.py")
         if os.path.exists(curFile):
             curFileDate = int(os.path.getmtime(curFile))
         else:
@@ -1601,7 +1721,7 @@ class SlaveLogic(QDialog):
 
         # zip Pandora update
         latestFile = (
-            self.slavePath + "\\Scripts\\%s\\Pandora-development.zip" % socket.gethostname()
+            os.path.join(self.slavePath, "Scripts", socket.gethostname(), "Pandora-development.zip")
         )
         if not os.path.exists(latestFile):
             latestFile = os.path.join(
@@ -1610,7 +1730,7 @@ class SlaveLogic(QDialog):
 
         if os.path.exists(latestFile):
             targetdir = os.path.join(
-                os.environ["temp"], "PandoraSlaveUpdate", "Pandora_update.zip"
+                tempfile.gettempdir(), "PandoraSlaveUpdate", "Pandora_update.zip"
             )
 
             if not os.path.exists(os.path.dirname(targetdir)):
@@ -1633,8 +1753,16 @@ class SlaveLogic(QDialog):
             try:
                 self.writeLog("call " + prog, 1)
                 self.writeLog(popenArgs, 0)
+                # an argument list can only be passed to the shell on Windows
+                useShell = PandoraPaths.getPlatform() == "windows" or not isinstance(
+                    popenArgs, (list, tuple)
+                )
                 jobData["renderProc"] = subprocess.Popen(
-                    popenArgs, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, text=True
+                    popenArgs,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    shell=useShell,
+                    universal_newlines=True,
                 )
 
                 def readStdout(jobData, prog, decode):
@@ -1957,50 +2085,67 @@ class SlaveLogic(QDialog):
         self.interrupted = False
         self.curTasks = [x for x in self.curTasks if not (x["jobcode"] == task["jobcode"] and x["taskname"] == task["taskname"])]
         self.getConfSetting("curtasks", section="slaveinfo", setval=True, value=self.getCurTasksData())
-        self.checkAssignments()
+        if self.headless:
+            # the main loop checks the assignments
+            self.wake()
+        else:
+            self.checkAssignments()
+
+
+# starts the slave without user interface
+def runHeadless():
+    import PandoraHeadless
+
+    core = PandoraHeadless.HeadlessCore()
+    slave = SlaveLogic(core)
+    slave.run()
 
 
 # true when this script is executed and not imported
 if __name__ == "__main__":
-    qapp = QApplication(sys.argv)
-    qapp.setStyleSheet(qdarkstyle.load_stylesheet(pyside=True))
+    if headless:
+        runHeadless()
+        sys.exit()
+    else:
+        qapp = QApplication(sys.argv)
+        qapp.setStyleSheet(qdarkstyle.load_stylesheet(pyside=True))
 
-    # set window icon
-    appIcon = QIcon(
-        os.path.join(
-            os.path.dirname(os.path.abspath(__file__)),
-            "UserInterfacesPandora",
-            "pandora_slave.ico",
-        )
-    )
-    qapp.setWindowIcon(appIcon)
-    qapp.setQuitOnLastWindowClosed(False)
-
-    # check if already a Pandora slave process is running
-    slaveProc = []
-    for x in psutil.pids():
-        try:
-            if (
-                x != os.getpid()
-                and os.path.basename(psutil.Process(x).exe()) == "Pandora Slave.exe"
-            ):
-                slaveProc.append(x)
-        except:
-            pass
-
-    if len(slaveProc) > 0:
-        if sys.argv[-1] == "forcestart":
-            for pid in slaveProc:
-                proc = psutil.Process(pid)
-                proc.kill()
-        else:
-            QMessageBox.warning(
-                QWidget(), "Pandora RenderSlave", "Pandora RenderSlave is already running."
+        # set window icon
+        appIcon = QIcon(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                "UserInterfacesPandora",
+                "pandora_slave.ico",
             )
-            sys.exit()
+        )
+        qapp.setWindowIcon(appIcon)
+        qapp.setQuitOnLastWindowClosed(False)
 
-    import PandoraCore
+        # check if already a Pandora slave process is running
+        slaveProc = []
+        for x in psutil.pids():
+            try:
+                if (
+                    x != os.getpid()
+                    and os.path.basename(psutil.Process(x).exe()) == "Pandora Slave.exe"
+                ):
+                    slaveProc.append(x)
+            except:
+                pass
 
-    pc = PandoraCore.PandoraCore()
-    pc.startRenderSlave()
-    sys.exit(qapp.exec_())
+        if len(slaveProc) > 0:
+            if sys.argv[-1] == "forcestart":
+                for pid in slaveProc:
+                    proc = psutil.Process(pid)
+                    proc.kill()
+            else:
+                QMessageBox.warning(
+                    QWidget(), "Pandora RenderSlave", "Pandora RenderSlave is already running."
+                )
+                sys.exit()
+
+        import PandoraCore
+
+        pc = PandoraCore.PandoraCore()
+        pc.startRenderSlave()
+        sys.exit(qapp.exec_())

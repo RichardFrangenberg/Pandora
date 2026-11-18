@@ -31,14 +31,14 @@
 # along with Pandora.  If not, see <https://www.gnu.org/licenses/>.
 
 
-import sys, os, io, time, socket, json
+import sys, os, io, time, socket, json, ast
 import hou
 
-slavePath = eval(sys.argv[3])[1]
+slavePath = ast.literal_eval(sys.argv[3])[1]
 
 
 def writeLog(text, level=0):
-    slaveLog = slavePath + "\\slaveLog_%s.txt" % socket.gethostname()
+    slaveLog = os.path.join(slavePath, "slaveLog_%s.txt" % socket.gethostname())
     if not os.path.exists(slaveLog):
         try:
             if not os.path.exists(os.path.dirname(slaveLog)):
@@ -61,8 +61,8 @@ try:
 
     writeLog("load Scene")
     hou.hipFile.load(sys.argv[1], ignore_load_warnings=True)
-    jobData = eval(sys.argv[2])
-    localSlavePath = eval(sys.argv[3])[0]
+    jobData = ast.literal_eval(sys.argv[2])
+    localSlavePath = ast.literal_eval(sys.argv[3])[0]
 
     frameStart = jobData["taskStartframe"]
     frameEnd = jobData["taskEndframe"]
