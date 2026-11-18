@@ -86,12 +86,19 @@ class Pandora_Houdini_externalAccess_Functions(object):
         ):
             houPath = houOverridePath
         else:
-            if "programVersion" in jobData:
-                houPath = self.getInstallPath(jobData["programVersion"])
-            else:
-                houPath = self.getInstallPath()
+            if platform.system() == "Windows":
+                if "programVersion" in jobData:
+                    houPath = self.getInstallPath(jobData["programVersion"])
+                else:
+                    houPath = self.getInstallPath()
 
-            houPath = os.path.join(houPath, "bin\\hython.exe")
+                houPath = os.path.join(houPath or "", "bin\\hython.exe")
+            else:
+                import PandoraSystem
+
+                houPath = PandoraSystem.findExecutable(
+                    "Houdini", jobData.get("programVersion")
+                )
 
             if not os.path.exists(houPath):
                 origin.writeLog("no Houdini installation found", 3)

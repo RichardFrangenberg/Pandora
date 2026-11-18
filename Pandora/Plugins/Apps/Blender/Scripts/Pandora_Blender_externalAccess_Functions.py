@@ -42,20 +42,21 @@ try:
 
     psVersion = 2
 except:
-    from PySide.QtCore import *
-    from PySide.QtGui import *
+    try:
+        from PySide.QtCore import *
+        from PySide.QtGui import *
 
-    psVersion = 1
+        psVersion = 1
+    except:
+        # no Qt available, e.g. on a renderslave without user interface
+        psVersion = 0
 
 
-if sys.version[0] == "3":
-    import winreg as _winreg
-
-    pVersion = 3
-else:
-    import _winreg
-
-    pVersion = 2
+if platform.system() == "Windows":
+    if sys.version[0] == "3":
+        import winreg as _winreg
+    else:
+        import _winreg
 
 
 class Pandora_Blender_externalAccess_Functions(object):
@@ -113,7 +114,14 @@ class Pandora_Blender_externalAccess_Functions(object):
         ):
             blenderPath = bldOverridePath
         else:
-            blenderPath = self.getInstallPath()
+            if platform.system() == "Windows":
+                blenderPath = self.getInstallPath()
+            else:
+                import PandoraSystem
+
+                blenderPath = PandoraSystem.findExecutable(
+                    "Blender", jobData.get("programVersion")
+                )
 
             if not os.path.exists(blenderPath):
                 origin.writeLog("no Blender installation found", 3)
@@ -191,7 +199,8 @@ if bpy.context.scene.node_tree is not None and bpy.context.scene.use_nodes:
 			usePasses = True
 
 if usePasses:
-	tmpOutput = os.path.join(os.environ["temp"], "PrismRender", "tmp.####.exr")
+	import tempfile
+	tmpOutput = os.path.join(tempfile.gettempdir(), "PrismRender", "tmp.####.exr")
 	bpy.context.scene.render.filepath = tmpOutput
 	if not os.path.exists(os.path.dirname(tmpOutput)):
 		os.makedirs(os.path.dirname(tmpOutput))
