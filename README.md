@@ -12,7 +12,25 @@ https://prism-pipeline.com/pandora
 
 On the [website](https://prism-pipeline.com/pandora) you can find the latest official installer.
 
-Currently Pandora runs on Windows only.
+Pandora runs on Windows. The Coordinator also runs on Linux, macOS and in a Docker container.
+
+
+## Coordinator in Docker
+
+The Coordinator can run in a container, e.g. on a NAS:
+
+* Copy `.env.example` to `.env` and set `PANDORA_ROOT_HOST` to your Pandora root folder.
+* Run `docker compose up -d`
+
+See [Linux, macOS and Docker](Documentation/index/cross_platform.rst) for details.
+
+
+## Tests
+
+```
+python -m pip install -r requirements-dev.txt
+python -m pytest tests
+```
 
 
 ## Installing
