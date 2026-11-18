@@ -29,18 +29,21 @@ class Pandora_Fake_unloaded(object):
         self.pluginName = "Fake"
 
     def startJob(self, origin, jobData={}):
-        script = (
-            "import os, sys\\n"
-            "out, start, end = sys.argv[1], int(sys.argv[2]), int(sys.argv[3])\\n"
-            "os.makedirs(os.path.dirname(out), exist_ok=True)\\n"
-            "for f in range(start, end + 1):\\n"
-            "    open(out.replace('####', '%04d' % f), 'w').write('frame')\\n"
-            "print('rendered')\\n"
-        )
+        # the script is passed as a file, because the Windows shell cannot pass multiline arguments
+        scriptPath = os.path.join(os.path.dirname(jobData["scenefile"]), "render.py")
+        with open(scriptPath, "w") as f:
+            f.write(
+                "import os, sys\\n"
+                "out, start, end = sys.argv[1], int(sys.argv[2]), int(sys.argv[3])\\n"
+                "os.makedirs(os.path.dirname(out), exist_ok=True)\\n"
+                "for f in range(start, end + 1):\\n"
+                "    open(out.replace('####', '%04d' % f), 'w').write('frame')\\n"
+                "print('rendered')\\n"
+            )
+
         args = [
             sys.executable,
-            "-c",
-            script,
+            scriptPath,
             jobData["outputPath"],
             str(jobData["taskStartframe"]),
             str(jobData["taskEndframe"]),
