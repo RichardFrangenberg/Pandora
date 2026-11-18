@@ -12,7 +12,7 @@ https://prism-pipeline.com/pandora
 
 On the [website](https://prism-pipeline.com/pandora) you can find the latest official installer.
 
-Pandora runs on Windows. The Coordinator also runs on Linux, macOS and in a Docker container.
+Pandora runs on Windows. The Coordinator and the Renderslave (without user interface) also run on Linux and macOS, the Coordinator also in a Docker container.
 
 
 ## Coordinator in Docker

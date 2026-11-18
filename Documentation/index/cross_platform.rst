@@ -9,12 +9,14 @@ Supported platforms
 +=================================+=========+=======+=======+========+
 | Coordinator                     | yes     | yes   | yes   | yes    |
 +---------------------------------+---------+-------+-------+--------+
-| Renderslave                     | yes     | no    | no    | no     |
+| Renderslave                     | yes     | yes*  | yes*  | no     |
 +---------------------------------+---------+-------+-------+--------+
 | Submitter, Render-Handler, Tray | yes     | no    | no    | no     |
 +---------------------------------+---------+-------+-------+--------+
 
-The Coordinator needs Python 3.7 or later and no additional Python modules.
+\* without user interface, see :ref:`headlessSlave`.
+
+The Coordinator needs Python 3.7 or later and no additional Python modules. The Renderslave additionally needs the ``psutil`` module.
 
 
 Running the Coordinator
@@ -49,6 +51,61 @@ On a machine without Pandora user preferences, e.g. a server, the Coordinator ca
 Environment variables have priority over the settings in the Render-Handler, which have priority over the user preferences.
 
 To stop the Coordinator send it a ``SIGTERM`` or ``SIGINT`` signal (e.g. ``Ctrl+C``). It finishes the current cycle and closes. After every cycle the Coordinator updates the file ``Scripts/PandoraCoordinator/heartbeat`` in the Pandora root, which can be used to monitor it.
+
+
+.. _headlessSlave:
+
+Renderslave without user interface
+==================================
+
+On Linux and macOS, and on Windows machines without a desktop session, the Renderslave can run without user interface:
+
+.. code-block:: bash
+
+   python -m pip install psutil
+   python Pandora/Scripts/PandoraSlave.py --headless
+
+In this mode the slave has no tray icon and doesn't ask a user before it starts rendering. All other features are the same: the slave appears in the Render-Handler, where it can be configured, paused and restarted like every other slave. The slave also starts without user interface if the environment variable ``PANDORA_HEADLESS`` is set to ``1`` or if Qt is not installed.
+
+The slave reads the Pandora user preferences or the environment variables described above. ``PANDORA_REPOSITORY`` is the local folder, in which the slave stores the jobs it renders. A typical render node only needs:
+
+.. code-block:: bash
+
+   export PANDORA_ROOT=/mnt/pandora
+   export PANDORA_REPOSITORY=/var/lib/pandora
+   python Pandora/Scripts/PandoraSlave.py --headless
+
+The slave stops rendering and closes when it receives a ``SIGTERM`` or ``SIGINT`` signal, so it can run as a service, e.g. with systemd:
+
+.. code-block:: ini
+
+   [Unit]
+   Description=Pandora Renderslave
+   After=network-online.target remote-fs.target
+
+   [Service]
+   User=render
+   Environment=PANDORA_ROOT=/mnt/pandora
+   Environment=PANDORA_REPOSITORY=/var/lib/pandora
+   ExecStart=/usr/bin/python3 /opt/Pandora/Pandora/Scripts/PandoraSlave.py --headless
+   Restart=on-failure
+
+   [Install]
+   WantedBy=multi-user.target
+
+Blender, Houdini and Maya jobs can be rendered on Linux and macOS. The slave searches the render executable (``blender``, ``hython``, ``Render``) in this order:
+
+#. the path override in the Pandora settings (``dccoverrides`` in ``Pandora.json``, e.g. ``"Blender_override": true, "Blender_path": "/opt/blender-4.2/blender"``)
+#. the default install location of the version, which was used to submit the job
+#. the environment (``HFS``, ``MAYA_LOCATION``)
+#. the ``PATH``
+#. the default install location of any version
+
+3ds Max jobs can only be rendered on Windows.
+
+.. note::
+
+   Update Pandora on the slaves by updating the whole Pandora installation. The Renderslave consists of multiple files now, so replacing only ``PandoraSlave.py`` in the ``Scripts/PandoraSlaves`` folder of the Pandora root doesn't work for slaves with an older Pandora version.
 
 
 Docker
@@ -90,14 +147,16 @@ Each rule describes one location. A path, which starts with one of the prefixes 
 
 A machine, which mounts a location differently than the rest of the farm, can have its own ``PathMapping.json`` in the folder of the Pandora user preferences. Its rules have priority.
 
-Currently the Coordinator applies the mapping to its repository path (``Repository`` in the Coordinator settings of the Render-Handler), so that a repository, which was set on a Windows workstation, is found by a Coordinator on Linux. Without a ``PathMapping.json`` no paths are changed.
+The Coordinator applies the mapping to its repository path (``Repository`` in the Coordinator settings of the Render-Handler), so that a repository, which was set on a Windows workstation, is found by a Coordinator on Linux. The Renderslave applies the mapping to the paths of a job (e.g. the output path) before it starts rendering, so that a job, which was submitted on Windows, can be rendered on Linux. Paths inside of the scenefile are not converted. Without a ``PathMapping.json`` no paths are changed.
 
 
 Security
 ========
 
-The Coordinator reads its commands from text files in the Pandora root folder. In previous versions the content of these files was executed as Python code, so everyone with write access to the Pandora root could run code on the Coordinator machine. Now the Coordinator reads the command files as data only.
+The Coordinator and the Renderslaves read their commands from text files in the Pandora root folder. In previous versions the content of these files was executed as Python code, so everyone with write access to the Pandora root could run code on the Coordinator and on every slave. Now the command files are read as data only.
 
 The ``Command`` setting of the Coordinator in the Render-Handler accepts calls to these functions: ``searchUncollectedRnd``, ``collectOutput``, ``notifyWorkstations``, ``notifySlaves``, ``restartGDrive``, e.g. ``self.searchUncollectedRnd()``. Other commands are rejected and a warning is shown in the Render-Handler.
 
-Renderslaves still execute the commands they receive. Only give trusted users write access to the Pandora root folder.
+The ``Command`` setting of a slave accepts calls to these functions: ``shutdownPC``, ``stopRender``, ``restartLogic``, ``exitLogic``, ``uploadCurJob``, ``startTeamviewer``, ``writeScreenshot``, ``clearLog``, ``pauseSlave``, ``activateSlave``, ``setSlave``, e.g. ``self.pauseSlave(60)``.
+
+Jobs still define what a slave renders, and the slaves update their scripts from the Pandora root folder. Only give trusted users write access to the Pandora root folder.
